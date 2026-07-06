@@ -20,19 +20,12 @@ from app.utils.email import (
     send_email, verification_email, forgot_password_email, money_donation_email
 )
 from app.utils.uploads import save_upload
+from app.utils.jwt import create_access_token
+from app.dependencies import require_officer
 
 # Import the handlers we can re-use directly
 from app.routers.listings import get_listings, add_listing
 from app.routers.requests import get_requests
-from app.routers.officer import (
-    list_requests as officer_list_requests,
-    list_listings as officer_list_listings,
-    list_users as officer_list_users,
-    list_money_donations as officer_list_money_donations,
-    list_feedback as officer_list_feedback,
-    get_stats as officer_get_stats,
-    FeedbackReply,
-)
 from app.routers.calendar import get_calendar_events
 from app.routers.feedback import get_feedback, submit_feedback
 from app.routers.contact import contact
@@ -63,7 +56,8 @@ def login_compat(body: LoginRequest, db: Session = Depends(get_db)):
         return _err("Please verify your email before logging in.")
     if user.status == "suspended":
         return _err("Your account has been suspended. Please contact support.")
-    return _ok({"user": {
+    token = create_access_token(user.id, user.role)
+    return _ok({"token": token, "user": {
         "id": user.id, "name": user.name, "email": user.email,
         "role": user.role, "phone_number": user.phone_number,
         "location": user.location, "status": user.status,
@@ -77,7 +71,8 @@ def officer_login_compat(body: LoginRequest, db: Session = Depends(get_db)):
         return _err("Invalid email or password.")
     if user.status == "suspended":
         return _err("This officer account has been suspended.")
-    return _ok({"user": {
+    token = create_access_token(user.id, user.role)
+    return _ok({"token": token, "user": {
         "id": user.id, "name": user.name,
         "email": user.email, "role": "admin",
     }})
@@ -399,36 +394,68 @@ async def add_money_donation_compat(request: Request, db: Session = Depends(get_
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# OFFICER — list (simple aliases)
+# OFFICER — all routes require officer JWT
 # ══════════════════════════════════════════════════════════════════════════════
 
 @router.get("/officer_list_requests.php")
-def officer_list_requests_compat(db: Session = Depends(get_db)):
-    return officer_list_requests(db=db)
+def officer_list_requests_compat(
+    _: User = Depends(require_officer), db: Session = Depends(get_db)
+):
+    requests = db.query(FoodRequest).order_by(FoodRequest.created_at.desc()).all()
+    return {"success": True, "requests": [
+        {"id": r.id, "food_item": r.food_name, "quantity": r.quantity,
+         "needed_by": r.needed_by, "location": r.location, "status": r.status,
+         "accepted_by": r.accepted_by, "created_at": r.created_at,
+         "recipient_name": r.recipient.name if r.recipient else None,
+         "recipient_email": r.recipient.email if r.recipient else None}
+        for r in requests
+    ]}
 
 
 @router.get("/officer_list_listings.php")
-def officer_list_listings_compat(db: Session = Depends(get_db)):
-    return officer_list_listings(db=db)
+def officer_list_listings_compat(
+    _: User = Depends(require_officer), db: Session = Depends(get_db)
+):
+    listings = db.query(FoodListing).order_by(FoodListing.created_at.desc()).all()
+    return {"success": True, "listings": [
+        {"id": l.id, "food_name": l.food_name, "description": l.description,
+         "quantity": l.quantity, "status": l.status, "expiry_date": l.expiry_date,
+         "location": l.location, "created_at": l.created_at, "donor_id": l.donor_id,
+         "donor_name": l.donor.name if l.donor else None}
+        for l in listings
+    ]}
 
 
 @router.get("/officer_list_users.php")
-def officer_list_users_compat(db: Session = Depends(get_db)):
-    return officer_list_users(db=db)
+def officer_list_users_compat(
+    _: User = Depends(require_officer), db: Session = Depends(get_db)
+):
+    users = db.query(User).filter(User.role != "officer").order_by(User.created_at.desc()).all()
+    return {"success": True, "users": [
+        {"id": u.id, "name": u.name, "email": u.email, "role": u.role,
+         "status": u.status, "is_verified": u.status == "active",
+         "location": getattr(u, "location", None), "created_at": u.created_at}
+        for u in users
+    ]}
 
 
 @router.get("/officer_list_money_donations.php")
-def officer_list_money_donations_compat(db: Session = Depends(get_db)):
-    return officer_list_money_donations(db=db)
+def officer_list_money_donations_compat(
+    _: User = Depends(require_officer), db: Session = Depends(get_db)
+):
+    from app.models import MoneyDonation
+    donations = db.query(MoneyDonation).order_by(MoneyDonation.created_at.desc()).all()
+    return {"success": True, "donations": [
+        {"id": d.id, "name": d.name, "email": d.email,
+         "amount": float(d.amount), "card_last4": d.card_last4, "created_at": d.created_at}
+        for d in donations
+    ]}
 
-
-# ══════════════════════════════════════════════════════════════════════════════
-# OFFICER — update / delete (POST with body-ID → PUT/DELETE with URL-ID)
-# ══════════════════════════════════════════════════════════════════════════════
 
 @router.post("/officer_update_request.php")
-async def officer_update_request_compat(request: Request, db: Session = Depends(get_db)):
-    """Frontend POSTs {request_id, updates: {status, accepted_by, ...}}."""
+async def officer_update_request_compat(
+    request: Request, _: User = Depends(require_officer), db: Session = Depends(get_db)
+):
     body = await request.json()
     request_id = body.get("request_id")
     updates    = body.get("updates") or {}
@@ -437,17 +464,17 @@ async def officer_update_request_compat(request: Request, db: Session = Depends(
     req = db.query(FoodRequest).filter(FoodRequest.id == int(request_id)).first()
     if not req:
         return _err("Request not found.")
-    allowed = {"status", "accepted_by"}
     for k, v in updates.items():
-        if k in allowed:
+        if k in {"status", "accepted_by"}:
             setattr(req, k, v)
     db.commit()
     return _ok({"message": "Request updated."})
 
 
 @router.post("/officer_delete_request.php")
-async def officer_delete_request_compat(request: Request, db: Session = Depends(get_db)):
-    """Frontend POSTs {request_id}."""
+async def officer_delete_request_compat(
+    request: Request, _: User = Depends(require_officer), db: Session = Depends(get_db)
+):
     body = await request.json()
     request_id = body.get("request_id") or body.get("id")
     if not request_id:
@@ -461,8 +488,9 @@ async def officer_delete_request_compat(request: Request, db: Session = Depends(
 
 
 @router.post("/officer_update_listing.php")
-async def officer_update_listing_compat(request: Request, db: Session = Depends(get_db)):
-    """Frontend POSTs {listing_id, updates: {status, ...}}."""
+async def officer_update_listing_compat(
+    request: Request, _: User = Depends(require_officer), db: Session = Depends(get_db)
+):
     body = await request.json()
     listing_id = body.get("listing_id")
     updates    = body.get("updates") or {}
@@ -471,17 +499,17 @@ async def officer_update_listing_compat(request: Request, db: Session = Depends(
     listing = db.query(FoodListing).filter(FoodListing.id == int(listing_id)).first()
     if not listing:
         return _err("Listing not found.")
-    allowed = {"food_name", "quantity", "expiry_date", "location", "description", "status"}
     for k, v in updates.items():
-        if k in allowed:
+        if k in {"food_name", "quantity", "expiry_date", "location", "description", "status"}:
             setattr(listing, k, v)
     db.commit()
     return _ok({"message": "Listing updated."})
 
 
 @router.post("/officer_delete_listing.php")
-async def officer_delete_listing_compat(request: Request, db: Session = Depends(get_db)):
-    """Frontend POSTs {listing_id}."""
+async def officer_delete_listing_compat(
+    request: Request, _: User = Depends(require_officer), db: Session = Depends(get_db)
+):
     body = await request.json()
     listing_id = body.get("listing_id") or body.get("id")
     if not listing_id:
@@ -495,8 +523,9 @@ async def officer_delete_listing_compat(request: Request, db: Session = Depends(
 
 
 @router.post("/officer_update_user.php")
-async def officer_update_user_compat(request: Request, db: Session = Depends(get_db)):
-    """Frontend POSTs {user_id, updates: {status, role, ...}}."""
+async def officer_update_user_compat(
+    request: Request, _: User = Depends(require_officer), db: Session = Depends(get_db)
+):
     body = await request.json()
     user_id = body.get("user_id")
     updates = body.get("updates") or {}
@@ -505,19 +534,19 @@ async def officer_update_user_compat(request: Request, db: Session = Depends(get
     user = db.query(User).filter(User.id == int(user_id)).first()
     if not user:
         return _err("User not found.")
-    allowed = {"name", "email", "role", "status", "phone_number", "location"}
     for k, v in updates.items():
         if k == "is_verified":
             user.status = "active" if v else "pending"
-        elif k in allowed:
+        elif k in {"name", "email", "role", "status", "phone_number", "location"}:
             setattr(user, k, v)
     db.commit()
     return _ok({"message": "User updated."})
 
 
 @router.post("/officer_suspend_user.php")
-async def officer_suspend_user_compat(request: Request, db: Session = Depends(get_db)):
-    """Frontend POSTs {user_id}. Toggles active ↔ suspended."""
+async def officer_suspend_user_compat(
+    request: Request, _: User = Depends(require_officer), db: Session = Depends(get_db)
+):
     body = await request.json()
     user_id = body.get("user_id")
     if not user_id:
@@ -531,8 +560,9 @@ async def officer_suspend_user_compat(request: Request, db: Session = Depends(ge
 
 
 @router.post("/officer_delete_user.php")
-async def officer_delete_user_compat(request: Request, db: Session = Depends(get_db)):
-    """Frontend POSTs {user_id}."""
+async def officer_delete_user_compat(
+    request: Request, _: User = Depends(require_officer), db: Session = Depends(get_db)
+):
     body = await request.json()
     user_id = body.get("user_id")
     if not user_id:
@@ -546,13 +576,24 @@ async def officer_delete_user_compat(request: Request, db: Session = Depends(get
 
 
 @router.get("/admin_list_feedback.php")
-def admin_list_feedback_compat(db: Session = Depends(get_db)):
-    return officer_list_feedback(db=db)
+def admin_list_feedback_compat(_: User = Depends(require_officer), db: Session = Depends(get_db)):
+    from app.models import Feedback
+    rows = db.query(Feedback).order_by(Feedback.created_at.desc()).all()
+    return {"success": True, "feedback": [
+        {"id": f.id, "request_id": f.request_id, "recipient_id": f.recipient_id,
+         "recipient_name": f.recipient.name if f.recipient else "Anonymous",
+         "rating": f.rating, "comment": f.comment, "image_path": f.image_path,
+         "admin_reply": f.admin_reply, "feedback_status": f.feedback_status,
+         "created_at": f.created_at}
+        for f in rows
+    ]}
 
 
 @router.post("/admin_resolve_feedback.php")
-async def admin_resolve_feedback_compat(request: Request, db: Session = Depends(get_db)):
-    """Frontend POSTs {feedback_id, reply}."""
+async def admin_resolve_feedback_compat(
+    request: Request, _: User = Depends(require_officer), db: Session = Depends(get_db)
+):
+    from app.models import Feedback
     body = await request.json()
     feedback_id = body.get("feedback_id")
     reply = body.get("reply", "")
@@ -568,8 +609,10 @@ async def admin_resolve_feedback_compat(request: Request, db: Session = Depends(
 
 
 @router.post("/admin_reopen_feedback.php")
-async def admin_reopen_feedback_compat(request: Request, db: Session = Depends(get_db)):
-    """Frontend POSTs {feedback_id}."""
+async def admin_reopen_feedback_compat(
+    request: Request, _: User = Depends(require_officer), db: Session = Depends(get_db)
+):
+    from app.models import Feedback
     body = await request.json()
     feedback_id = body.get("feedback_id")
     if not feedback_id:
@@ -584,5 +627,40 @@ async def admin_reopen_feedback_compat(request: Request, db: Session = Depends(g
 
 
 @router.get("/admin_stats.php")
-def admin_stats_compat(db: Session = Depends(get_db)):
-    return officer_get_stats(db=db)
+def admin_stats_compat(_: User = Depends(require_officer), db: Session = Depends(get_db)):
+    from app.models import FoodRequest, FoodListing, MoneyDonation
+    from sqlalchemy import func, extract
+    total_requests  = db.query(FoodRequest).count()
+    total_listings  = db.query(FoodListing).count()
+    total_users     = db.query(User).count()
+    total_donations = db.query(MoneyDonation).count()
+    req_by_status = dict(
+        db.query(FoodRequest.status, func.count(FoodRequest.id))
+          .group_by(FoodRequest.status).all()
+    )
+    users_by_role = dict(
+        db.query(User.role, func.count(User.id)).group_by(User.role).all()
+    )
+    top_foods = (
+        db.query(FoodRequest.food_name, func.count(FoodRequest.id).label("count"))
+          .group_by(FoodRequest.food_name)
+          .order_by(func.count(FoodRequest.id).desc()).limit(5).all()
+    )
+    donations_by_month = (
+        db.query(
+            extract("year", FoodRequest.created_at).label("year"),
+            extract("month", FoodRequest.created_at).label("month"),
+            func.count(FoodRequest.id).label("count"),
+        )
+        .filter(FoodRequest.status == "accepted")
+        .group_by("year", "month").order_by("year", "month").limit(6).all()
+    )
+    return {
+        "success": True,
+        "total_requests": total_requests, "total_listings": total_listings,
+        "total_users": total_users, "total_money_donations": total_donations,
+        "requests_by_status": req_by_status, "users_by_role": users_by_role,
+        "top_requested_foods": [{"name": f[0], "count": f[1]} for f in top_foods],
+        "donations_by_month": [{"year": int(d[0]), "month": int(d[1]), "count": d[2]}
+                                for d in donations_by_month],
+    }

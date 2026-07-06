@@ -6,6 +6,8 @@ import {
   Title, Tooltip, Legend, ArcElement, PointElement, LineElement
 } from 'chart.js';
 import { useLanguage } from './i18n/LanguageContext.jsx';
+import { useAuth } from './contexts/AuthContext.jsx';
+import { apiFetch } from './utils/api.js';
 import { API_BASE } from './config.js';
 
 ChartJS.register(
@@ -80,6 +82,7 @@ const NAV_ITEMS = [
 
 export default function OfficerDashboard() {
   const { t } = useLanguage();
+  const { user: adminUser, logout } = useAuth();
   const navigate = useNavigate();
 
   const [tab, setTab]               = useState('overview');
@@ -97,22 +100,18 @@ export default function OfficerDashboard() {
   const [userSearch, setUserSearch] = useState('');
   const [userRoleFilter, setUserRoleFilter] = useState('');
 
-  const adminUser = (() => {
-    try { return JSON.parse(localStorage.getItem('user') || '{}'); } catch { return {}; }
-  })();
-
   const showToast = useCallback((msg, type = 'success') => setToast({ msg, type }), []);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
       const [rr, lr, ur, mr, fr, sr] = await Promise.all([
-        fetch(`${API_BASE}/officer_list_requests.php`).then(r => r.json()),
-        fetch(`${API_BASE}/officer_list_listings.php`).then(r => r.json()),
-        fetch(`${API_BASE}/officer_list_users.php`).then(r => r.json()),
-        fetch(`${API_BASE}/officer_list_money_donations.php`).then(r => r.json()),
-        fetch(`${API_BASE}/admin_list_feedback.php`).then(r => r.json()),
-        fetch(`${API_BASE}/admin_stats.php`).then(r => r.json()),
+        apiFetch(`${API_BASE}/api/officer/requests`).then(r => r.json()),
+        apiFetch(`${API_BASE}/api/officer/listings`).then(r => r.json()),
+        apiFetch(`${API_BASE}/api/officer/users`).then(r => r.json()),
+        apiFetch(`${API_BASE}/api/officer/donations/money`).then(r => r.json()),
+        apiFetch(`${API_BASE}/api/officer/feedback`).then(r => r.json()),
+        apiFetch(`${API_BASE}/api/officer/stats`).then(r => r.json()),
       ]);
       if (rr.success) setRequests(rr.requests || []);
       if (lr.success) setListings(lr.listings || []);
@@ -130,12 +129,12 @@ export default function OfficerDashboard() {
 
   const updateRequest = async (id, updates) => {
     try {
-      const d = await fetch(`${API_BASE}/officer_update_request.php`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ request_id: id, updates })
+      const d = await apiFetch(`${API_BASE}/api/officer/requests/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(updates)
       }).then(r => r.json());
       if (d.success) { showToast('Request updated.'); fetchAll(); }
-      else showToast(d.message || 'Update failed.', 'error');
+      else showToast(d.message || d.detail || 'Update failed.', 'error');
     } catch { showToast('Network error.', 'error'); }
   };
 
@@ -143,82 +142,77 @@ export default function OfficerDashboard() {
     if (!confirmDel) return;
     const { type, id } = confirmDel;
     setConfirmDel(null);
-    const url  = type === 'request' ? `${API_BASE}/officer_delete_request.php` : `${API_BASE}/officer_delete_listing.php`;
-    const body = type === 'request' ? { request_id: id } : { listing_id: id };
+    const url = type === 'request'
+      ? `${API_BASE}/api/officer/requests/${id}`
+      : `${API_BASE}/api/officer/listings/${id}`;
     try {
-      const d = await fetch(url, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      }).then(r => r.json());
+      const d = await apiFetch(url, { method: 'DELETE' }).then(r => r.json());
       if (d.success) {
         showToast('Deleted successfully.');
         if (type === 'request') setRequests(p => p.filter(r => r.id !== id));
         else setListings(p => p.filter(l => l.id !== id));
       } else {
-        showToast(d.message || 'Delete failed.', 'error');
+        showToast(d.message || d.detail || 'Delete failed.', 'error');
       }
     } catch { showToast('Network error.', 'error'); }
   };
 
   const updateListing = async (id, updates) => {
     try {
-      const d = await fetch(`${API_BASE}/officer_update_listing.php`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ listing_id: id, updates })
+      const d = await apiFetch(`${API_BASE}/api/officer/listings/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(updates)
       }).then(r => r.json());
       if (d.success) { showToast('Listing updated.'); fetchAll(); }
-      else showToast(d.message || 'Update failed.', 'error');
+      else showToast(d.message || d.detail || 'Update failed.', 'error');
     } catch { showToast('Network error.', 'error'); }
   };
 
   const suspendUser = async (u) => {
     try {
-      const d = await fetch(`${API_BASE}/officer_suspend_user.php`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: u.id })
+      const d = await apiFetch(`${API_BASE}/api/officer/users/${u.id}/suspend`, {
+        method: 'PATCH'
       }).then(r => r.json());
       if (d.success) {
         showToast(`${u.name} ${d.status === 'suspended' ? 'suspended' : 'unsuspended'}.`);
         fetchAll();
-      } else showToast(d.message || 'Failed.', 'error');
+      } else showToast(d.message || d.detail || 'Failed.', 'error');
     } catch { showToast('Network error.', 'error'); }
   };
 
   const deleteUser = async (u) => {
     if (!window.confirm(`Delete ${u.name}? This cannot be undone.`)) return;
     try {
-      const d = await fetch(`${API_BASE}/officer_delete_user.php`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: u.id })
+      const d = await apiFetch(`${API_BASE}/api/officer/users/${u.id}`, {
+        method: 'DELETE'
       }).then(r => r.json());
       if (d.success) { showToast(`${u.name} deleted.`); fetchAll(); }
-      else showToast(d.message || 'Failed.', 'error');
+      else showToast(d.message || d.detail || 'Failed.', 'error');
     } catch { showToast('Network error.', 'error'); }
   };
 
   const resolveFeedback = async () => {
     const { item, text } = fbReply;
     try {
-      const d = await fetch(`${API_BASE}/admin_resolve_feedback.php`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ feedback_id: item.id, reply: text })
+      const d = await apiFetch(`${API_BASE}/api/officer/feedback/${item.id}/resolve`, {
+        method: 'POST',
+        body: JSON.stringify({ reply: text })
       }).then(r => r.json());
       if (d.success) {
         showToast('Feedback resolved.');
         setFbReply({ open: false, item: null, text: '' });
         fetchAll();
-      } else showToast(d.message || 'Failed.', 'error');
+      } else showToast(d.message || d.detail || 'Failed.', 'error');
     } catch { showToast('Network error.', 'error'); }
   };
 
   const reopenFeedback = async (id) => {
     try {
-      const d = await fetch(`${API_BASE}/admin_reopen_feedback.php`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ feedback_id: id })
+      const d = await apiFetch(`${API_BASE}/api/officer/feedback/${id}/reopen`, {
+        method: 'PATCH'
       }).then(r => r.json());
       if (d.success) { showToast('Feedback reopened.'); fetchAll(); }
-      else showToast(d.message || 'Failed.', 'error');
+      else showToast(d.message || d.detail || 'Failed.', 'error');
     } catch { showToast('Network error.', 'error'); }
   };
 
@@ -249,7 +243,7 @@ export default function OfficerDashboard() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('user');
+    logout();
     navigate('/');
   };
 

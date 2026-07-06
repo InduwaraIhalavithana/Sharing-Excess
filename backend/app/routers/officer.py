@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from app.database import get_db
 from app.models import User, FoodListing, FoodRequest, MoneyDonation, Feedback
 from app.schemas import UserUpdate, ListingUpdate, RequestUpdate
+from app.dependencies import require_officer
 
 
 class FeedbackReply(BaseModel):
@@ -18,7 +19,7 @@ router = APIRouter(prefix="/api/officer", tags=["officer"])
 # ── Users ─────────────────────────────────────────────────────────────────────
 
 @router.get("/users")
-def list_users(db: Session = Depends(get_db)):
+def list_users(current_user: User = Depends(require_officer), db: Session = Depends(get_db)):
     users = db.query(User).filter(User.role != "officer").order_by(User.created_at.desc()).all()
     return {"success": True, "users": [
         {"id": u.id, "name": u.name, "email": u.email,
@@ -31,7 +32,8 @@ def list_users(db: Session = Depends(get_db)):
 
 
 @router.put("/users/{user_id}")
-def update_user(user_id: int, body: UserUpdate, db: Session = Depends(get_db)):
+def update_user(user_id: int, body: UserUpdate,
+                current_user: User = Depends(require_officer), db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(404, "User not found")
@@ -42,7 +44,8 @@ def update_user(user_id: int, body: UserUpdate, db: Session = Depends(get_db)):
 
 
 @router.delete("/users/{user_id}")
-def delete_user(user_id: int, db: Session = Depends(get_db)):
+def delete_user(user_id: int,
+                current_user: User = Depends(require_officer), db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(404, "User not found")
@@ -52,7 +55,8 @@ def delete_user(user_id: int, db: Session = Depends(get_db)):
 
 
 @router.patch("/users/{user_id}/suspend")
-def toggle_suspend(user_id: int, db: Session = Depends(get_db)):
+def toggle_suspend(user_id: int,
+                   current_user: User = Depends(require_officer), db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(404, "User not found")
@@ -64,7 +68,7 @@ def toggle_suspend(user_id: int, db: Session = Depends(get_db)):
 # ── Listings ──────────────────────────────────────────────────────────────────
 
 @router.get("/listings")
-def list_listings(db: Session = Depends(get_db)):
+def list_listings(current_user: User = Depends(require_officer), db: Session = Depends(get_db)):
     listings = db.query(FoodListing).order_by(FoodListing.created_at.desc()).all()
     return {"success": True, "listings": [
         {
@@ -79,7 +83,8 @@ def list_listings(db: Session = Depends(get_db)):
 
 
 @router.put("/listings/{listing_id}")
-def update_listing(listing_id: int, body: ListingUpdate, db: Session = Depends(get_db)):
+def update_listing(listing_id: int, body: ListingUpdate,
+                   current_user: User = Depends(require_officer), db: Session = Depends(get_db)):
     listing = db.query(FoodListing).filter(FoodListing.id == listing_id).first()
     if not listing:
         raise HTTPException(404, "Listing not found")
@@ -90,7 +95,8 @@ def update_listing(listing_id: int, body: ListingUpdate, db: Session = Depends(g
 
 
 @router.delete("/listings/{listing_id}")
-def delete_listing(listing_id: int, db: Session = Depends(get_db)):
+def delete_listing(listing_id: int,
+                   current_user: User = Depends(require_officer), db: Session = Depends(get_db)):
     listing = db.query(FoodListing).filter(FoodListing.id == listing_id).first()
     if not listing:
         raise HTTPException(404, "Listing not found")
@@ -102,7 +108,7 @@ def delete_listing(listing_id: int, db: Session = Depends(get_db)):
 # ── Requests ──────────────────────────────────────────────────────────────────
 
 @router.get("/requests")
-def list_requests(db: Session = Depends(get_db)):
+def list_requests(current_user: User = Depends(require_officer), db: Session = Depends(get_db)):
     requests = db.query(FoodRequest).order_by(FoodRequest.created_at.desc()).all()
     return {"success": True, "requests": [
         {
@@ -118,7 +124,8 @@ def list_requests(db: Session = Depends(get_db)):
 
 
 @router.put("/requests/{request_id}")
-def update_request(request_id: int, body: RequestUpdate, db: Session = Depends(get_db)):
+def update_request(request_id: int, body: RequestUpdate,
+                   current_user: User = Depends(require_officer), db: Session = Depends(get_db)):
     req = db.query(FoodRequest).filter(FoodRequest.id == request_id).first()
     if not req:
         raise HTTPException(404, "Request not found")
@@ -129,7 +136,8 @@ def update_request(request_id: int, body: RequestUpdate, db: Session = Depends(g
 
 
 @router.delete("/requests/{request_id}")
-def delete_request(request_id: int, db: Session = Depends(get_db)):
+def delete_request(request_id: int,
+                   current_user: User = Depends(require_officer), db: Session = Depends(get_db)):
     req = db.query(FoodRequest).filter(FoodRequest.id == request_id).first()
     if not req:
         raise HTTPException(404, "Request not found")
@@ -141,7 +149,7 @@ def delete_request(request_id: int, db: Session = Depends(get_db)):
 # ── Money donations ───────────────────────────────────────────────────────────
 
 @router.get("/donations/money")
-def list_money_donations(db: Session = Depends(get_db)):
+def list_money_donations(current_user: User = Depends(require_officer), db: Session = Depends(get_db)):
     donations = db.query(MoneyDonation).order_by(MoneyDonation.created_at.desc()).all()
     return {"success": True, "donations": [
         {"id": d.id, "name": d.name, "email": d.email,
@@ -154,7 +162,7 @@ def list_money_donations(db: Session = Depends(get_db)):
 # ── Feedback management ───────────────────────────────────────────────────────
 
 @router.get("/feedback")
-def list_feedback(db: Session = Depends(get_db)):
+def list_feedback(current_user: User = Depends(require_officer), db: Session = Depends(get_db)):
     rows = db.query(Feedback).order_by(Feedback.created_at.desc()).all()
     return {"success": True, "feedback": [
         {
@@ -174,7 +182,8 @@ def list_feedback(db: Session = Depends(get_db)):
 
 
 @router.post("/feedback/{feedback_id}/resolve")
-def resolve_feedback(feedback_id: int, body: FeedbackReply, db: Session = Depends(get_db)):
+def resolve_feedback(feedback_id: int, body: FeedbackReply,
+                     current_user: User = Depends(require_officer), db: Session = Depends(get_db)):
     fb = db.query(Feedback).filter(Feedback.id == feedback_id).first()
     if not fb:
         raise HTTPException(404, "Feedback not found")
@@ -185,7 +194,8 @@ def resolve_feedback(feedback_id: int, body: FeedbackReply, db: Session = Depend
 
 
 @router.patch("/feedback/{feedback_id}/reopen")
-def reopen_feedback(feedback_id: int, db: Session = Depends(get_db)):
+def reopen_feedback(feedback_id: int,
+                    current_user: User = Depends(require_officer), db: Session = Depends(get_db)):
     fb = db.query(Feedback).filter(Feedback.id == feedback_id).first()
     if not fb:
         raise HTTPException(404, "Feedback not found")
@@ -198,33 +208,26 @@ def reopen_feedback(feedback_id: int, db: Session = Depends(get_db)):
 # ── Stats (officer dashboard charts) ─────────────────────────────────────────
 
 @router.get("/stats")
-def get_stats(db: Session = Depends(get_db)):
+def get_stats(current_user: User = Depends(require_officer), db: Session = Depends(get_db)):
     total_requests  = db.query(FoodRequest).count()
     total_listings  = db.query(FoodListing).count()
     total_users     = db.query(User).count()
     total_donations = db.query(MoneyDonation).count()
 
-    # Requests by status
     req_by_status = dict(
         db.query(FoodRequest.status, func.count(FoodRequest.id))
           .group_by(FoodRequest.status).all()
     )
-
-    # Users by role
     users_by_role = dict(
         db.query(User.role, func.count(User.id))
           .group_by(User.role).all()
     )
-
-    # Top requested foods
     top_foods = (
         db.query(FoodRequest.food_name, func.count(FoodRequest.id).label("count"))
           .group_by(FoodRequest.food_name)
           .order_by(func.count(FoodRequest.id).desc())
           .limit(5).all()
     )
-
-    # Accepted donations by month (last 6 months)
     donations_by_month = (
         db.query(
             extract("year",  FoodRequest.created_at).label("year"),
@@ -239,12 +242,13 @@ def get_stats(db: Session = Depends(get_db)):
 
     return {
         "success": True,
-        "total_requests":       total_requests,
-        "total_listings":       total_listings,
-        "total_users":          total_users,
+        "total_requests":        total_requests,
+        "total_listings":        total_listings,
+        "total_users":           total_users,
         "total_money_donations": total_donations,
-        "requests_by_status":   req_by_status,
-        "users_by_role":        users_by_role,
-        "top_requested_foods":  [{"name": f[0], "count": f[1]} for f in top_foods],
-        "donations_by_month":   [{"year": int(d[0]), "month": int(d[1]), "count": d[2]} for d in donations_by_month],
+        "requests_by_status":    req_by_status,
+        "users_by_role":         users_by_role,
+        "top_requested_foods":   [{"name": f[0], "count": f[1]} for f in top_foods],
+        "donations_by_month":    [{"year": int(d[0]), "month": int(d[1]), "count": d[2]}
+                                   for d in donations_by_month],
     }

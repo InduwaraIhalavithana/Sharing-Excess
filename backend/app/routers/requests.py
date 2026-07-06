@@ -6,6 +6,7 @@ from app.database import get_db
 from app.models import FoodRequest, FoodListing, User
 from app.schemas import RespondRequest, UpdateDeliveryStatus
 from app.utils.uploads import save_upload
+from app.utils.email import send_email, request_accepted_email, request_declined_email, request_delivered_email
 
 router = APIRouter(prefix="/api/requests", tags=["requests"])
 
@@ -105,10 +106,10 @@ def respond_to_request(request_id: int, body: RespondRequest, db: Session = Depe
         raise HTTPException(404, "Request not found")
 
     req.status = body.status
+    recipient = req.recipient
 
     if body.status == "accepted":
         req.accepted_by = body.user_name or None
-        # Also mark the linked listing as accepted
         if req.listing_id:
             listing = db.query(FoodListing).filter(FoodListing.id == req.listing_id).first()
             if listing:
@@ -121,9 +122,22 @@ def respond_to_request(request_id: int, body: RespondRequest, db: Session = Depe
             donor_phone = donor.phone_number or "" if donor else ""
 
         db.commit()
+        if recipient and recipient.email:
+            send_email(
+                recipient.email,
+                "Your food request has been accepted – Sharing Excess",
+                request_accepted_email(recipient.name, req.food_name,
+                                       body.user_name or "a donor", donor_phone),
+            )
         return {"success": True, "message": "Request accepted", "donor_phone": donor_phone}
 
     db.commit()
+    if recipient and recipient.email:
+        send_email(
+            recipient.email,
+            "Update on your food request – Sharing Excess",
+            request_declined_email(recipient.name, req.food_name),
+        )
     return {"success": True, "message": "Request declined"}
 
 
@@ -132,8 +146,15 @@ def update_delivery_status(request_id: int, body: UpdateDeliveryStatus, db: Sess
     req = db.query(FoodRequest).filter(FoodRequest.id == request_id).first()
     if not req:
         raise HTTPException(404, "Request not found")
+    prev_status = req.status
     req.status = body.status
     db.commit()
+    if body.status == "delivered" and prev_status != "delivered" and req.recipient and req.recipient.email:
+        send_email(
+            req.recipient.email,
+            "Your food has been delivered – Sharing Excess",
+            request_delivered_email(req.recipient.name, req.food_name),
+        )
     return {"success": True, "message": "Status updated"}
 
 

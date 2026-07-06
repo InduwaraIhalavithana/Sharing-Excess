@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from './i18n/LanguageContext.jsx';
+import { useAuth } from './contexts/AuthContext.jsx';
+import { apiFetch } from './utils/api.js';
 import { API_BASE, APP_ROOT } from './config.js';
 import FeedbackForm from './components/FeedbackForm';
 
@@ -26,11 +28,25 @@ function StatusBadge({ status }) {
   );
 }
 
+function StatusTimeline({ status }) {
+  const steps = ['pending', 'accepted', 'delivered'];
+  const idx = steps.indexOf(status?.toLowerCase());
+  return (
+    <div className="req-timeline">
+      {steps.map((step, i) => (
+        <div key={step} className={`req-timeline__step${i <= idx ? ' done' : ''}${i === idx ? ' current' : ''}`}>
+          <div className="req-timeline__dot" />
+          <span className="req-timeline__label">{step}</span>
+          {i < steps.length - 1 && <div className="req-timeline__line" />}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function RecipientDashboard() {
   const { t } = useLanguage();
-  const [user] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('user')); } catch { return null; }
-  });
+  const { user } = useAuth();
 
   const [tab, setTab] = useState('available');
   const [foodListings, setFoodListings] = useState([]);
@@ -48,16 +64,22 @@ export default function RecipientDashboard() {
   // Feedback
   const [feedbackFor, setFeedbackFor] = useState(null);
 
+  // Search
+  const [search, setSearch] = useState('');
+
   const showToast = useCallback((msg, type = 'success') => {
     setToast({ msg, type });
   }, []);
 
-  const fetchAll = useCallback(async () => {
+  const fetchAll = useCallback(async (searchVal = search) => {
     setLoading(true);
     try {
+      const listingUrl = searchVal
+        ? `${API_BASE}/get_listings.php?q=${encodeURIComponent(searchVal)}`
+        : `${API_BASE}/get_listings.php`;
       const [listRes, reqRes] = await Promise.all([
-        fetch(`${API_BASE}/get_listings.php`).then(r => r.json()),
-        user ? fetch(`${API_BASE}/get_requests.php?recipient_id=${user.id}`).then(r => r.json()) : Promise.resolve({ success: true, requests: [] }),
+        apiFetch(listingUrl).then(r => r.json()),
+        user ? apiFetch(`${API_BASE}/get_requests.php?recipient_id=${user.id}`).then(r => r.json()) : Promise.resolve({ success: true, requests: [] }),
       ]);
       if (listRes.success) setFoodListings(listRes.listings || []);
       if (reqRes.success) setMyRequests(reqRes.requests || []);
@@ -75,9 +97,8 @@ export default function RecipientDashboard() {
       return;
     }
     try {
-      const res = await fetch(`${API_BASE}/request_food.php`, {
+      const res = await apiFetch(`${API_BASE}/request_food.php`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           listing_id: listing.id,
           food_name: listing.food_name,
@@ -107,9 +128,8 @@ export default function RecipientDashboard() {
     }
     setFormLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/request_food.php`, {
+      const res = await apiFetch(`${API_BASE}/request_food.php`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...customReq, recipient_id: user.id })
       });
       const data = await res.json();
@@ -129,9 +149,8 @@ export default function RecipientDashboard() {
 
   const handleDeleteRequest = async (requestId) => {
     try {
-      const res = await fetch(`${API_BASE}/delete_food_request.php`, {
+      const res = await apiFetch(`${API_BASE}/delete_food_request.php`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ request_id: requestId, recipient_id: user?.id })
       });
       const data = await res.json();
@@ -249,6 +268,22 @@ export default function RecipientDashboard() {
         <>
           {/* Available Listings */}
           {tab === 'available' && (
+            <>
+              <div className="dd-search-row">
+                <input
+                  className="form-control"
+                  type="text"
+                  placeholder="Search food name, location…"
+                  value={search}
+                  onChange={e => { setSearch(e.target.value); fetchAll(e.target.value); }}
+                  style={{ maxWidth: 320 }}
+                />
+                {search && (
+                  <button className="btn btn-outline btn-sm" onClick={() => { setSearch(''); fetchAll(''); }}>
+                    ✕ Clear
+                  </button>
+                )}
+              </div>
             <div className="cards-grid">
               {foodListings.length === 0 ? (
                 <div className="dd-empty">
@@ -283,6 +318,7 @@ export default function RecipientDashboard() {
                 </div>
               ))}
             </div>
+            </>
           )}
 
           {/* My Requests */}
@@ -308,6 +344,7 @@ export default function RecipientDashboard() {
                     </div>
                     <StatusBadge status={req.status} />
                   </div>
+                  <StatusTimeline status={req.status} />
                   <div className="dd-card-actions">
                     {req.status === 'pending' && (
                       <button
