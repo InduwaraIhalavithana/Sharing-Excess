@@ -23,14 +23,14 @@ for %%P in (8003 5175) do (
 )
 
 echo  [1/2] Starting Backend API   ^| port 8003
-start "Sharing Excess | Backend :8003" "%ROOT%_run_backend.bat"
+start "Sharing Excess - Backend :8003" "%ROOT%_run_backend.bat"
 
 echo.
 echo  Waiting 5 seconds for backend to initialise...
 timeout /t 5 /nobreak >nul
 
 echo  [2/2] Starting Frontend      ^| port 5175
-start "Sharing Excess | Frontend :5175" "%ROOT%_run_frontend.bat"
+start "Sharing Excess - Frontend :5175" "%ROOT%_run_frontend.bat"
 
 echo.
 echo  ============================================================
