@@ -19,7 +19,7 @@ router = APIRouter(prefix="/api/officer", tags=["officer"])
 
 @router.get("/users")
 def list_users(db: Session = Depends(get_db)):
-    users = db.query(User).order_by(User.created_at.desc()).all()
+    users = db.query(User).filter(User.role != "officer").order_by(User.created_at.desc()).all()
     return {"success": True, "users": [
         {"id": u.id, "name": u.name, "email": u.email,
          "role": u.role, "status": u.status,

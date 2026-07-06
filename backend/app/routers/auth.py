@@ -4,13 +4,12 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User
 from app.schemas import (
-    SignupRequest, LoginRequest, OfficerLoginRequest,
+    SignupRequest, LoginRequest,
     VerifyEmailRequest, ResendVerificationRequest,
     ForgotPasswordRequest, ResetPasswordRequest,
 )
 from app.utils.security import hash_password, verify_password, generate_otp
 from app.utils.email import send_email, verification_email, forgot_password_email
-from app.models import Officer
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -67,17 +66,17 @@ def login(body: LoginRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/officer-login")
-def officer_login(body: OfficerLoginRequest, db: Session = Depends(get_db)):
-    officer = db.query(Officer).filter(Officer.email == body.email).first()
-    if not officer or not verify_password(body.password, officer.password):
+def officer_login(body: LoginRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == body.email, User.role == "officer").first()
+    if not user or not verify_password(body.password, user.password):
         raise HTTPException(401, "Invalid email or password")
-    if officer.status == "inactive":
-        raise HTTPException(403, "This officer account is inactive")
+    if user.status == "suspended":
+        raise HTTPException(403, "This officer account has been suspended")
     return {
         "success": True,
         "officer": {
-            "id": officer.id, "name": officer.name,
-            "email": officer.email, "role": "admin",
+            "id": user.id, "name": user.name,
+            "email": user.email, "role": "admin",
         }
     }
 

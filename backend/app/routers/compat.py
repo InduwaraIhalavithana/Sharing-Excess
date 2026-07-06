@@ -9,9 +9,9 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import User, FoodListing, FoodRequest, Feedback, Officer
+from app.models import User, FoodListing, FoodRequest, Feedback
 from app.schemas import (
-    SignupRequest, LoginRequest, OfficerLoginRequest,
+    SignupRequest, LoginRequest,
     ResendVerificationRequest, ForgotPasswordRequest,
     ListingUpdate, RequestUpdate, UserUpdate,
 )
@@ -71,15 +71,15 @@ def login_compat(body: LoginRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/officer_login.php")
-def officer_login_compat(body: OfficerLoginRequest, db: Session = Depends(get_db)):
-    officer = db.query(Officer).filter(Officer.email == body.email).first()
-    if not officer or not verify_password(body.password, officer.password):
+def officer_login_compat(body: LoginRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == body.email, User.role == "officer").first()
+    if not user or not verify_password(body.password, user.password):
         return _err("Invalid email or password.")
-    if officer.status == "inactive":
-        return _err("This officer account is inactive.")
+    if user.status == "suspended":
+        return _err("This officer account has been suspended.")
     return _ok({"user": {
-        "id": officer.id, "name": officer.name,
-        "email": officer.email, "role": "admin",
+        "id": user.id, "name": user.name,
+        "email": user.email, "role": "admin",
     }})
 
 
