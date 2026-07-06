@@ -20,10 +20,6 @@ class LoginRequest(BaseModel):
     password: str
 
 
-class OfficerLoginRequest(BaseModel):
-    email: EmailStr
-    password: str
-
 
 class VerifyEmailRequest(BaseModel):
     user_id: int

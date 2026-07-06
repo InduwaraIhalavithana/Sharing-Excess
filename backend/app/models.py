@@ -14,7 +14,7 @@ class User(Base):
     name              = Column(String(255), nullable=False)
     email             = Column(String(255), unique=True, nullable=False, index=True)
     password          = Column(String(255), nullable=False)
-    role              = Column(SAEnum("donor", "recipient", name="user_role"), nullable=False, default="recipient")
+    role              = Column(SAEnum("donor", "recipient", "officer", name="user_role"), nullable=False, default="recipient")
     phone_number      = Column(String(20), nullable=True)
     location          = Column(String(255), nullable=True)
     status            = Column(SAEnum("pending", "active", "suspended", name="user_status"), nullable=False, default="pending")
@@ -78,17 +78,6 @@ class FoodRequest(Base):
     listing   = relationship("FoodListing", back_populates="requests")
     feedback  = relationship("Feedback", back_populates="request")
 
-
-class Officer(Base):
-    __tablename__ = "officers"
-
-    id         = Column(Integer, primary_key=True, index=True)
-    name       = Column(String(100), nullable=False)
-    email      = Column(String(100), unique=True, nullable=False, index=True)
-    password   = Column(String(255), nullable=False)
-    role       = Column(SAEnum("officer", "admin", name="officer_role"), nullable=False, default="officer")
-    status     = Column(SAEnum("active", "inactive", name="officer_status"), nullable=False, default="active")
-    created_at = Column(DateTime, server_default=func.now())
 
 
 class Feedback(Base):

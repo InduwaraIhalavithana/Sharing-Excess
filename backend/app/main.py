@@ -26,6 +26,15 @@ async def lifespan(app: FastAPI):
         for sql in [
             "ALTER TABLE feedback ADD COLUMN IF NOT EXISTS admin_reply TEXT",
             "ALTER TABLE feedback ADD COLUMN IF NOT EXISTS feedback_status VARCHAR(10) NOT NULL DEFAULT 'open'",
+            # Extend user_role enum to include officer (idempotent)
+            "ALTER TYPE user_role ADD VALUE IF NOT EXISTS 'officer'",
+            # Migrate existing officers table rows into users (one-time, safe to re-run)
+            """INSERT INTO users (name, email, password, role, status, created_at)
+               SELECT name, email, password, 'officer',
+                      CASE WHEN status = 'active' THEN 'active' ELSE 'suspended' END,
+                      created_at
+               FROM officers
+               WHERE email NOT IN (SELECT email FROM users)""",
         ]:
             try:
                 conn.execute(text(sql))
