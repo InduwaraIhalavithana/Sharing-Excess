@@ -10,8 +10,8 @@ echo.
 
 REM ── Step 1: Kill the cmd windows by title ───────────────────────────────────
 echo  Closing service windows...
-taskkill /F /T /FI "WINDOWTITLE eq Sharing Excess | Backend :8003"  >nul 2>&1
-taskkill /F /T /FI "WINDOWTITLE eq Sharing Excess | Frontend :5175" >nul 2>&1
+taskkill /F /T /FI "WINDOWTITLE eq Sharing Excess - Backend :8003"  >nul 2>&1
+taskkill /F /T /FI "WINDOWTITLE eq Sharing Excess - Frontend :5175" >nul 2>&1
 
 timeout /t 1 /nobreak >nul
 

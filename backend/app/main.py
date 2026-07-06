@@ -36,7 +36,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-CORS_ORIGIN = os.getenv("CORS_ORIGIN", "http://localhost:3000")
+CORS_ORIGIN = os.getenv("CORS_ORIGIN", "http://localhost:5175")
 cors_origins = [o.strip() for o in CORS_ORIGIN.split(",") if o.strip()]
 
 app = FastAPI(
