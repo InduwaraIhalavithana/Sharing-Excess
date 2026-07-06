@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../i18n/LanguageContext.jsx';
+import { useAuth } from '../contexts/AuthContext.jsx';
 import { API_BASE } from '../config.js';
 import './Donate.css';
 
@@ -17,10 +18,7 @@ function Toast({ msg, type = 'success', onDone }) {
 export default function Donate() {
   const { t } = useLanguage();
   const navigate = useNavigate();
-
-  const [user] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('user')); } catch { return null; }
-  });
+  const { user } = useAuth();
 
   const [tab, setTab] = useState('food');
   const [toast, setToast] = useState(null);
@@ -92,7 +90,7 @@ export default function Donate() {
       fd.append('contact_email', food.contactEmail);
       if (image) fd.append('food_image', image);
 
-      const res = await fetch(`${API_BASE}/add_listing.php`, { method: 'POST', body: fd });
+      const res = await fetch(`${API_BASE}/api/listings`, { method: 'POST', body: fd });
       const data = await res.json();
       if (data.success) {
         setSuccessMsg(t('donate', 'success'));
@@ -132,7 +130,7 @@ export default function Donate() {
         card_last4: money.card.slice(-4), expiry: money.expiry, cvv: money.cvv,
         comment: money.comment, monthly: money.monthly ? 1 : 0, dedicate: money.dedicate ? 1 : 0
       };
-      const res = await fetch(`${API_BASE}/add_money_donation.php`, {
+      const res = await fetch(`${API_BASE}/api/donations/money`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)

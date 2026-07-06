@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from './i18n/LanguageContext.jsx';
+import { useAuth } from './contexts/AuthContext.jsx';
 import { API_BASE, APP_ROOT } from './config.js';
 
 function Toast({ msg, type = 'success', onDone }) {
@@ -12,9 +13,7 @@ function Toast({ msg, type = 'success', onDone }) {
 
 export default function FeedbackPage() {
   const { t } = useLanguage();
-  const [user] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('user')); } catch { return null; }
-  });
+  const { user } = useAuth();
 
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -30,7 +29,7 @@ export default function FeedbackPage() {
   const fetchFeedback = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/get_feedback.php`);
+      const res = await fetch(`${API_BASE}/api/feedback`);
       const data = await res.json();
       if (data.success) setList(data.feedback || []);
     } catch {
@@ -66,7 +65,7 @@ export default function FeedbackPage() {
       fd.append('recipient_id', user.id);
       fd.append('comment', form.comment);
       if (form.image) fd.append('image', form.image);
-      const res = await fetch(`${API_BASE}/submit_feedback.php`, { method: 'POST', body: fd });
+      const res = await fetch(`${API_BASE}/api/feedback`, { method: 'POST', body: fd });
       const data = await res.json();
       if (data.success) {
         showToast('Feedback submitted!');

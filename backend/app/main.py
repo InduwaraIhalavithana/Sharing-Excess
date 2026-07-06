@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.database import engine, Base
-from app.routers import auth, listings, requests, officer, calendar, feedback, contact, donations, compat
+from app.routers import auth, listings, requests, officer, calendar, feedback, contact, donations
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -77,7 +77,6 @@ app.include_router(calendar.router)
 app.include_router(feedback.router)
 app.include_router(contact.router)
 app.include_router(donations.router)
-app.include_router(compat.router)
 
 
 @app.get("/")

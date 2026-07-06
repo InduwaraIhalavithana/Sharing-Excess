@@ -50,14 +50,11 @@ export default function DonorDashboard() {
     setLoading(true);
     try {
       const [reqRes, donRes] = await Promise.all([
-        apiFetch(`${API_BASE}/get_requests.php?donor_view=true`).then(r => r.json()),
-        apiFetch(`${API_BASE}/get_donor_donations.php`, {
-          method: 'POST',
-          body: JSON.stringify({ donor_id: user?.id })
-        }).then(r => r.json()),
+        apiFetch(`${API_BASE}/api/requests?donor_view=true`).then(r => r.json()),
+        apiFetch(`${API_BASE}/api/listings?donor_id=${user?.id}`).then(r => r.json()),
       ]);
       if (reqRes.success) setFoodRequests(reqRes.requests || []);
-      if (donRes.success) setMyDonations(donRes.donations || []);
+      if (donRes.success) setMyDonations(donRes.listings || []);
     } catch {
       showToast('Failed to load data.', 'error');
     }
@@ -68,39 +65,29 @@ export default function DonorDashboard() {
 
   const handleRespond = async (requestId, status) => {
     try {
-      const res = await apiFetch(`${API_BASE}/respond_to_request.php`, {
-        method: 'POST',
+      const res = await apiFetch(`${API_BASE}/api/requests/${requestId}/respond`, {
+        method: 'PUT',
         body: JSON.stringify({
           request_id: requestId,
           status,
-          user_id: user?.id,
-          user_name: user?.name
+          user_id: user?.id || 0,
+          user_name: user?.name || ''
         })
       });
       const data = await res.json();
-      if (data.success) {
+      if (res.ok && data.success) {
         showToast(`Request ${status} successfully!`);
         fetchAll();
       } else {
-        showToast(data.message || 'Action failed.', 'error');
+        showToast(data.detail || data.message || 'Action failed.', 'error');
       }
     } catch {
       showToast('Network error.', 'error');
     }
   };
 
-  const handleShareFeedback = async (feedbackId) => {
-    try {
-      const res = await apiFetch(`${API_BASE}/share_feedback.php`, {
-        method: 'POST',
-        body: JSON.stringify({ feedback_id: feedbackId, donor_id: user?.id })
-      });
-      const data = await res.json();
-      if (data.success) showToast('Feedback shared to the feedback page!');
-      else showToast(data.message || 'Failed to share feedback.', 'error');
-    } catch {
-      showToast('Network error.', 'error');
-    }
+  const handleShareFeedback = () => {
+    showToast('Feedback is visible on the community feedback page.');
   };
 
   // Stats

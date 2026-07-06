@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
+import { useAuth } from '../contexts/AuthContext.jsx';
 import { API_BASE } from '../config.js';
 
 function Toast({ msg, type = 'success', onDone }) {
@@ -34,16 +35,14 @@ export default function CalendarPage() {
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
 
-  const [user] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('user') || '{}'); } catch { return {}; }
-  });
+  const { user } = useAuth();
 
   const showToast = useCallback((msg, type = 'success') => setToast({ msg, type }), []);
 
   const fetchEvents = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/get_calendar_events.php`);
+      const res = await fetch(`${API_BASE}/api/calendar/events`);
       const data = await res.json();
       if (data.success && data.events) {
         setEvents(data.events.map(e => ({ ...e, start: new Date(e.date), end: new Date(e.date) })));
@@ -73,8 +72,8 @@ export default function CalendarPage() {
 
   const handleStatusUpdate = async (eventId, newStatus) => {
     try {
-      const res = await fetch(`${API_BASE}/update_delivery_status.php`, {
-        method: 'POST',
+      const res = await fetch(`${API_BASE}/api/requests/${eventId}/status`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ request_id: eventId, status: newStatus }),
       });

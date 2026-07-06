@@ -3,7 +3,7 @@ import { useLanguage } from '../i18n/LanguageContext.jsx';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { API_BASE } from '../config.js';
 
-export default function VerificationModal({ email, password, role, onClose, onVerified }) {
+export default function VerificationModal({ email, userId, password, role, onClose, onVerified }) {
   const { t } = useLanguage();
   const { login } = useAuth();
   const [digits, setDigits] = useState(['', '', '', '', '', '']);
@@ -56,23 +56,23 @@ export default function VerificationModal({ email, password, role, onClose, onVe
     setVerifying(true);
     setError('');
     try {
-      const res = await fetch(`${API_BASE}/verify_email.php`, {
+      const res = await fetch(`${API_BASE}/api/auth/verify-email`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, verification_code: fullCode })
+        body: JSON.stringify({ user_id: userId, code: fullCode })
       });
       const data = await res.json();
-      if (data.success) {
+      if (res.ok && data.success) {
         setSuccess('Email verified! Logging you in…');
         let userData = { email, role };
         try {
-          const lr = await fetch(`${API_BASE}/login.php`, {
+          const lr = await fetch(`${API_BASE}/api/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password, role })
+            body: JSON.stringify({ email, password })
           });
           const ld = await lr.json();
-          if (ld.success) {
+          if (lr.ok && ld.success) {
             userData = ld.user;
             login(ld.user, ld.token);
           }
@@ -81,7 +81,7 @@ export default function VerificationModal({ email, password, role, onClose, onVe
           onVerified(userData);
         }, 1200);
       } else {
-        setError(data.message || 'Invalid verification code.');
+        setError(data.detail || data.message || 'Invalid verification code.');
       }
     } catch {
       setError('Network error. Please try again.');
@@ -94,14 +94,14 @@ export default function VerificationModal({ email, password, role, onClose, onVe
     setError('');
     setSuccess('');
     try {
-      const res = await fetch(`${API_BASE}/resend_verification.php`, {
+      const res = await fetch(`${API_BASE}/api/auth/resend-verification`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })
       });
       const data = await res.json();
-      if (data.success) setSuccess('A new code has been sent to your inbox.');
-      else setError(data.message || 'Could not resend code.');
+      if (res.ok && data.success) setSuccess('A new code has been sent to your inbox.');
+      else setError(data.detail || data.message || 'Could not resend code.');
     } catch {
       setError('Network error.');
     }

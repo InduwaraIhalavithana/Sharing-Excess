@@ -14,7 +14,7 @@ function FoodDonationsDashboard() {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch(`${API_BASE}/get_listings.php`);
+      const response = await fetch(`${API_BASE}/api/listings`);
       const data = await response.json();
       if (data.success) {
         setDonations(data.listings);

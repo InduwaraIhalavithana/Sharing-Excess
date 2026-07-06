@@ -24,17 +24,17 @@ export default function ForgotPasswordModal({ onClose, onBackToLogin }) {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`${API_BASE}/forgot_password.php`, {
+      const res = await fetch(`${API_BASE}/api/auth/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })
       });
       const data = await res.json();
-      if (data.success) {
+      if (res.ok && data.success) {
         setMessage('A reset code has been sent to your email.');
         setStep(2);
       } else {
-        setError(data.message || 'Failed to send reset code.');
+        setError(data.detail || data.message || 'Failed to send reset code.');
       }
     } catch {
       setError('Network error. Please try again.');
@@ -44,24 +44,23 @@ export default function ForgotPasswordModal({ onClose, onBackToLogin }) {
 
   const handleReset = async (e) => {
     e.preventDefault();
-    if (newPassword.length < 6) {
-      setError('Password must be at least 6 characters.');
+    if (newPassword.length < 8) {
+      setError('Password must be at least 8 characters.');
       return;
     }
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`${API_BASE}/reset_password.php`, {
+      const res = await fetch(`${API_BASE}/api/auth/reset-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, code, newpassword: newPassword })
+        body: JSON.stringify({ email, code, new_password: newPassword })
       });
       const data = await res.json();
-      if (data.success) {
-        if (data.user) localStorage.setItem('user', JSON.stringify(data.user));
+      if (res.ok && data.success) {
         setStep(3);
       } else {
-        setError(data.message || 'Password reset failed.');
+        setError(data.detail || data.message || 'Password reset failed.');
       }
     } catch {
       setError('Network error. Please try again.');
@@ -141,7 +140,7 @@ export default function ForgotPasswordModal({ onClose, onBackToLogin }) {
                   <input
                     className="form-control"
                     type={showPw ? 'text' : 'password'}
-                    placeholder="Minimum 6 characters"
+                    placeholder="Minimum 8 characters"
                     value={newPassword}
                     onChange={e => setNewPassword(e.target.value)}
                     required
