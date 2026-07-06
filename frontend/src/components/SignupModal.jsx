@@ -1,0 +1,218 @@
+import { useState, useEffect } from 'react';
+import { useLanguage } from '../i18n/LanguageContext.jsx';
+import { API_BASE } from '../config.js';
+
+export default function SignupModal({ onClose, onSignupSuccess, onSwitchToLogin }) {
+  const { t } = useLanguage();
+  const [form, setForm] = useState({
+    name: '', email: '', password: '', confirmPassword: '',
+    role: '', phone_number: '', location: ''
+  });
+  const [showPw, setShowPw] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  const setField = (field) => (e) => {
+    setForm(p => ({ ...p, [field]: e.target.value }));
+    if (errors[field]) setErrors(p => ({ ...p, [field]: '' }));
+  };
+
+  const validate = () => {
+    const e = {};
+    if (!form.name.trim()) e.name = 'Name is required';
+    if (!form.email) e.email = 'Email is required';
+    else if (!/\S+@\S+\.\S+/.test(form.email)) e.email = 'Invalid email format';
+    if (!form.password) e.password = 'Password is required';
+    else if (form.password.length < 6) e.password = 'Minimum 6 characters';
+    if (form.password !== form.confirmPassword) e.confirmPassword = 'Passwords do not match';
+    if (!form.role) e.role = 'Please select a role';
+    if (!form.phone_number.trim()) e.phone_number = 'Phone is required';
+    if (!form.location.trim()) e.location = 'Location is required';
+    return e;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const errs = validate();
+    if (Object.keys(errs).length) { setErrors(errs); return; }
+    setLoading(true);
+    setErrors({});
+    try {
+      const res = await fetch(`${API_BASE}/signup.php`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: form.name, email: form.email, password: form.password,
+          role: form.role, phone_number: form.phone_number, location: form.location
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        onSignupSuccess({
+          email: form.email,
+          user_id: data.user_id,
+          password: form.password,
+          role: form.role
+        });
+      } else {
+        setErrors({ submit: data.message || 'Signup failed. Please try again.' });
+      }
+    } catch {
+      setErrors({ submit: 'Could not connect to server.' });
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-box modal-box--wide" onClick={e => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>{t('auth', 'signup_title')}</h2>
+          <p>{t('auth', 'signup_subtitle')}</p>
+          <button className="modal-close" onClick={onClose} aria-label="Close">✕</button>
+        </div>
+
+        <div className="modal-body">
+          <form onSubmit={handleSubmit} noValidate>
+            <div className="form-row-2">
+              <div className="form-group">
+                <label className="form-label">{t('auth', 'name')}</label>
+                <input
+                  className={`form-control${errors.name ? ' error' : ''}`}
+                  type="text"
+                  placeholder={t('auth', 'name_placeholder')}
+                  value={form.name}
+                  onChange={setField('name')}
+                  autoFocus
+                />
+                {errors.name && <span className="form-error">{errors.name}</span>}
+              </div>
+              <div className="form-group">
+                <label className="form-label">{t('auth', 'email')}</label>
+                <input
+                  className={`form-control${errors.email ? ' error' : ''}`}
+                  type="email"
+                  placeholder={t('auth', 'email_placeholder')}
+                  value={form.email}
+                  onChange={setField('email')}
+                />
+                {errors.email && <span className="form-error">{errors.email}</span>}
+              </div>
+            </div>
+
+            <div className="form-row-2">
+              <div className="form-group">
+                <label className="form-label">{t('auth', 'password')}</label>
+                <div className="input-with-eye">
+                  <input
+                    className={`form-control${errors.password ? ' error' : ''}`}
+                    type={showPw ? 'text' : 'password'}
+                    placeholder={t('auth', 'password_hint')}
+                    value={form.password}
+                    onChange={setField('password')}
+                  />
+                  <button
+                    type="button"
+                    className="eye-btn"
+                    onClick={() => setShowPw(p => !p)}
+                    aria-label={showPw ? 'Hide password' : 'Show password'}
+                  >
+                    {showPw ? '🙈' : '👁️'}
+                  </button>
+                </div>
+                {errors.password && <span className="form-error">{errors.password}</span>}
+              </div>
+              <div className="form-group">
+                <label className="form-label">{t('auth', 'confirm_password')}</label>
+                <input
+                  className={`form-control${errors.confirmPassword ? ' error' : ''}`}
+                  type="password"
+                  placeholder={t('auth', 'confirm_placeholder')}
+                  value={form.confirmPassword}
+                  onChange={setField('confirmPassword')}
+                />
+                {errors.confirmPassword && <span className="form-error">{errors.confirmPassword}</span>}
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">{t('auth', 'role')}</label>
+              <div className="role-cards">
+                {[
+                  { value: 'donor', icon: '🍽️', label: t('auth', 'role_donor') },
+                  { value: 'recipient', icon: '🤝', label: t('auth', 'role_recipient') }
+                ].map(r => (
+                  <label
+                    key={r.value}
+                    className={`role-card${form.role === r.value ? ' selected' : ''}`}
+                  >
+                    <input
+                      type="radio"
+                      name="role"
+                      value={r.value}
+                      checked={form.role === r.value}
+                      onChange={setField('role')}
+                    />
+                    <span className="role-card__icon">{r.icon}</span>
+                    <span className="role-card__label">{r.label}</span>
+                  </label>
+                ))}
+              </div>
+              {errors.role && <span className="form-error">{errors.role}</span>}
+            </div>
+
+            <div className="form-row-2">
+              <div className="form-group">
+                <label className="form-label">Phone Number</label>
+                <input
+                  className={`form-control${errors.phone_number ? ' error' : ''}`}
+                  type="tel"
+                  placeholder="+94 7X XXX XXXX"
+                  value={form.phone_number}
+                  onChange={setField('phone_number')}
+                />
+                {errors.phone_number && <span className="form-error">{errors.phone_number}</span>}
+              </div>
+              <div className="form-group">
+                <label className="form-label">Location</label>
+                <input
+                  className={`form-control${errors.location ? ' error' : ''}`}
+                  type="text"
+                  placeholder="City / District"
+                  value={form.location}
+                  onChange={setField('location')}
+                />
+                {errors.location && <span className="form-error">{errors.location}</span>}
+              </div>
+            </div>
+
+            {errors.submit && <p className="form-error">{errors.submit}</p>}
+
+            <button
+              type="submit"
+              className="btn btn-primary btn-block"
+              disabled={loading}
+            >
+              {loading ? 'Creating account…' : t('auth', 'signup_btn')}
+            </button>
+          </form>
+        </div>
+
+        <div className="modal-footer">
+          <p className="auth-switch">
+            {t('auth', 'already_account')}{' '}
+            <button type="button" className="auth-link" onClick={onSwitchToLogin}>
+              {t('auth', 'login_link')}
+            </button>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
