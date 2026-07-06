@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from './i18n/LanguageContext.jsx';
+import { useAuth } from './contexts/AuthContext.jsx';
+import { apiFetch } from './utils/api.js';
 import { API_BASE, APP_ROOT } from './config.js';
 
 function Toast({ msg, type = 'success', onDone }) {
@@ -32,9 +34,7 @@ function StatusBadge({ status }) {
 
 export default function DonorDashboard() {
   const { t } = useLanguage();
-  const [user] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('user')); } catch { return null; }
-  });
+  const { user } = useAuth();
   const [tab, setTab] = useState('requests');
   const [foodRequests, setFoodRequests] = useState([]);
   const [myDonations, setMyDonations] = useState([]);
@@ -50,10 +50,9 @@ export default function DonorDashboard() {
     setLoading(true);
     try {
       const [reqRes, donRes] = await Promise.all([
-        fetch(`${API_BASE}/get_requests.php?donor_view=true`).then(r => r.json()),
-        fetch(`${API_BASE}/get_donor_donations.php`, {
+        apiFetch(`${API_BASE}/get_requests.php?donor_view=true`).then(r => r.json()),
+        apiFetch(`${API_BASE}/get_donor_donations.php`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ donor_id: user?.id })
         }).then(r => r.json()),
       ]);
@@ -69,9 +68,8 @@ export default function DonorDashboard() {
 
   const handleRespond = async (requestId, status) => {
     try {
-      const res = await fetch(`${API_BASE}/respond_to_request.php`, {
+      const res = await apiFetch(`${API_BASE}/respond_to_request.php`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           request_id: requestId,
           status,
@@ -93,9 +91,8 @@ export default function DonorDashboard() {
 
   const handleShareFeedback = async (feedbackId) => {
     try {
-      const res = await fetch(`${API_BASE}/share_feedback.php`, {
+      const res = await apiFetch(`${API_BASE}/share_feedback.php`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ feedback_id: feedbackId, donor_id: user?.id })
       });
       const data = await res.json();

@@ -1526,6 +1526,62 @@ h1, h2, h3, h4, h5, h6 {
   border: 1px solid var(--border-color);
 }
 
+/* ── Search row (Task 5) ──────────────────────────────────────────────────── */
+.dd-search-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+/* ── Status timeline (Task 7) ──────────────────────────────────────────────── */
+.req-timeline {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin: 12px 0 8px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border-color);
+}
+.req-timeline__step {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  position: relative;
+}
+.req-timeline__dot {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: var(--border-color);
+  border: 2px solid var(--border-color);
+  flex-shrink: 0;
+  z-index: 1;
+  transition: background 0.2s;
+}
+.req-timeline__step.done .req-timeline__dot {
+  background: var(--clr-primary);
+  border-color: var(--clr-primary);
+}
+.req-timeline__step.current .req-timeline__dot {
+  box-shadow: 0 0 0 3px rgba(22,163,74,0.25);
+}
+.req-timeline__label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: capitalize;
+  margin-left: 4px;
+}
+.req-timeline__step.done .req-timeline__label { color: var(--clr-primary); }
+.req-timeline__step.current .req-timeline__label { color: var(--clr-primary); font-weight: 700; }
+.req-timeline__line {
+  flex: 1;
+  height: 2px;
+  background: var(--border-color);
+  margin: 0 4px;
+}
+.req-timeline__step.done .req-timeline__line { background: var(--clr-primary); }
+
 .dd-card-info { flex: 1; min-width: 0; }
 
 .dd-card-title {

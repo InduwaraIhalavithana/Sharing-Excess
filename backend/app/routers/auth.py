@@ -10,6 +10,7 @@ from app.schemas import (
 )
 from app.utils.security import hash_password, verify_password, generate_otp
 from app.utils.email import send_email, verification_email, forgot_password_email
+from app.utils.jwt import create_access_token
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -55,8 +56,10 @@ def login(body: LoginRequest, db: Session = Depends(get_db)):
         raise HTTPException(403, "Please verify your email before logging in")
     if user.status == "suspended":
         raise HTTPException(403, "Your account has been suspended")
+    token = create_access_token(user.id, user.role)
     return {
         "success": True,
+        "token": token,
         "user": {
             "id": user.id, "name": user.name, "email": user.email,
             "role": user.role, "phone_number": user.phone_number,
@@ -72,8 +75,10 @@ def officer_login(body: LoginRequest, db: Session = Depends(get_db)):
         raise HTTPException(401, "Invalid email or password")
     if user.status == "suspended":
         raise HTTPException(403, "This officer account has been suspended")
+    token = create_access_token(user.id, user.role)
     return {
         "success": True,
+        "token": token,
         "officer": {
             "id": user.id, "name": user.name,
             "email": user.email, "role": "admin",

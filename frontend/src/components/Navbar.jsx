@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext.jsx';
 import { useLanguage } from '../i18n/LanguageContext.jsx';
+import { useAuth } from '../contexts/AuthContext.jsx';
 import LoginModal from '../LoginModal.jsx';
 import SignupModal from './SignupModal.jsx';
 import ForgotPasswordModal from './ForgotPasswordModal.jsx';
@@ -14,10 +15,10 @@ const LANGS = ['en', 'si', 'ta'];
 export default function Navbar() {
   const { theme, toggleTheme } = useTheme();
   const { lang, setLanguage, t } = useLanguage();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [user, setUser] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -30,21 +31,6 @@ export default function Navbar() {
   const [pendingSignup, setPendingSignup] = useState(null);
 
   const userMenuRef = useRef(null);
-
-  const loadUser = () => {
-    try {
-      const stored = localStorage.getItem('user');
-      setUser(stored ? JSON.parse(stored) : null);
-    } catch {
-      setUser(null);
-    }
-  };
-
-  useEffect(() => {
-    loadUser();
-    window.addEventListener('storage', loadUser);
-    return () => window.removeEventListener('storage', loadUser);
-  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -80,16 +66,13 @@ export default function Navbar() {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('user');
-    setUser(null);
+    logout();
     setUserMenuOpen(false);
     setMenuOpen(false);
     navigate('/');
   };
 
   const handleLoginSuccess = (userData) => {
-    localStorage.setItem('user', JSON.stringify(userData));
-    setUser(userData);
     setShowLogin(false);
     const role = String(userData.role || '').toLowerCase();
     if (role === 'admin') navigate('/admin');
@@ -104,8 +87,6 @@ export default function Navbar() {
   };
 
   const handleVerificationSuccess = (userData) => {
-    localStorage.setItem('user', JSON.stringify(userData));
-    setUser(userData);
     setShowVerification(false);
     const role = String(userData.role || '').toLowerCase();
     if (role === 'admin') navigate('/admin');

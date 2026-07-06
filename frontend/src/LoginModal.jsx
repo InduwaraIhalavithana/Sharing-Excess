@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useLanguage } from './i18n/LanguageContext.jsx';
+import { useAuth } from './contexts/AuthContext.jsx';
 import { API_BASE } from './config.js';
 
 export default function LoginModal({ onClose, onLoginSuccess, onSwitchToSignup, onForgotPassword }) {
   const { t } = useLanguage();
+  const { login } = useAuth();
   const [mode, setMode] = useState('user'); // 'user' | 'admin'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -44,7 +46,7 @@ export default function LoginModal({ onClose, onLoginSuccess, onSwitchToSignup, 
           email: data.user.email,
           role: data.user.role || role
         };
-        localStorage.setItem('user', JSON.stringify(user));
+        login(user, data.token);
         onLoginSuccess(user);
       } else {
         setError(data.message || 'Invalid email or password.');

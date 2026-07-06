@@ -7,3 +7,4 @@ psycopg2-binary>=2.9.9
 passlib>=1.7.4          # use pbkdf2_sha256 — bcrypt incompatible with Python 3.14+
 python-multipart>=0.0.9 # required for File/UploadFile in FastAPI
 slowapi>=0.1.9          # rate limiting
+python-jose[cryptography]>=3.3.0  # JWT tokens

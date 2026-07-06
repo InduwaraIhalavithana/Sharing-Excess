@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLanguage } from '../i18n/LanguageContext.jsx';
+import { useAuth } from '../contexts/AuthContext.jsx';
 import { API_BASE } from '../config.js';
 
 export default function VerificationModal({ email, password, role, onClose, onVerified }) {
   const { t } = useLanguage();
+  const { login } = useAuth();
   const [digits, setDigits] = useState(['', '', '', '', '', '']);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -62,7 +64,6 @@ export default function VerificationModal({ email, password, role, onClose, onVe
       const data = await res.json();
       if (data.success) {
         setSuccess('Email verified! Logging you in…');
-        // Auto-login after verification
         let userData = { email, role };
         try {
           const lr = await fetch(`${API_BASE}/login.php`, {
@@ -71,10 +72,12 @@ export default function VerificationModal({ email, password, role, onClose, onVe
             body: JSON.stringify({ email, password, role })
           });
           const ld = await lr.json();
-          if (ld.success) userData = ld.user;
+          if (ld.success) {
+            userData = ld.user;
+            login(ld.user, ld.token);
+          }
         } catch { /* use minimal data */ }
         setTimeout(() => {
-          localStorage.setItem('user', JSON.stringify(userData));
           onVerified(userData);
         }, 1200);
       } else {

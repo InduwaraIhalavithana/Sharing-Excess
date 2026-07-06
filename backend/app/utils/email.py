@@ -82,6 +82,59 @@ def money_donation_email(name: str, amount: float) -> str:
 </body></html>"""
 
 
+def request_accepted_email(recipient_name: str, food_name: str, donor_name: str, donor_phone: str) -> str:
+    phone_line = f"<p>📞 Donor phone: <b>{donor_phone}</b></p>" if donor_phone else ""
+    return f"""
+<html><body style="font-family:Arial,sans-serif;color:#333">
+  <div style="max-width:600px;margin:0 auto;padding:20px">
+    <div style="background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;padding:20px;text-align:center;border-radius:10px 10px 0 0">
+      <h1>Sharing Excess</h1><p>Your request has been accepted!</p>
+    </div>
+    <div style="background:#f9f9f9;padding:30px;border-radius:0 0 10px 10px">
+      <h2>Great news, {recipient_name}!</h2>
+      <p>Your request for <b>{food_name}</b> has been accepted by donor <b>{donor_name}</b>.</p>
+      {phone_line}
+      <p>Please coordinate with the donor to arrange pickup or delivery.</p>
+      <p>Thank you for using Sharing Excess!</p>
+    </div>
+  </div>
+</body></html>"""
+
+
+def request_declined_email(recipient_name: str, food_name: str) -> str:
+    return f"""
+<html><body style="font-family:Arial,sans-serif;color:#333">
+  <div style="max-width:600px;margin:0 auto;padding:20px">
+    <div style="background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;padding:20px;text-align:center;border-radius:10px 10px 0 0">
+      <h1>Sharing Excess</h1><p>Request update</p>
+    </div>
+    <div style="background:#f9f9f9;padding:30px;border-radius:0 0 10px 10px">
+      <h2>Hello {recipient_name},</h2>
+      <p>Unfortunately, your request for <b>{food_name}</b> was not able to be fulfilled at this time.</p>
+      <p>Please check our listings for other available food items. We hope to find a match for you soon!</p>
+      <p>— The Sharing Excess Team</p>
+    </div>
+  </div>
+</body></html>"""
+
+
+def request_delivered_email(recipient_name: str, food_name: str) -> str:
+    return f"""
+<html><body style="font-family:Arial,sans-serif;color:#333">
+  <div style="max-width:600px;margin:0 auto;padding:20px">
+    <div style="background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;padding:20px;text-align:center;border-radius:10px 10px 0 0">
+      <h1>Sharing Excess</h1><p>Food delivered!</p>
+    </div>
+    <div style="background:#f9f9f9;padding:30px;border-radius:0 0 10px 10px">
+      <h2>Hello {recipient_name}!</h2>
+      <p>Your food request for <b>{food_name}</b> has been marked as delivered.</p>
+      <p>We hope the food reached you safely. Please consider leaving feedback to help our donors!</p>
+      <p>Thank you for being part of the Sharing Excess community.</p>
+    </div>
+  </div>
+</body></html>"""
+
+
 def contact_notification_email(name: str, sender_email: str, subject: str, message: str) -> str:
     return f"""
 <html><body style="font-family:Arial,sans-serif;color:#333">

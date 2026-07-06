@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
+import { useAuth } from '../contexts/AuthContext.jsx';
+import { apiFetch } from '../utils/api.js';
 import { API_BASE } from '../config.js';
 
-function FeedbackForm({ requestId, recipientId, foodImage, foodName, onFeedbackSubmitted }) {
+function FeedbackForm({ requestId, onSuccess, onClose, onFeedbackSubmitted, foodImage, foodName }) {
+  const { user } = useAuth();
   const [comment, setComment] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
@@ -11,28 +14,21 @@ function FeedbackForm({ requestId, recipientId, foodImage, foodName, onFeedbackS
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      // Check file type
-      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-      if (!allowedTypes.includes(file.type)) {
-        setError('Please select a valid image file (JPEG, PNG, GIF, or WebP)');
-        return;
-      }
-
-      // Check file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        setError('Image size must be less than 5MB');
-        return;
-      }
-
-      setSelectedImage(file);
-      setError('');
-      
-      // Create preview
-      const reader = new FileReader();
-      reader.onload = (e) => setImagePreview(e.target.result);
-      reader.readAsDataURL(file);
+    if (!file) return;
+    const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowed.includes(file.type)) {
+      setError('Please select a valid image file (JPEG, PNG, GIF, or WebP)');
+      return;
     }
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Image size must be less than 5MB');
+      return;
+    }
+    setSelectedImage(file);
+    setError('');
+    const reader = new FileReader();
+    reader.onload = (e) => setImagePreview(e.target.result);
+    reader.readAsDataURL(file);
   };
 
   const removeImage = () => {
@@ -44,45 +40,43 @@ function FeedbackForm({ requestId, recipientId, foodImage, foodName, onFeedbackS
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!comment.trim() && !selectedImage) {
-      setError('Please provide either a comment or an image');
+      setError('Please provide a comment or an image');
+      return;
+    }
+    if (!user?.id) {
+      setError('You must be logged in to submit feedback');
       return;
     }
 
     setIsLoading(true);
     setError('');
-    
+
     try {
       const formData = new FormData();
-      formData.append('request_id', requestId);
-      formData.append('recipient_id', recipientId);
+      formData.append('request_id', requestId || 0);
+      formData.append('recipient_id', user.id);
       formData.append('comment', comment);
-      formData.append('food_name', foodName);
-      
-      if (selectedImage) {
-        formData.append('feedback_image', selectedImage);
-      }
+      if (foodName) formData.append('food_name', foodName);
+      if (selectedImage) formData.append('image', selectedImage);
 
-      const response = await fetch(`${API_BASE}/submit_feedback.php`, {
+      const res = await apiFetch(`${API_BASE}/submit_feedback.php`, {
         method: 'POST',
         body: formData,
       });
-
-      const data = await response.json();
+      const data = await res.json();
 
       if (data.success) {
         setIsSubmitted(true);
         setComment('');
         setSelectedImage(null);
         setImagePreview(null);
-        
-        if (onFeedbackSubmitted) {
-          onFeedbackSubmitted();
-        }
+        const cb = onSuccess || onFeedbackSubmitted;
+        if (cb) cb();
         setTimeout(() => setIsSubmitted(false), 3000);
       } else {
         setError(data.message || 'Failed to submit feedback');
       }
-    } catch (err) {
+    } catch {
       setError('Network error. Please try again.');
     } finally {
       setIsLoading(false);
@@ -90,164 +84,70 @@ function FeedbackForm({ requestId, recipientId, foodImage, foodName, onFeedbackS
   };
 
   return (
-    <div style={{ marginTop: '16px', padding: '16px', border: '1px solid #e9ecef', borderRadius: '8px' }}>
-      <h4 style={{ marginBottom: '16px', color: '#28a745' }}>Share Your Feedback</h4>
-      
+    <div style={{ marginTop: 16, padding: 16, border: '1px solid var(--border)', borderRadius: 8 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <h4 style={{ margin: 0, color: 'var(--clr-primary)' }}>Share Your Feedback</h4>
+        {onClose && (
+          <button type="button" onClick={onClose}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: 'var(--text-secondary)' }}>
+            ✕
+          </button>
+        )}
+      </div>
+
       {foodImage && (
-        <div style={{ marginBottom: '16px' }}>
-          <p style={{ marginBottom: '8px', fontWeight: '500' }}>Food Item: {foodName}</p>
-          <img 
-            src={foodImage} 
-            alt={foodName || 'Donated food'} 
-            style={{ 
-              maxWidth: '200px', 
-              maxHeight: '150px', 
-              borderRadius: '8px',
-              objectFit: 'cover'
-            }}
-            onError={(e) => {
-              e.target.onerror = null;
-              e.target.src = '/placeholder-food.jpg';
-            }}
-          />
+        <div style={{ marginBottom: 16 }}>
+          <p style={{ marginBottom: 8, fontWeight: 500 }}>Food Item: {foodName}</p>
+          <img src={foodImage} alt={foodName || 'Donated food'}
+            style={{ maxWidth: 200, maxHeight: 150, borderRadius: 8, objectFit: 'cover' }}
+            onError={e => { e.target.onerror = null; e.target.style.display = 'none'; }} />
         </div>
       )}
-      
+
       {isSubmitted ? (
-        <div style={{
-          padding: '12px',
-          marginBottom: '16px',
-          backgroundColor: '#d4edda',
-          color: '#155724',
-          borderRadius: '4px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          fontSize: '14px'
-        }}>
-          <span>✓</span>
-          <span>Thank you for your feedback!</span>
+        <div style={{ padding: 12, background: '#d4edda', color: '#155724', borderRadius: 4, display: 'flex', gap: 8, fontSize: 14 }}>
+          <span>✓</span><span>Thank you for your feedback!</span>
         </div>
       ) : (
         <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: '16px' }}>
-        
-          </div>
-
-          <div style={{ marginBottom: '16px' }}>
-            <label style={{
-              display: 'block',
-              marginBottom: '8px',
-              fontWeight: '500',
-              color: '#333',
-              fontSize: '14px'
-            }}>
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: 'block', marginBottom: 8, fontWeight: 500, color: 'var(--text-primary)', fontSize: 14 }}>
               Your Feedback:
             </label>
-            <textarea
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              disabled={isLoading}
+            <textarea value={comment} onChange={e => setComment(e.target.value)} disabled={isLoading}
               rows={3}
-              style={{
-                width: '100%',
-                padding: '10px',
-                borderRadius: '4px',
-                border: '1px solid #ced4da',
-                fontFamily: "'Montserrat', sans-serif",
-                fontSize: '14px',
-                resize: 'vertical',
-                minHeight: '80px',
-                marginBottom: '8px'
-              }}
-              placeholder="Share your experience with this food donation..."
-              required
-            />
+              style={{ width: '100%', padding: 10, borderRadius: 4, border: '1px solid var(--border)',
+                fontFamily: 'inherit', fontSize: 14, resize: 'vertical', minHeight: 80,
+                background: 'var(--surface)', color: 'var(--text-primary)' }}
+              placeholder="Share your experience with this food donation..." />
           </div>
 
-          <div style={{ marginBottom: '16px' }}>
-            <label style={{
-              display: 'block',
-              marginBottom: '8px',
-              fontWeight: '500',
-              color: '#333',
-              fontSize: '14px'
-            }}>
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: 'block', marginBottom: 8, fontWeight: 500, color: 'var(--text-primary)', fontSize: 14 }}>
               Add Image (Optional):
             </label>
-            
             {!imagePreview ? (
-              <div>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  style={{
-                    display: 'none'
-                  }}
-                  id="feedback-image-input"
-                />
-                <label
-                  htmlFor="feedback-image-input"
-                  style={{
-                    display: 'block',
-                    padding: '0.75rem',
-                    border: '2px dashed #28a745',
-                    borderRadius: '6px',
-                    textAlign: 'center',
-                    cursor: 'pointer',
-                    color: '#28a745',
-                    fontWeight: 500,
-                    transition: 'all 0.2s'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.background = 'rgba(40, 167, 69, 0.05)';
-                    e.target.style.borderColor = '#218838';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.background = 'transparent';
-                    e.target.style.borderColor = '#28a745';
-                  }}
-                >
+              <>
+                <input type="file" accept="image/*" onChange={handleImageChange}
+                  style={{ display: 'none' }} id="feedback-image-input" />
+                <label htmlFor="feedback-image-input"
+                  style={{ display: 'block', padding: '0.75rem', border: '2px dashed var(--clr-primary)',
+                    borderRadius: 6, textAlign: 'center', cursor: 'pointer', color: 'var(--clr-primary)',
+                    fontWeight: 500 }}>
                   📷 Click to upload an image
-                  <div style={{ fontSize: '0.8rem', color: '#666', marginTop: '0.25rem' }}>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: 4 }}>
                     Max size: 5MB (JPEG, PNG, GIF, WebP)
                   </div>
                 </label>
-              </div>
+              </>
             ) : (
               <div style={{ position: 'relative' }}>
-                <img
-                  src={imagePreview}
-                  alt="Feedback preview"
-                  style={{
-                    width: '100%',
-                    maxHeight: '200px',
-                    objectFit: 'cover',
-                    borderRadius: '6px',
-                    border: '1px solid #ddd'
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={removeImage}
-                  style={{
-                    position: 'absolute',
-                    top: '0.5rem',
-                    right: '0.5rem',
-                    background: '#dc3545',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '50%',
-                    width: '24px',
-                    height: '24px',
-                    cursor: 'pointer',
-                    fontSize: '0.8rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
+                <img src={imagePreview} alt="Preview"
+                  style={{ width: '100%', maxHeight: 200, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--border)' }} />
+                <button type="button" onClick={removeImage}
+                  style={{ position: 'absolute', top: 8, right: 8, background: '#dc3545', color: '#fff',
+                    border: 'none', borderRadius: '50%', width: 24, height: 24, cursor: 'pointer',
+                    fontSize: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   ×
                 </button>
               </div>
@@ -255,29 +155,24 @@ function FeedbackForm({ requestId, recipientId, foodImage, foodName, onFeedbackS
           </div>
 
           {error && (
-            <div style={{ color: '#dc3545', marginBottom: '12px', fontSize: '14px' }}>
-              {error}
-            </div>
+            <div style={{ color: 'var(--clr-danger)', marginBottom: 12, fontSize: 14 }}>{error}</div>
           )}
-          
-          <button
-            type="submit"
-            disabled={!comment.trim() && !selectedImage || isLoading}
-            style={{
-              backgroundColor: (!comment.trim() && !selectedImage) || isLoading ? '#6c757d' : '#28a745',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              padding: '8px 16px',
-              fontSize: '14px',
-              fontWeight: '500',
-              cursor: (!comment.trim() && !selectedImage) || isLoading ? 'not-allowed' : 'pointer',
-              opacity: isLoading ? 0.7 : 1,
-              transition: 'all 0.2s ease'
-            }}
-          >
-            {isLoading ? 'Submitting...' : 'Submit Feedback'}
-          </button>
+
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button type="submit" disabled={isLoading}
+              style={{ flex: 1, background: isLoading ? '#6c757d' : 'var(--clr-primary)', color: '#fff',
+                border: 'none', borderRadius: 4, padding: '8px 16px', fontSize: 14, fontWeight: 500,
+                cursor: isLoading ? 'not-allowed' : 'pointer' }}>
+              {isLoading ? 'Submitting…' : 'Submit Feedback'}
+            </button>
+            {onClose && (
+              <button type="button" onClick={onClose}
+                style={{ padding: '8px 16px', borderRadius: 4, border: '1px solid var(--border)',
+                  background: 'var(--surface)', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: 14 }}>
+                Cancel
+              </button>
+            )}
+          </div>
         </form>
       )}
     </div>

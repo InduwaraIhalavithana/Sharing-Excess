@@ -31,14 +31,30 @@ def _listing_out(l: FoodListing) -> dict:
 
 
 @router.get("")
-def get_listings(donor_id: Optional[int] = None, db: Session = Depends(get_db)):
-    q = db.query(FoodListing)
+def get_listings(
+    donor_id: Optional[int] = None,
+    q: Optional[str] = None,
+    page: int = 1,
+    limit: int = 20,
+    db: Session = Depends(get_db),
+):
+    query = db.query(FoodListing)
     if donor_id:
-        q = q.filter(FoodListing.donor_id == donor_id)
+        query = query.filter(FoodListing.donor_id == donor_id)
     else:
-        q = q.filter(FoodListing.status == "available")
-    listings = q.order_by(FoodListing.created_at.desc()).all()
-    return {"success": True, "listings": [_listing_out(l) for l in listings]}
+        query = query.filter(FoodListing.status == "available")
+    if q:
+        like = f"%{q}%"
+        query = query.filter(
+            FoodListing.food_name.ilike(like) |
+            FoodListing.description.ilike(like) |
+            FoodListing.location.ilike(like)
+        )
+    total = query.count()
+    offset = (max(page, 1) - 1) * limit
+    listings = query.order_by(FoodListing.created_at.desc()).offset(offset).limit(limit).all()
+    return {"success": True, "total": total, "page": page, "limit": limit,
+            "listings": [_listing_out(l) for l in listings]}
 
 
 @router.post("")
