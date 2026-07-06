@@ -31,25 +31,26 @@ export default function LoginModal({ onClose, onLoginSuccess, onSwitchToSignup, 
       const isAdmin = email.trim() === 'admin@sharingexcess.com';
       const role = mode === 'admin' ? 'admin' : (isAdmin ? 'admin' : '');
       const endpoint = mode === 'admin'
-        ? `${API_BASE}/officer_login.php`
-        : `${API_BASE}/login.php`;
+        ? `${API_BASE}/api/auth/officer-login`
+        : `${API_BASE}/api/auth/login`;
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), password, role })
+        body: JSON.stringify({ email: email.trim(), password })
       });
       const data = await res.json();
-      if (data.success) {
+      if (res.ok && data.success) {
+        const rawUser = data.user || data.officer;
         const user = {
-          id: data.user.id,
-          name: data.user.name || 'User',
-          email: data.user.email,
-          role: data.user.role || role
+          id: rawUser.id,
+          name: rawUser.name || 'User',
+          email: rawUser.email,
+          role: rawUser.role || role
         };
         login(user, data.token);
         onLoginSuccess(user);
       } else {
-        setError(data.message || 'Invalid email or password.');
+        setError(data.detail || data.message || 'Invalid email or password.');
       }
     } catch {
       setError('Could not connect to server.');

@@ -59,7 +59,7 @@ function FeedbackForm({ requestId, onSuccess, onClose, onFeedbackSubmitted, food
       if (foodName) formData.append('food_name', foodName);
       if (selectedImage) formData.append('image', selectedImage);
 
-      const res = await apiFetch(`${API_BASE}/submit_feedback.php`, {
+      const res = await apiFetch(`${API_BASE}/api/feedback`, {
         method: 'POST',
         body: formData,
       });

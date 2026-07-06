@@ -29,7 +29,7 @@ export default function SignupModal({ onClose, onSignupSuccess, onSwitchToLogin 
     if (!form.email) e.email = 'Email is required';
     else if (!/\S+@\S+\.\S+/.test(form.email)) e.email = 'Invalid email format';
     if (!form.password) e.password = 'Password is required';
-    else if (form.password.length < 6) e.password = 'Minimum 6 characters';
+    else if (form.password.length < 8) e.password = 'Minimum 8 characters';
     if (form.password !== form.confirmPassword) e.confirmPassword = 'Passwords do not match';
     if (!form.role) e.role = 'Please select a role';
     if (!form.phone_number.trim()) e.phone_number = 'Phone is required';
@@ -44,7 +44,7 @@ export default function SignupModal({ onClose, onSignupSuccess, onSwitchToLogin 
     setLoading(true);
     setErrors({});
     try {
-      const res = await fetch(`${API_BASE}/signup.php`, {
+      const res = await fetch(`${API_BASE}/api/auth/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -53,7 +53,7 @@ export default function SignupModal({ onClose, onSignupSuccess, onSwitchToLogin 
         })
       });
       const data = await res.json();
-      if (data.success) {
+      if (res.ok && data.success) {
         onSignupSuccess({
           email: form.email,
           user_id: data.user_id,
@@ -61,7 +61,7 @@ export default function SignupModal({ onClose, onSignupSuccess, onSwitchToLogin 
           role: form.role
         });
       } else {
-        setErrors({ submit: data.message || 'Signup failed. Please try again.' });
+        setErrors({ submit: data.detail || data.message || 'Signup failed. Please try again.' });
       }
     } catch {
       setErrors({ submit: 'Could not connect to server.' });

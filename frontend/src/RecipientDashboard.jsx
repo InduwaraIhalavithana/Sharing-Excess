@@ -75,11 +75,11 @@ export default function RecipientDashboard() {
     setLoading(true);
     try {
       const listingUrl = searchVal
-        ? `${API_BASE}/get_listings.php?q=${encodeURIComponent(searchVal)}`
-        : `${API_BASE}/get_listings.php`;
+        ? `${API_BASE}/api/listings?q=${encodeURIComponent(searchVal)}`
+        : `${API_BASE}/api/listings`;
       const [listRes, reqRes] = await Promise.all([
         apiFetch(listingUrl).then(r => r.json()),
-        user ? apiFetch(`${API_BASE}/get_requests.php?recipient_id=${user.id}`).then(r => r.json()) : Promise.resolve({ success: true, requests: [] }),
+        user ? apiFetch(`${API_BASE}/api/requests?recipient_id=${user.id}`).then(r => r.json()) : Promise.resolve({ success: true, requests: [] }),
       ]);
       if (listRes.success) setFoodListings(listRes.listings || []);
       if (reqRes.success) setMyRequests(reqRes.requests || []);
@@ -97,23 +97,19 @@ export default function RecipientDashboard() {
       return;
     }
     try {
-      const res = await apiFetch(`${API_BASE}/request_food.php`, {
-        method: 'POST',
-        body: JSON.stringify({
-          listing_id: listing.id,
-          food_name: listing.food_name,
-          quantity: listing.quantity,
-          needed_by: new Date().toISOString().split('T')[0],
-          location: user.location || '',
-          recipient_id: user.id
-        })
-      });
+      const fd = new FormData();
+      fd.append('recipient_id', user.id);
+      fd.append('food_name', listing.food_name);
+      fd.append('quantity', listing.quantity);
+      fd.append('needed_by', new Date().toISOString().split('T')[0]);
+      fd.append('location', user.location || '');
+      const res = await apiFetch(`${API_BASE}/api/requests`, { method: 'POST', body: fd });
       const data = await res.json();
-      if (data.success) {
+      if (res.ok && data.success) {
         showToast('Food request submitted!');
         fetchAll();
       } else {
-        showToast(data.message || 'Request failed.', 'error');
+        showToast(data.detail || data.message || 'Request failed.', 'error');
       }
     } catch {
       showToast('Network error.', 'error');
@@ -128,18 +124,21 @@ export default function RecipientDashboard() {
     }
     setFormLoading(true);
     try {
-      const res = await apiFetch(`${API_BASE}/request_food.php`, {
-        method: 'POST',
-        body: JSON.stringify({ ...customReq, recipient_id: user.id })
-      });
+      const fd = new FormData();
+      fd.append('recipient_id', user.id);
+      fd.append('food_name', customReq.food_name);
+      fd.append('quantity', customReq.quantity);
+      fd.append('needed_by', customReq.needed_by);
+      fd.append('location', customReq.location);
+      const res = await apiFetch(`${API_BASE}/api/requests`, { method: 'POST', body: fd });
       const data = await res.json();
-      if (data.success) {
+      if (res.ok && data.success) {
         showToast('Custom request submitted!');
         setShowForm(false);
         setCustomReq({ food_name: '', quantity: '', needed_by: '', location: '' });
         fetchAll();
       } else {
-        showToast(data.message || 'Submission failed.', 'error');
+        showToast(data.detail || data.message || 'Submission failed.', 'error');
       }
     } catch {
       showToast('Network error.', 'error');
@@ -149,16 +148,13 @@ export default function RecipientDashboard() {
 
   const handleDeleteRequest = async (requestId) => {
     try {
-      const res = await apiFetch(`${API_BASE}/delete_food_request.php`, {
-        method: 'POST',
-        body: JSON.stringify({ request_id: requestId, recipient_id: user?.id })
-      });
+      const res = await apiFetch(`${API_BASE}/api/requests/${requestId}`, { method: 'DELETE' });
       const data = await res.json();
-      if (data.success) {
+      if (res.ok && data.success) {
         setMyRequests(p => p.filter(r => r.id !== requestId));
         showToast('Request deleted.');
       } else {
-        showToast(data.message || 'Delete failed.', 'error');
+        showToast(data.detail || data.message || 'Delete failed.', 'error');
       }
     } catch {
       showToast('Network error.', 'error');
