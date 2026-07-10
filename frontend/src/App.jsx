@@ -15,6 +15,7 @@ import CalendarPage from './components/CalendarPage.jsx';
 import Contact from './components/Contact.jsx';
 import Events from './components/Events.jsx';
 import FeedbackPage from './FeedbackPage.jsx';
+import NotFound from './components/NotFound.jsx';
 
 function AppContent() {
   const location = useLocation();
@@ -47,6 +48,7 @@ function AppContent() {
             <Route path="/calendar"            element={<CalendarPage />} />
             <Route path="/contact"             element={<Contact />} />
             <Route path="/feedback"            element={<FeedbackPage />} />
+            <Route path="*"                    element={<NotFound />} />
           </Routes>
         </div>
       </div>

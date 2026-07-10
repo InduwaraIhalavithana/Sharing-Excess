@@ -89,7 +89,7 @@ export default function CalendarPage() {
     }
   };
 
-  const isOfficer = user?.role === 'admin';
+  const isOfficer = ['admin', 'officer'].includes(String(user?.role || '').toLowerCase());
 
   return (
     <div className="calendar-page">

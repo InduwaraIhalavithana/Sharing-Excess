@@ -180,6 +180,22 @@ class MoneyDonationRequest(BaseModel):
         return v
 
 
+class PayhereInitiateRequest(BaseModel):
+    name: str
+    email: EmailStr
+    amount: float
+    phone: str = ""
+    address: str = ""
+    city: str = ""
+
+    @field_validator("amount")
+    @classmethod
+    def validate_amount(cls, v: float) -> float:
+        if v <= 0:
+            raise ValueError("amount must be positive")
+        return v
+
+
 # ── Contact ──────────────────────────────────────────────────────────────────
 
 class ContactRequest(BaseModel):

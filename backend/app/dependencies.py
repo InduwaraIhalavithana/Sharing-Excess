@@ -24,7 +24,19 @@ def get_current_user(
     return user
 
 
-def require_officer(current_user: User = Depends(get_current_user)) -> User:
-    if current_user.role != "officer":
+def require_staff(current_user: User = Depends(get_current_user)) -> User:
+    """Officer OR admin — coordination-level access."""
+    if current_user.role not in ("officer", "admin"):
         raise HTTPException(status_code=403, detail="Officer access required")
     return current_user
+
+
+def require_admin(current_user: User = Depends(get_current_user)) -> User:
+    """Admin only — platform management access."""
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return current_user
+
+
+# Backwards-compatible alias (old routes imported require_officer)
+require_officer = require_staff

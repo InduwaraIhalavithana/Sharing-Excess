@@ -70,11 +70,15 @@ async def add_request(
     needed_by:    str            = Form(""),
     location:     str            = Form(""),
     description:  str            = Form(""),
+    listing_id:   Optional[int]  = Form(None),
     food_image:   Optional[UploadFile] = File(None),
     db: Session = Depends(get_db),
 ):
     if not db.query(User).filter(User.id == recipient_id).first():
         raise HTTPException(404, "Recipient not found")
+
+    if listing_id and not db.query(FoodListing).filter(FoodListing.id == listing_id).first():
+        raise HTTPException(404, "Listing not found")
 
     image_path = None
     if food_image and food_image.filename:
@@ -87,6 +91,7 @@ async def add_request(
         needed_by=needed_by or None,
         location=location or None,
         description=description or None,
+        listing_id=listing_id,
         image_path=image_path,
         status="pending",
     )
