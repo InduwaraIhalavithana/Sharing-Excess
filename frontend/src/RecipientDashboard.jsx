@@ -181,8 +181,8 @@ export default function RecipientDashboard() {
   ];
 
   const TABS = [
-    { key: 'available', label: `${t('recipient', 'available_food')} (${available})` },
-    { key: 'requests',  label: `${t('recipient', 'my_requests')} (${myRequests.length})` },
+    { key: 'available', label: `🍽️ ${t('recipient', 'available_food')} (${available})` },
+    { key: 'requests',  label: `📬 ${t('recipient', 'my_requests')} (${myRequests.length})` },
   ];
 
   return (
