@@ -144,8 +144,8 @@ export default function DonorDashboard() {
   ];
 
   const TABS = [
-    { key: 'requests',  label: `Incoming Requests (${foodRequests.length})` },
-    { key: 'listings',  label: `My Listings (${totalListings})` },
+    { key: 'requests',  label: `📬 Incoming Requests (${foodRequests.length})` },
+    { key: 'listings',  label: `🍽️ My Listings (${totalListings})` },
   ];
 
   return (
