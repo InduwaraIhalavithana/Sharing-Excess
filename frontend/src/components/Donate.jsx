@@ -35,8 +35,7 @@ export default function Donate() {
 
   // Money form
   const [money, setMoney] = useState({
-    name: '', email: '', amount: '', card: '',
-    expiry: '', cvv: '', comment: '', monthly: true, dedicate: false
+    name: '', email: '', amount: '', phone: '', monthly: true,
   });
   const [moneySuccess, setMoneySuccess] = useState(false);
 
@@ -114,38 +113,39 @@ export default function Donate() {
 
   const handleMoneySubmit = async (e) => {
     e.preventDefault();
-    if (!/^\d{16}$/.test(money.card)) {
-      showToast('Card number must be exactly 16 digits.', 'error'); return;
-    }
-    if (!/^\d{1,2}\/\d{4}$/.test(money.expiry)) {
-      showToast('Card expiry must be MM/YYYY.', 'error'); return;
-    }
-    if (!/^\d{3}$/.test(money.cvv)) {
-      showToast('CVV must be 3 digits.', 'error'); return;
+    if (!money.name.trim() || !money.email.trim() || !money.amount) {
+      showToast('Please fill in all required fields.', 'error'); return;
     }
     setSubmitting(true);
     try {
-      const payload = {
-        name: money.name, email: money.email, amount: money.amount,
-        card_last4: money.card.slice(-4), expiry: money.expiry, cvv: money.cvv,
-        comment: money.comment, monthly: money.monthly ? 1 : 0, dedicate: money.dedicate ? 1 : 0
-      };
-      const res = await fetch(`${API_BASE}/api/donations/money`, {
+      const res = await fetch(`${API_BASE}/api/donations/payhere/initiate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({ name: money.name, email: money.email, amount: Number(money.amount), phone: money.phone }),
       });
       const data = await res.json();
-      if (data.success) {
-        setMoneySuccess(true);
-        setMoney({ name: '', email: '', amount: '', card: '', expiry: '', cvv: '', comment: '', monthly: true, dedicate: false });
-      } else {
-        showToast(data.message || 'Donation failed.', 'error');
+      if (!data.success) {
+        showToast(data.detail || 'Failed to initiate payment.', 'error');
+        setSubmitting(false);
+        return;
       }
+      // Auto-submit a hidden form to PayHere
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = data.checkout_url;
+      Object.entries(data.params).forEach(([k, v]) => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = k;
+        input.value = v;
+        form.appendChild(input);
+      });
+      document.body.appendChild(form);
+      form.submit();
     } catch {
       showToast('Network error. Please try again.', 'error');
+      setSubmitting(false);
     }
-    setSubmitting(false);
   };
 
   return (
@@ -399,117 +399,75 @@ export default function Donate() {
                 <span className="badge badge-green">100% Transparent</span>
                 <span className="badge badge-green">Sri Lanka Registered</span>
               </div>
-              <p className="donate-money-demo-note">Demo only — no real transaction occurs.</p>
+              <p className="donate-money-demo-note">Powered by PayHere — Sri Lanka's trusted payment gateway.</p>
             </div>
 
             <div className="donate-money-form card">
-              {moneySuccess ? (
-                <div className="donate-success" style={{ textAlign: 'center', padding: '32px 0' }}>
-                  <div style={{ fontSize: '3rem', marginBottom: 12 }}>🎉</div>
-                  <h3>Thank you for your donation!</h3>
-                  <p style={{ color: 'var(--text-secondary)', marginTop: 8 }}>
-                    A confirmation will be sent to {money.email || 'your email'}.
-                  </p>
+              <div className="donate-money-toggle">
+                <button
+                  type="button"
+                  className={`donate-money-toggle__btn${!money.monthly ? ' active' : ''}`}
+                  onClick={() => setMoney(p => ({ ...p, monthly: false }))}
+                >
+                  Give once
+                </button>
+                <button
+                  type="button"
+                  className={`donate-money-toggle__btn${money.monthly ? ' active' : ''}`}
+                  onClick={() => setMoney(p => ({ ...p, monthly: true }))}
+                >
+                  ❤ Monthly
+                </button>
+              </div>
+
+              <div className="donate-presets">
+                {PRESET_AMOUNTS.map(amt => (
                   <button
-                    className="btn btn-outline"
-                    style={{ marginTop: 20 }}
-                    onClick={() => setMoneySuccess(false)}
+                    key={amt}
+                    type="button"
+                    className={`donate-preset${String(money.amount) === String(amt) ? ' active' : ''}`}
+                    onClick={() => setMoney(p => ({ ...p, amount: amt }))}
                   >
-                    Donate again
+                    Rs {amt.toLocaleString()}
                   </button>
+                ))}
+              </div>
+
+              <form onSubmit={handleMoneySubmit} noValidate>
+                <div className="form-group">
+                  <label className="form-label">Amount (Rs) *</label>
+                  <input
+                    className="form-control donate-amount-input"
+                    type="number"
+                    name="amount"
+                    value={money.amount}
+                    onChange={handleMoneyChange}
+                    placeholder="4000"
+                    min={1}
+                    required
+                  />
                 </div>
-              ) : (
-                <>
-                  <div className="donate-money-toggle">
-                    <button
-                      type="button"
-                      className={`donate-money-toggle__btn${!money.monthly ? ' active' : ''}`}
-                      onClick={() => setMoney(p => ({ ...p, monthly: false }))}
-                    >
-                      Give once
-                    </button>
-                    <button
-                      type="button"
-                      className={`donate-money-toggle__btn${money.monthly ? ' active' : ''}`}
-                      onClick={() => setMoney(p => ({ ...p, monthly: true }))}
-                    >
-                      ❤ Monthly
-                    </button>
+                <div className="form-row-2">
+                  <div className="form-group">
+                    <label className="form-label">Your Name *</label>
+                    <input className="form-control" type="text" name="name" value={money.name} onChange={handleMoneyChange} placeholder="Full name" required />
                   </div>
-
-                  <div className="donate-presets">
-                    {PRESET_AMOUNTS.map(amt => (
-                      <button
-                        key={amt}
-                        type="button"
-                        className={`donate-preset${String(money.amount) === String(amt) ? ' active' : ''}`}
-                        onClick={() => setMoney(p => ({ ...p, amount: amt }))}
-                      >
-                        Rs {amt.toLocaleString()}
-                      </button>
-                    ))}
+                  <div className="form-group">
+                    <label className="form-label">Your Email *</label>
+                    <input className="form-control" type="email" name="email" value={money.email} onChange={handleMoneyChange} placeholder="email@example.com" required />
                   </div>
-
-                  <form onSubmit={handleMoneySubmit} noValidate>
-                    <div className="form-group">
-                      <label className="form-label">Amount (Rs) *</label>
-                      <input
-                        className="form-control donate-amount-input"
-                        type="number"
-                        name="amount"
-                        value={money.amount}
-                        onChange={handleMoneyChange}
-                        placeholder="4000"
-                        min={1}
-                        required
-                      />
-                    </div>
-                    <div className="form-row-2">
-                      <div className="form-group">
-                        <label className="form-label">Your Name *</label>
-                        <input className="form-control" type="text" name="name" value={money.name} onChange={handleMoneyChange} placeholder="Full name" required />
-                      </div>
-                      <div className="form-group">
-                        <label className="form-label">Your Email *</label>
-                        <input className="form-control" type="email" name="email" value={money.email} onChange={handleMoneyChange} placeholder="email@example.com" required />
-                      </div>
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Card Number * <span className="donate-demo-badge">Demo</span></label>
-                      <input className="form-control" type="text" name="card" value={money.card} onChange={handleMoneyChange} placeholder="16-digit card number" maxLength={16} required />
-                    </div>
-                    <div className="form-row-2">
-                      <div className="form-group">
-                        <label className="form-label">Expiry (MM/YYYY) *</label>
-                        <input className="form-control" type="text" name="expiry" value={money.expiry} onChange={handleMoneyChange} placeholder="MM/YYYY" required />
-                      </div>
-                      <div className="form-group">
-                        <label className="form-label">CVV *</label>
-                        <input className="form-control" type="text" name="cvv" value={money.cvv} onChange={handleMoneyChange} placeholder="XXX" maxLength={3} required />
-                      </div>
-                    </div>
-                    <div className="form-group">
-                      <label className="donate-checkbox">
-                        <input type="checkbox" name="dedicate" checked={money.dedicate} onChange={handleMoneyChange} />
-                        Dedicate this donation
-                      </label>
-                    </div>
-                    <div className="form-group">
-                      <textarea
-                        className="form-control"
-                        name="comment"
-                        value={money.comment}
-                        onChange={handleMoneyChange}
-                        placeholder="Optional message"
-                        rows={2}
-                      />
-                    </div>
-                    <button type="submit" className="btn btn-primary btn-block" disabled={submitting}>
-                      {submitting ? 'Processing…' : `Donate ${money.monthly ? 'monthly' : 'now'}`}
-                    </button>
-                  </form>
-                </>
-              )}
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Phone (optional)</label>
+                  <input className="form-control" type="tel" name="phone" value={money.phone} onChange={handleMoneyChange} placeholder="+94 77 123 4567" />
+                </div>
+                <button type="submit" className="btn btn-primary btn-block" disabled={submitting}>
+                  {submitting ? 'Redirecting to PayHere…' : `Pay with PayHere ${money.monthly ? '(Monthly)' : ''}`}
+                </button>
+                <p style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 10 }}>
+                  You will be redirected to PayHere sandbox to complete your payment securely.
+                </p>
+              </form>
             </div>
           </div>
         )}

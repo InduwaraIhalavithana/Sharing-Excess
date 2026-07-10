@@ -5,22 +5,39 @@ from typing import Optional
 from pydantic import BaseModel
 
 from app.database import get_db
-from app.models import User, FoodListing, FoodRequest, MoneyDonation, Feedback
+from app.models import User, FoodListing, FoodRequest, MoneyDonation, Feedback, Escalation
 from app.schemas import UserUpdate, ListingUpdate, RequestUpdate
-from app.dependencies import require_officer
+from app.dependencies import require_staff, require_admin
 
 
 class FeedbackReply(BaseModel):
     reply: Optional[str] = None
 
+
+class VerifyListingBody(BaseModel):
+    action: str                       # "approve" | "reject"
+    reason: Optional[str] = None      # required when rejecting
+
+
+class EscalationCreate(BaseModel):
+    target_type: str                  # "user" | "listing" | "request" | "feedback"
+    target_id: int
+    reason: str
+
+
+class EscalationUpdate(BaseModel):
+    status: str                       # "actioned" | "dismissed"
+    admin_note: Optional[str] = None
+
+
 router = APIRouter(prefix="/api/officer", tags=["officer"])
 
 
-# ── Users ─────────────────────────────────────────────────────────────────────
+# ── Users (ADMIN only) ────────────────────────────────────────────────────────
 
 @router.get("/users")
-def list_users(current_user: User = Depends(require_officer), db: Session = Depends(get_db)):
-    users = db.query(User).filter(User.role != "officer").order_by(User.created_at.desc()).all()
+def list_users(current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
+    users = db.query(User).filter(User.role.notin_(["admin"])).order_by(User.created_at.desc()).all()
     return {"success": True, "users": [
         {"id": u.id, "name": u.name, "email": u.email,
          "role": u.role, "status": u.status,
@@ -33,7 +50,7 @@ def list_users(current_user: User = Depends(require_officer), db: Session = Depe
 
 @router.put("/users/{user_id}")
 def update_user(user_id: int, body: UserUpdate,
-                current_user: User = Depends(require_officer), db: Session = Depends(get_db)):
+                current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(404, "User not found")
@@ -45,10 +62,12 @@ def update_user(user_id: int, body: UserUpdate,
 
 @router.delete("/users/{user_id}")
 def delete_user(user_id: int,
-                current_user: User = Depends(require_officer), db: Session = Depends(get_db)):
+                current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(404, "User not found")
+    if user.role == "admin":
+        raise HTTPException(403, "Admin accounts cannot be deleted")
     db.delete(user)
     db.commit()
     return {"success": True, "message": "User deleted"}
@@ -56,24 +75,28 @@ def delete_user(user_id: int,
 
 @router.patch("/users/{user_id}/suspend")
 def toggle_suspend(user_id: int,
-                   current_user: User = Depends(require_officer), db: Session = Depends(get_db)):
+                   current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(404, "User not found")
+    if user.role == "admin":
+        raise HTTPException(403, "Admin accounts cannot be suspended")
     user.status = "suspended" if user.status == "active" else "active"
     db.commit()
     return {"success": True, "status": user.status}
 
 
-# ── Listings ──────────────────────────────────────────────────────────────────
+# ── Listings (view: STAFF · verify: STAFF · edit/delete: ADMIN) ──────────────
 
 @router.get("/listings")
-def list_listings(current_user: User = Depends(require_officer), db: Session = Depends(get_db)):
+def list_listings(current_user: User = Depends(require_staff), db: Session = Depends(get_db)):
     listings = db.query(FoodListing).order_by(FoodListing.created_at.desc()).all()
     return {"success": True, "listings": [
         {
             "id": l.id, "food_name": l.food_name, "description": l.description,
             "quantity": l.quantity, "status": l.status,
+            "verification_status": l.verification_status,
+            "rejection_reason": l.rejection_reason,
             "expiry_date": l.expiry_date, "location": l.location,
             "created_at": l.created_at, "donor_id": l.donor_id,
             "donor_name": l.donor.name if l.donor else None,
@@ -82,9 +105,48 @@ def list_listings(current_user: User = Depends(require_officer), db: Session = D
     ]}
 
 
+@router.get("/listings/pending")
+def pending_listings(current_user: User = Depends(require_staff), db: Session = Depends(get_db)):
+    listings = (db.query(FoodListing)
+                  .filter(FoodListing.verification_status == "pending_review")
+                  .order_by(FoodListing.created_at.asc()).all())
+    return {"success": True, "listings": [
+        {
+            "id": l.id, "food_name": l.food_name, "description": l.description,
+            "quantity": l.quantity, "expiry_date": l.expiry_date,
+            "location": l.location, "image_path": l.image_path,
+            "created_at": l.created_at,
+            "donor_name": l.donor.name if l.donor else None,
+            "donor_email": l.donor.email if l.donor else None,
+            "contact_phone": l.contact_phone,
+        }
+        for l in listings
+    ]}
+
+
+@router.patch("/listings/{listing_id}/verify")
+def verify_listing(listing_id: int, body: VerifyListingBody,
+                   current_user: User = Depends(require_staff), db: Session = Depends(get_db)):
+    if body.action not in ("approve", "reject"):
+        raise HTTPException(400, "action must be 'approve' or 'reject'")
+    listing = db.query(FoodListing).filter(FoodListing.id == listing_id).first()
+    if not listing:
+        raise HTTPException(404, "Listing not found")
+    if body.action == "approve":
+        listing.verification_status = "approved"
+        listing.rejection_reason = None
+    else:
+        if not (body.reason or "").strip():
+            raise HTTPException(400, "A reason is required when rejecting a listing")
+        listing.verification_status = "rejected"
+        listing.rejection_reason = body.reason.strip()
+    db.commit()
+    return {"success": True, "verification_status": listing.verification_status}
+
+
 @router.put("/listings/{listing_id}")
 def update_listing(listing_id: int, body: ListingUpdate,
-                   current_user: User = Depends(require_officer), db: Session = Depends(get_db)):
+                   current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
     listing = db.query(FoodListing).filter(FoodListing.id == listing_id).first()
     if not listing:
         raise HTTPException(404, "Listing not found")
@@ -96,7 +158,7 @@ def update_listing(listing_id: int, body: ListingUpdate,
 
 @router.delete("/listings/{listing_id}")
 def delete_listing(listing_id: int,
-                   current_user: User = Depends(require_officer), db: Session = Depends(get_db)):
+                   current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
     listing = db.query(FoodListing).filter(FoodListing.id == listing_id).first()
     if not listing:
         raise HTTPException(404, "Listing not found")
@@ -105,10 +167,10 @@ def delete_listing(listing_id: int,
     return {"success": True, "message": "Listing deleted"}
 
 
-# ── Requests ──────────────────────────────────────────────────────────────────
+# ── Requests (view/coordinate: STAFF · delete: ADMIN) ────────────────────────
 
 @router.get("/requests")
-def list_requests(current_user: User = Depends(require_officer), db: Session = Depends(get_db)):
+def list_requests(current_user: User = Depends(require_staff), db: Session = Depends(get_db)):
     requests = db.query(FoodRequest).order_by(FoodRequest.created_at.desc()).all()
     return {"success": True, "requests": [
         {
@@ -125,7 +187,7 @@ def list_requests(current_user: User = Depends(require_officer), db: Session = D
 
 @router.put("/requests/{request_id}")
 def update_request(request_id: int, body: RequestUpdate,
-                   current_user: User = Depends(require_officer), db: Session = Depends(get_db)):
+                   current_user: User = Depends(require_staff), db: Session = Depends(get_db)):
     req = db.query(FoodRequest).filter(FoodRequest.id == request_id).first()
     if not req:
         raise HTTPException(404, "Request not found")
@@ -137,7 +199,7 @@ def update_request(request_id: int, body: RequestUpdate,
 
 @router.delete("/requests/{request_id}")
 def delete_request(request_id: int,
-                   current_user: User = Depends(require_officer), db: Session = Depends(get_db)):
+                   current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
     req = db.query(FoodRequest).filter(FoodRequest.id == request_id).first()
     if not req:
         raise HTTPException(404, "Request not found")
@@ -146,10 +208,10 @@ def delete_request(request_id: int,
     return {"success": True, "message": "Request deleted"}
 
 
-# ── Money donations ───────────────────────────────────────────────────────────
+# ── Money donations (ADMIN only — financial data) ────────────────────────────
 
 @router.get("/donations/money")
-def list_money_donations(current_user: User = Depends(require_officer), db: Session = Depends(get_db)):
+def list_money_donations(current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
     donations = db.query(MoneyDonation).order_by(MoneyDonation.created_at.desc()).all()
     return {"success": True, "donations": [
         {"id": d.id, "name": d.name, "email": d.email,
@@ -159,10 +221,10 @@ def list_money_donations(current_user: User = Depends(require_officer), db: Sess
     ]}
 
 
-# ── Feedback management ───────────────────────────────────────────────────────
+# ── Feedback (list/resolve/reopen: STAFF · delete: ADMIN) ────────────────────
 
 @router.get("/feedback")
-def list_feedback(current_user: User = Depends(require_officer), db: Session = Depends(get_db)):
+def list_feedback(current_user: User = Depends(require_staff), db: Session = Depends(get_db)):
     rows = db.query(Feedback).order_by(Feedback.created_at.desc()).all()
     return {"success": True, "feedback": [
         {
@@ -183,7 +245,7 @@ def list_feedback(current_user: User = Depends(require_officer), db: Session = D
 
 @router.post("/feedback/{feedback_id}/resolve")
 def resolve_feedback(feedback_id: int, body: FeedbackReply,
-                     current_user: User = Depends(require_officer), db: Session = Depends(get_db)):
+                     current_user: User = Depends(require_staff), db: Session = Depends(get_db)):
     fb = db.query(Feedback).filter(Feedback.id == feedback_id).first()
     if not fb:
         raise HTTPException(404, "Feedback not found")
@@ -195,7 +257,7 @@ def resolve_feedback(feedback_id: int, body: FeedbackReply,
 
 @router.patch("/feedback/{feedback_id}/reopen")
 def reopen_feedback(feedback_id: int,
-                    current_user: User = Depends(require_officer), db: Session = Depends(get_db)):
+                    current_user: User = Depends(require_staff), db: Session = Depends(get_db)):
     fb = db.query(Feedback).filter(Feedback.id == feedback_id).first()
     if not fb:
         raise HTTPException(404, "Feedback not found")
@@ -205,14 +267,86 @@ def reopen_feedback(feedback_id: int,
     return {"success": True, "message": "Feedback reopened"}
 
 
-# ── Stats (officer dashboard charts) ─────────────────────────────────────────
+@router.delete("/feedback/{feedback_id}")
+def delete_feedback(feedback_id: int,
+                    current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
+    fb = db.query(Feedback).filter(Feedback.id == feedback_id).first()
+    if not fb:
+        raise HTTPException(404, "Feedback not found")
+    db.delete(fb)
+    db.commit()
+    return {"success": True, "message": "Feedback deleted"}
+
+
+# ── Escalations (create/list: STAFF · action: ADMIN) ─────────────────────────
+
+@router.post("/escalations")
+def create_escalation(body: EscalationCreate,
+                      current_user: User = Depends(require_staff), db: Session = Depends(get_db)):
+    if body.target_type not in ("user", "listing", "request", "feedback"):
+        raise HTTPException(400, "Invalid target_type")
+    if not body.reason.strip():
+        raise HTTPException(400, "A reason is required")
+    esc = Escalation(
+        raised_by=current_user.id,
+        target_type=body.target_type,
+        target_id=body.target_id,
+        reason=body.reason.strip(),
+    )
+    db.add(esc)
+    db.commit()
+    db.refresh(esc)
+    return {"success": True, "message": "Escalated to admin", "escalation_id": esc.id}
+
+
+@router.get("/escalations")
+def list_escalations(current_user: User = Depends(require_staff), db: Session = Depends(get_db)):
+    q = db.query(Escalation)
+    # Officers see only their own flags; admin sees the full inbox
+    if current_user.role != "admin":
+        q = q.filter(Escalation.raised_by == current_user.id)
+    rows = q.order_by(Escalation.created_at.desc()).all()
+    return {"success": True, "escalations": [
+        {
+            "id": e.id,
+            "raised_by": e.raised_by,
+            "officer_name": e.officer.name if e.officer else None,
+            "target_type": e.target_type,
+            "target_id": e.target_id,
+            "reason": e.reason,
+            "status": e.status,
+            "admin_note": e.admin_note,
+            "created_at": e.created_at,
+        }
+        for e in rows
+    ]}
+
+
+@router.patch("/escalations/{escalation_id}")
+def update_escalation(escalation_id: int, body: EscalationUpdate,
+                      current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
+    if body.status not in ("actioned", "dismissed", "open"):
+        raise HTTPException(400, "status must be 'actioned', 'dismissed' or 'open'")
+    esc = db.query(Escalation).filter(Escalation.id == escalation_id).first()
+    if not esc:
+        raise HTTPException(404, "Escalation not found")
+    esc.status = body.status
+    if body.admin_note is not None:
+        esc.admin_note = body.admin_note
+    db.commit()
+    return {"success": True, "message": "Escalation updated"}
+
+
+# ── Stats (STAFF — financial figures stripped for non-admin) ─────────────────
 
 @router.get("/stats")
-def get_stats(current_user: User = Depends(require_officer), db: Session = Depends(get_db)):
+def get_stats(current_user: User = Depends(require_staff), db: Session = Depends(get_db)):
     total_requests  = db.query(FoodRequest).count()
     total_listings  = db.query(FoodListing).count()
     total_users     = db.query(User).count()
-    total_donations = db.query(MoneyDonation).count()
+    pending_verifications = (db.query(FoodListing)
+                               .filter(FoodListing.verification_status == "pending_review").count())
+    open_escalations = db.query(Escalation).filter(Escalation.status == "open").count()
 
     req_by_status = dict(
         db.query(FoodRequest.status, func.count(FoodRequest.id))
@@ -240,15 +374,20 @@ def get_stats(current_user: User = Depends(require_officer), db: Session = Depen
         .limit(6).all()
     )
 
-    return {
+    out = {
         "success": True,
         "total_requests":        total_requests,
         "total_listings":        total_listings,
         "total_users":           total_users,
-        "total_money_donations": total_donations,
+        "pending_verifications": pending_verifications,
+        "open_escalations":      open_escalations,
         "requests_by_status":    req_by_status,
         "users_by_role":         users_by_role,
         "top_requested_foods":   [{"name": f[0], "count": f[1]} for f in top_foods],
         "donations_by_month":    [{"year": int(d[0]), "month": int(d[1]), "count": d[2]}
                                    for d in donations_by_month],
     }
+    # Financial data is admin-only
+    if current_user.role == "admin":
+        out["total_money_donations"] = db.query(MoneyDonation).count()
+    return out

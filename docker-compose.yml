@@ -1,0 +1,68 @@
+services:
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB:       sharing_excess
+      POSTGRES_USER:     postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - se_net
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL:             postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/sharing_excess
+      SECRET_KEY:               ${SECRET_KEY:-change-me-in-production-32-chars!!}
+      CORS_ORIGIN:              http://localhost
+      CLOUDINARY_CLOUD_NAME:    ${CLOUDINARY_CLOUD_NAME:-}
+      CLOUDINARY_API_KEY:       ${CLOUDINARY_API_KEY:-}
+      CLOUDINARY_API_SECRET:    ${CLOUDINARY_API_SECRET:-}
+      PAYHERE_SANDBOX:          ${PAYHERE_SANDBOX:-true}
+      PAYHERE_MERCHANT_ID:      ${PAYHERE_MERCHANT_ID:-1211149}
+      PAYHERE_MERCHANT_SECRET:  ${PAYHERE_MERCHANT_SECRET:-Pay&HeRe}
+      MAIL_HOST:                ${MAIL_HOST:-smtp.gmail.com}
+      MAIL_PORT:                ${MAIL_PORT:-465}
+      MAIL_USERNAME:            ${MAIL_USERNAME:-}
+      MAIL_PASSWORD:            ${MAIL_PASSWORD:-}
+      MAIL_FROM_NAME:           Sharing Excess
+    volumes:
+      - uploads_data:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8003:8003"   # direct API / Swagger docs access
+    networks:
+      - se_net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ""
+        VITE_APP_ROOT_URL: ""
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - se_net
+
+volumes:
+  postgres_data:
+  uploads_data:
+
+networks:
+  se_net:
+    driver: bridge

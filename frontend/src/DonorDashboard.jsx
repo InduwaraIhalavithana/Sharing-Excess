@@ -4,6 +4,7 @@ import { useLanguage } from './i18n/LanguageContext.jsx';
 import { useAuth } from './contexts/AuthContext.jsx';
 import { apiFetch } from './utils/api.js';
 import { API_BASE, APP_ROOT } from './config.js';
+import { SkeletonGrid } from './components/SkeletonCard.jsx';
 
 function Toast({ msg, type = 'success', onDone }) {
   useEffect(() => {
@@ -24,6 +25,10 @@ function StatusBadge({ status }) {
     expired:   'badge badge-red',
     declined:  'badge badge-red',
     claimed:   'badge badge-blue',
+    delivering: 'badge badge-blue',
+    pending_review: 'badge badge-amber',
+    approved:  'badge badge-green',
+    rejected:  'badge badge-red',
   };
   return (
     <span className={map[status?.toLowerCase()] || 'badge badge-gray'}>
@@ -90,6 +95,42 @@ export default function DonorDashboard() {
     showToast('Feedback is visible on the community feedback page.');
   };
 
+  const handleMarkDelivered = async (requestId) => {
+    try {
+      const res = await apiFetch(`${API_BASE}/api/requests/${requestId}/status`, {
+        method: 'PUT',
+        body: JSON.stringify({ request_id: requestId, status: 'delivered' })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showToast('Marked as delivered — the recipient has been notified!');
+        fetchAll();
+      } else {
+        showToast(data.detail || data.message || 'Action failed.', 'error');
+      }
+    } catch {
+      showToast('Network error.', 'error');
+    }
+  };
+
+  const handleDeleteListing = async (listing) => {
+    if (!window.confirm(`Delete "${listing.food_name}"? This cannot be undone.`)) return;
+    try {
+      const res = await apiFetch(`${API_BASE}/api/listings/${listing.id}?donor_id=${user?.id}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showToast('Listing deleted.');
+        fetchAll();
+      } else {
+        showToast(data.detail || data.message || 'Delete failed.', 'error');
+      }
+    } catch {
+      showToast('Network error.', 'error');
+    }
+  };
+
   // Stats
   const pending = foodRequests.filter(r => r.status === 'pending').length;
   const accepted = foodRequests.filter(r => r.status === 'accepted').length;
@@ -150,10 +191,7 @@ export default function DonorDashboard() {
       </div>
 
       {loading ? (
-        <div className="dd-loading">
-          <span className="dd-spinner" />
-          Loading…
-        </div>
+        <SkeletonGrid count={6} />
       ) : (
         <>
           {/* Incoming Requests Tab */}
@@ -204,7 +242,18 @@ export default function DonorDashboard() {
                     </div>
                   )}
                   {req.status === 'accepted' && (
-                    <p className="dd-accepted-msg">✓ {t('donor', 'accept_request')}ed</p>
+                    <div className="dd-card-actions">
+                      <p className="dd-accepted-msg" style={{ margin: 0 }}>✓ {t('donor', 'accept_request')}ed</p>
+                      <button
+                        className="btn btn-primary btn-sm"
+                        onClick={() => handleMarkDelivered(req.id)}
+                      >
+                        📦 Mark Delivered
+                      </button>
+                    </div>
+                  )}
+                  {req.status === 'delivered' && (
+                    <p className="dd-accepted-msg">📦 Delivered</p>
                   )}
                 </div>
               ))}
@@ -239,8 +288,18 @@ export default function DonorDashboard() {
                       <p className="dd-card-meta">📅 Expires: {don.expiry_date}</p>
                       <p className="dd-card-meta">📍 {don.location}</p>
                       <p className="dd-card-meta">📊 {don.total_requests || 0} requests</p>
+                      {don.verification_status === 'rejected' && don.rejection_reason && (
+                        <p className="dd-card-meta" style={{ color: 'var(--clr-danger, #dc2626)' }}>
+                          ✕ Rejected: {don.rejection_reason}
+                        </p>
+                      )}
                     </div>
-                    <StatusBadge status={don.status} />
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-end' }}>
+                      <StatusBadge status={don.status} />
+                      {don.verification_status && don.verification_status !== 'approved' && (
+                        <StatusBadge status={don.verification_status} />
+                      )}
+                    </div>
                   </div>
 
                   <div className="dd-card-actions">
@@ -249,6 +308,13 @@ export default function DonorDashboard() {
                       onClick={() => window.open(`https://maps.google.com/?q=${encodeURIComponent(don.location)}`, '_blank')}
                     >
                       🗺️ View Location
+                    </button>
+                    <button
+                      className="btn btn-outline btn-sm"
+                      style={{ '--btn-color': 'var(--clr-danger)' }}
+                      onClick={() => handleDeleteListing(don)}
+                    >
+                      🗑 Delete
                     </button>
                     {don.requests?.length > 0 && (
                       <button

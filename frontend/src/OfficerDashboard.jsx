@@ -39,6 +39,12 @@ function StatusBadge({ status }) {
     admin:     'badge badge-red',
     open:      'badge badge-amber',
     resolved:  'badge badge-green',
+    pending_review: 'badge badge-amber',
+    approved:  'badge badge-green',
+    rejected:  'badge badge-red',
+    actioned:  'badge badge-green',
+    dismissed: 'badge badge-gray',
+    officer:   'badge badge-blue',
   };
   return (
     <span className={map[status?.toLowerCase()] || 'badge badge-gray'}>
@@ -71,13 +77,15 @@ function EditableCell({ value, onSave, type = 'text', options }) {
 }
 
 const NAV_ITEMS = [
-  { key: 'overview',  icon: '📊', label: 'Overview' },
-  { key: 'requests',  icon: '📬', label: 'Requests' },
-  { key: 'listings',  icon: '🍽️', label: 'Listings' },
-  { key: 'users',     icon: '👥', label: 'Users' },
-  { key: 'money',     icon: '💰', label: 'Money Donations' },
-  { key: 'feedback',  icon: '💬', label: 'Feedback' },
-  { key: 'reports',   icon: '📈', label: 'Reports' },
+  { key: 'overview',    icon: '📊', label: 'Overview' },
+  { key: 'verify',      icon: '✅', label: 'Verify Listings' },
+  { key: 'requests',    icon: '📬', label: 'Requests' },
+  { key: 'listings',    icon: '🍽️', label: 'Listings' },
+  { key: 'users',       icon: '👥', label: 'Users',           adminOnly: true },
+  { key: 'money',       icon: '💰', label: 'Money Donations', adminOnly: true },
+  { key: 'feedback',    icon: '💬', label: 'Feedback' },
+  { key: 'escalations', icon: '🚩', label: 'Escalations' },
+  { key: 'reports',     icon: '📈', label: 'Reports',         adminOnly: true },
 ];
 
 export default function OfficerDashboard() {
@@ -85,18 +93,24 @@ export default function OfficerDashboard() {
   const { user: adminUser, logout } = useAuth();
   const navigate = useNavigate();
 
+  const isAdmin = String(adminUser?.role || '').toLowerCase() === 'admin';
+
   const [tab, setTab]               = useState('overview');
   const [requests, setRequests]     = useState([]);
   const [listings, setListings]     = useState([]);
   const [users, setUsers]           = useState([]);
   const [moneyDon, setMoneyDon]     = useState([]);
   const [feedback, setFeedback]     = useState([]);
+  const [pending, setPending]       = useState([]);
+  const [escalations, setEscalations] = useState([]);
   const [stats, setStats]           = useState(null);
   const [loading, setLoading]       = useState(true);
   const [toast, setToast]           = useState(null);
   const [confirmDel, setConfirmDel] = useState(null);
   const [fbFilter, setFbFilter]     = useState('open');
   const [fbReply, setFbReply]       = useState({ open: false, item: null, text: '' });
+  const [rejectModal, setRejectModal] = useState({ open: false, listing: null, reason: '' });
+  const [flagModal, setFlagModal]   = useState({ open: false, targetType: null, targetId: null, label: '', reason: '' });
   const [userSearch, setUserSearch] = useState('');
   const [userRoleFilter, setUserRoleFilter] = useState('');
 
@@ -105,27 +119,43 @@ export default function OfficerDashboard() {
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [rr, lr, ur, mr, fr, sr] = await Promise.all([
+      const staffCalls = [
         apiFetch(`${API_BASE}/api/officer/requests`).then(r => r.json()),
         apiFetch(`${API_BASE}/api/officer/listings`).then(r => r.json()),
-        apiFetch(`${API_BASE}/api/officer/users`).then(r => r.json()),
-        apiFetch(`${API_BASE}/api/officer/donations/money`).then(r => r.json()),
         apiFetch(`${API_BASE}/api/officer/feedback`).then(r => r.json()),
         apiFetch(`${API_BASE}/api/officer/stats`).then(r => r.json()),
-      ]);
+        apiFetch(`${API_BASE}/api/officer/listings/pending`).then(r => r.json()),
+        apiFetch(`${API_BASE}/api/officer/escalations`).then(r => r.json()),
+      ];
+      const [rr, lr, fr, sr, pr, er] = await Promise.all(staffCalls);
       if (rr.success) setRequests(rr.requests || []);
       if (lr.success) setListings(lr.listings || []);
-      if (ur.success) setUsers(ur.users || []);
-      if (mr.success) setMoneyDon(mr.donations || []);
       if (fr.success) setFeedback(fr.feedback || []);
       if (sr.success) setStats(sr);
+      if (pr.success) setPending(pr.listings || []);
+      if (er.success) setEscalations(er.escalations || []);
+      if (isAdmin) {
+        const [ur, mr] = await Promise.all([
+          apiFetch(`${API_BASE}/api/officer/users`).then(r => r.json()),
+          apiFetch(`${API_BASE}/api/officer/donations/money`).then(r => r.json()),
+        ]);
+        if (ur.success) setUsers(ur.users || []);
+        if (mr.success) setMoneyDon(mr.donations || []);
+      }
     } catch {
       showToast('Failed to load data.', 'error');
     }
     setLoading(false);
-  }, [showToast]);
+  }, [showToast, isAdmin]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
+
+  // Guard: only staff accounts may view this dashboard
+  useEffect(() => {
+    if (!adminUser || !['officer', 'admin'].includes(String(adminUser.role || '').toLowerCase())) {
+      navigate('/');
+    }
+  }, [adminUser, navigate]);
 
   const updateRequest = async (id, updates) => {
     try {
@@ -216,6 +246,61 @@ export default function OfficerDashboard() {
     } catch { showToast('Network error.', 'error'); }
   };
 
+  const verifyListing = async (id, action, reason = '') => {
+    try {
+      const d = await apiFetch(`${API_BASE}/api/officer/listings/${id}/verify`, {
+        method: 'PATCH',
+        body: JSON.stringify({ action, reason })
+      }).then(r => r.json());
+      if (d.success) {
+        showToast(action === 'approve' ? 'Listing approved — now public.' : 'Listing rejected.');
+        setRejectModal({ open: false, listing: null, reason: '' });
+        fetchAll();
+      } else showToast(d.message || d.detail || 'Failed.', 'error');
+    } catch { showToast('Network error.', 'error'); }
+  };
+
+  const createEscalation = async () => {
+    const { targetType, targetId, reason } = flagModal;
+    if (!reason.trim()) { showToast('Please give a reason.', 'error'); return; }
+    try {
+      const d = await apiFetch(`${API_BASE}/api/officer/escalations`, {
+        method: 'POST',
+        body: JSON.stringify({ target_type: targetType, target_id: targetId, reason })
+      }).then(r => r.json());
+      if (d.success) {
+        showToast('Flagged to admin.');
+        setFlagModal({ open: false, targetType: null, targetId: null, label: '', reason: '' });
+        fetchAll();
+      } else showToast(d.message || d.detail || 'Failed.', 'error');
+    } catch { showToast('Network error.', 'error'); }
+  };
+
+  const updateEscalation = async (id, status) => {
+    try {
+      const d = await apiFetch(`${API_BASE}/api/officer/escalations/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status })
+      }).then(r => r.json());
+      if (d.success) { showToast(`Escalation ${status}.`); fetchAll(); }
+      else showToast(d.message || d.detail || 'Failed.', 'error');
+    } catch { showToast('Network error.', 'error'); }
+  };
+
+  const deleteFeedback = async (id) => {
+    if (!window.confirm('Delete this feedback permanently?')) return;
+    try {
+      const d = await apiFetch(`${API_BASE}/api/officer/feedback/${id}`, {
+        method: 'DELETE'
+      }).then(r => r.json());
+      if (d.success) { showToast('Feedback deleted.'); fetchAll(); }
+      else showToast(d.message || d.detail || 'Failed.', 'error');
+    } catch { showToast('Network error.', 'error'); }
+  };
+
+  const openFlag = (targetType, targetId, label) =>
+    setFlagModal({ open: true, targetType, targetId, label, reason: '' });
+
   const exportCSV = () => {
     if (!stats) return;
     const rows = [
@@ -269,6 +354,7 @@ export default function OfficerDashboard() {
   const chartOpts      = { responsive: true, plugins: { legend: { position: 'bottom' } } };
 
   const openFeedbackCount = feedback.filter(f => f.feedback_status === 'open').length;
+  const openEscalationCount = escalations.filter(e => e.status === 'open').length;
 
   const filteredFeedback = feedback.filter(f =>
     fbFilter === 'all' ? true : f.feedback_status === fbFilter
@@ -341,18 +427,74 @@ export default function OfficerDashboard() {
         </div>
       )}
 
+      {/* Reject listing modal */}
+      {rejectModal.open && (
+        <div className="modal-overlay" onClick={() => setRejectModal({ open: false, listing: null, reason: '' })}>
+          <div className="modal-box" style={{ maxWidth: 480 }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Reject Listing</h2>
+              <button className="modal-close" onClick={() => setRejectModal({ open: false, listing: null, reason: '' })}>✕</button>
+            </div>
+            <div className="modal-body">
+              <p style={{ color: 'var(--text-secondary)', marginBottom: 12 }}>
+                Rejecting <strong>{rejectModal.listing?.food_name}</strong>. The donor will see this reason.
+              </p>
+              <textarea
+                rows={3}
+                value={rejectModal.reason}
+                onChange={e => setRejectModal(p => ({ ...p, reason: e.target.value }))}
+                placeholder="e.g., Expiry date too close, unclear photo, unsafe food type…"
+                className="ad-fb-textarea"
+              />
+              <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
+                <button className="btn btn-outline" onClick={() => setRejectModal({ open: false, listing: null, reason: '' })}>Cancel</button>
+                <button className="btn btn-primary" onClick={() => verifyListing(rejectModal.listing.id, 'reject', rejectModal.reason)}>Reject Listing</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Flag-to-admin modal */}
+      {flagModal.open && (
+        <div className="modal-overlay" onClick={() => setFlagModal({ open: false, targetType: null, targetId: null, label: '', reason: '' })}>
+          <div className="modal-box" style={{ maxWidth: 480 }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>🚩 Flag to Admin</h2>
+              <button className="modal-close" onClick={() => setFlagModal({ open: false, targetType: null, targetId: null, label: '', reason: '' })}>✕</button>
+            </div>
+            <div className="modal-body">
+              <p style={{ color: 'var(--text-secondary)', marginBottom: 12 }}>
+                Escalating <strong>{flagModal.label}</strong> ({flagModal.targetType} #{flagModal.targetId}) to the admin.
+              </p>
+              <textarea
+                rows={3}
+                value={flagModal.reason}
+                onChange={e => setFlagModal(p => ({ ...p, reason: e.target.value }))}
+                placeholder="Why does this need admin attention?"
+                className="ad-fb-textarea"
+              />
+              <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
+                <button className="btn btn-outline" onClick={() => setFlagModal({ open: false, targetType: null, targetId: null, label: '', reason: '' })}>Cancel</button>
+                <button className="btn btn-primary" onClick={createEscalation}>🚩 Send to Admin</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Sidebar ── */}
       <aside className="ad-sidebar">
         <div className="ad-sidebar__brand">
           <div className="ad-sidebar__brand-icon">🌿</div>
           <div>
             <div className="ad-sidebar__brand-name">Sharing Excess</div>
-            <div className="ad-sidebar__brand-sub">Admin Panel</div>
+            <div className="ad-sidebar__brand-sub">{isAdmin ? 'Admin Panel' : 'Officer Panel'}</div>
           </div>
         </div>
 
         <nav className="ad-sidebar__nav">
-          {NAV_ITEMS.map(({ key, icon, label }) => (
+          {NAV_ITEMS.filter(n => isAdmin || !n.adminOnly).map(({ key, icon, label }) => (
             <button
               key={key}
               className={`ad-sidebar__link${tab === key ? ' active' : ''}`}
@@ -363,6 +505,12 @@ export default function OfficerDashboard() {
               {key === 'feedback' && openFeedbackCount > 0 && (
                 <span className="ad-sidebar__badge">{openFeedbackCount}</span>
               )}
+              {key === 'verify' && pending.length > 0 && (
+                <span className="ad-sidebar__badge">{pending.length}</span>
+              )}
+              {key === 'escalations' && openEscalationCount > 0 && (
+                <span className="ad-sidebar__badge">{openEscalationCount}</span>
+              )}
             </button>
           ))}
         </nav>
@@ -370,8 +518,8 @@ export default function OfficerDashboard() {
         <div className="ad-sidebar__user">
           <div className="ad-sidebar__user-avatar">{initials}</div>
           <div className="ad-sidebar__user-info">
-            <div className="ad-sidebar__user-name">{adminUser.name || 'Admin'}</div>
-            <div className="ad-sidebar__user-role">Administrator</div>
+            <div className="ad-sidebar__user-name">{adminUser?.name || 'Staff'}</div>
+            <div className="ad-sidebar__user-role">{isAdmin ? 'Administrator' : 'Field Officer'}</div>
           </div>
         </div>
       </aside>
@@ -399,12 +547,16 @@ export default function OfficerDashboard() {
                     {[
                       { icon: '📬', value: requests.length,                                          label: 'Total Requests',   color: '#16a34a' },
                       { icon: '🍽️', value: listings.length,                                         label: 'Food Listings',    color: '#2563eb' },
-                      { icon: '👥', value: users.length,                                             label: 'Registered Users', color: '#7c3aed' },
-                      { icon: '💰', value: moneyDon.length,                                          label: 'Money Donations',  color: '#d97706' },
+                      { icon: '✅', value: pending.length,                                           label: 'Awaiting Review',  color: '#ea580c' },
+                      { icon: '🚩', value: openEscalationCount,                                      label: 'Open Escalations', color: '#dc2626' },
                       { icon: '📦', value: requests.filter(r => r.status === 'delivered').length,    label: 'Delivered',        color: '#059669' },
                       { icon: '⏳', value: requests.filter(r => r.status === 'pending').length,      label: 'Pending',          color: '#f59e0b' },
                       { icon: '💬', value: openFeedbackCount,                                        label: 'Open Feedback',    color: '#dc2626' },
-                      { icon: '💵', value: 'LKR ' + moneyDon.reduce((s, m) => s + Number(m.amount || 0), 0).toLocaleString(), label: 'Total Raised', color: '#0891b2' },
+                      ...(isAdmin ? [
+                        { icon: '👥', value: users.length,    label: 'Registered Users', color: '#7c3aed' },
+                        { icon: '💰', value: moneyDon.length, label: 'Money Donations',  color: '#d97706' },
+                        { icon: '💵', value: 'LKR ' + moneyDon.reduce((s, m) => s + Number(m.amount || 0), 0).toLocaleString(), label: 'Total Raised', color: '#0891b2' },
+                      ] : []),
                     ].map(s => (
                       <div key={s.label} className="dashboard-card stat-card">
                         <span className="stat-card__icon">{s.icon}</span>
@@ -438,6 +590,112 @@ export default function OfficerDashboard() {
                 </div>
               )}
 
+              {/* ═══ VERIFY LISTINGS ═════════════════════════════════════════════ */}
+              {tab === 'verify' && (
+                <div>
+                  {pending.length === 0 ? (
+                    <div className="dashboard-card" style={{ textAlign: 'center', padding: 40 }}>
+                      <div style={{ fontSize: 40, marginBottom: 8 }}>🎉</div>
+                      <p style={{ color: 'var(--text-secondary)' }}>No listings waiting for review. All caught up!</p>
+                    </div>
+                  ) : (
+                    <div className="ad-fb-list">
+                      {pending.map(l => (
+                        <div key={l.id} className="ad-fb-card">
+                          <div className="ad-fb-card__header">
+                            <div className="ad-fb-card__user">
+                              <div className="ad-fb-card__avatar">🍽️</div>
+                              <div>
+                                <div className="ad-fb-card__name">{l.food_name}</div>
+                                <div className="ad-fb-card__meta">
+                                  <span>{l.donor_name}</span>
+                                  <span>{l.quantity}</span>
+                                  {l.expiry_date && <span>Expires {l.expiry_date}</span>}
+                                  {l.location && <span>📍 {l.location}</span>}
+                                </div>
+                              </div>
+                            </div>
+                            <StatusBadge status="pending_review" />
+                          </div>
+                          {l.description && <p className="ad-fb-card__comment">{l.description}</p>}
+                          {l.image_path && (
+                            <img
+                              src={`${API_BASE.replace('/api', '')}/uploads/${l.image_path.split('/').pop()}`}
+                              alt={l.food_name}
+                              className="ad-fb-card__img"
+                            />
+                          )}
+                          <div className="ad-fb-card__actions">
+                            <button className="btn btn-sm ad-btn-success" onClick={() => verifyListing(l.id, 'approve')}>
+                              ✓ Approve
+                            </button>
+                            <button className="btn btn-sm ad-btn-danger" onClick={() => setRejectModal({ open: true, listing: l, reason: '' })}>
+                              ✕ Reject
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ═══ ESCALATIONS ═════════════════════════════════════════════════ */}
+              {tab === 'escalations' && (
+                <div>
+                  <p style={{ color: 'var(--text-secondary)', marginBottom: 16 }}>
+                    {isAdmin
+                      ? 'Issues flagged by officers. Take action or dismiss.'
+                      : 'Issues you have flagged to the admin.'}
+                  </p>
+                  {escalations.length === 0 ? (
+                    <div className="dashboard-card" style={{ textAlign: 'center', padding: 40 }}>
+                      <div style={{ fontSize: 40, marginBottom: 8 }}>🚩</div>
+                      <p style={{ color: 'var(--text-secondary)' }}>No escalations yet.</p>
+                    </div>
+                  ) : (
+                    <div className="ad-fb-list">
+                      {escalations.map(e => (
+                        <div key={e.id} className={`ad-fb-card${e.status !== 'open' ? ' resolved' : ''}`}>
+                          <div className="ad-fb-card__header">
+                            <div className="ad-fb-card__user">
+                              <div className="ad-fb-card__avatar">🚩</div>
+                              <div>
+                                <div className="ad-fb-card__name">
+                                  {e.target_type} #{e.target_id}
+                                </div>
+                                <div className="ad-fb-card__meta">
+                                  <span>Flagged by {e.officer_name || 'staff'}</span>
+                                  <span>{new Date(e.created_at).toLocaleDateString()}</span>
+                                </div>
+                              </div>
+                            </div>
+                            <StatusBadge status={e.status} />
+                          </div>
+                          <p className="ad-fb-card__comment">{e.reason}</p>
+                          {e.admin_note && (
+                            <div className="ad-fb-card__reply">
+                              <div className="ad-fb-card__reply-label">Admin note</div>
+                              <p>{e.admin_note}</p>
+                            </div>
+                          )}
+                          {isAdmin && e.status === 'open' && (
+                            <div className="ad-fb-card__actions">
+                              <button className="btn btn-sm ad-btn-success" onClick={() => updateEscalation(e.id, 'actioned')}>
+                                ✓ Mark Actioned
+                              </button>
+                              <button className="btn btn-sm ad-btn-warn" onClick={() => updateEscalation(e.id, 'dismissed')}>
+                                Dismiss
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* ═══ REQUESTS ════════════════════════════════════════════════════ */}
               {tab === 'requests' && (
                 <div className="od-table-wrap">
@@ -453,9 +711,14 @@ export default function OfficerDashboard() {
                           <td>{r.recipient_name}</td>
                           <td><EditableCell value={r.quantity} onSave={v => updateRequest(r.id, { quantity: v })} /></td>
                           <td>{r.location}</td>
-                          <td><EditableCell value={r.status} options={['pending','accepted','delivered','declined']} onSave={v => updateRequest(r.id, { status: v })} /></td>
+                          <td><EditableCell value={r.status} options={['pending','accepted','delivering','delivered','declined']} onSave={v => updateRequest(r.id, { status: v })} /></td>
                           <td>
-                            <button className="btn btn-sm ad-btn-danger" onClick={() => setConfirmDel({ type: 'request', id: r.id })}>Delete</button>
+                            <div style={{ display: 'flex', gap: 6 }}>
+                              {isAdmin && (
+                                <button className="btn btn-sm ad-btn-danger" onClick={() => setConfirmDel({ type: 'request', id: r.id })}>Delete</button>
+                              )}
+                              <button className="btn btn-sm ad-btn-warn" onClick={() => openFlag('request', r.id, r.food_name || r.food_item)}>🚩 Flag</button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -470,7 +733,7 @@ export default function OfficerDashboard() {
                 <div className="od-table-wrap">
                   <table className="od-table">
                     <thead>
-                      <tr><th>ID</th><th>Food Name</th><th>Donor</th><th>Qty</th><th>Expiry</th><th>Status</th><th>Actions</th></tr>
+                      <tr><th>ID</th><th>Food Name</th><th>Donor</th><th>Qty</th><th>Expiry</th><th>Status</th><th>Verification</th><th>Actions</th></tr>
                     </thead>
                     <tbody>
                       {listings.map(l => (
@@ -478,11 +741,21 @@ export default function OfficerDashboard() {
                           <td>{l.id}</td>
                           <td>{l.food_name}</td>
                           <td>{l.donor_name}</td>
-                          <td><EditableCell value={l.quantity} onSave={v => updateListing(l.id, { quantity: v })} /></td>
+                          <td>{isAdmin
+                            ? <EditableCell value={l.quantity} onSave={v => updateListing(l.id, { quantity: v })} />
+                            : l.quantity}</td>
                           <td>{l.expiry_date}</td>
-                          <td><EditableCell value={l.status} options={['available','claimed','expired']} onSave={v => updateListing(l.id, { status: v })} /></td>
+                          <td>{isAdmin
+                            ? <EditableCell value={l.status} options={['available','claimed','expired']} onSave={v => updateListing(l.id, { status: v })} />
+                            : <StatusBadge status={l.status} />}</td>
+                          <td><StatusBadge status={l.verification_status} /></td>
                           <td>
-                            <button className="btn btn-sm ad-btn-danger" onClick={() => setConfirmDel({ type: 'listing', id: l.id })}>Delete</button>
+                            <div style={{ display: 'flex', gap: 6 }}>
+                              {isAdmin && (
+                                <button className="btn btn-sm ad-btn-danger" onClick={() => setConfirmDel({ type: 'listing', id: l.id })}>Delete</button>
+                              )}
+                              <button className="btn btn-sm ad-btn-warn" onClick={() => openFlag('listing', l.id, l.food_name)}>🚩 Flag</button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -643,6 +916,16 @@ export default function OfficerDashboard() {
                             ) : (
                               <button className="btn btn-sm ad-btn-warn" onClick={() => reopenFeedback(f.id)}>
                                 ↺ Reopen
+                              </button>
+                            )}
+                            {isAdmin && (
+                              <button className="btn btn-sm ad-btn-danger" onClick={() => deleteFeedback(f.id)}>
+                                🗑 Delete
+                              </button>
+                            )}
+                            {!isAdmin && (
+                              <button className="btn btn-sm ad-btn-warn" onClick={() => openFlag('feedback', f.id, `feedback from ${f.recipient_name}`)}>
+                                🚩 Flag
                               </button>
                             )}
                           </div>

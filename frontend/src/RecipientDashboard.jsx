@@ -2,8 +2,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from './i18n/LanguageContext.jsx';
 import { useAuth } from './contexts/AuthContext.jsx';
 import { apiFetch } from './utils/api.js';
+import { parseApiErrors } from './utils/formErrors.js';
 import { API_BASE, APP_ROOT } from './config.js';
 import FeedbackForm from './components/FeedbackForm';
+import { SkeletonGrid } from './components/SkeletonCard.jsx';
 
 function Toast({ msg, type = 'success', onDone }) {
   useEffect(() => {
@@ -60,6 +62,7 @@ export default function RecipientDashboard() {
   const [customReq, setCustomReq] = useState({
     food_name: '', quantity: '', needed_by: '', location: ''
   });
+  const [formErrors, setFormErrors] = useState({});
 
   // Feedback
   const [feedbackFor, setFeedbackFor] = useState(null);
@@ -103,6 +106,7 @@ export default function RecipientDashboard() {
       fd.append('quantity', listing.quantity);
       fd.append('needed_by', new Date().toISOString().split('T')[0]);
       fd.append('location', user.location || '');
+      fd.append('listing_id', listing.id);
       const res = await apiFetch(`${API_BASE}/api/requests`, { method: 'POST', body: fd });
       const data = await res.json();
       if (res.ok && data.success) {
@@ -122,6 +126,7 @@ export default function RecipientDashboard() {
       showToast('Please log in as a recipient.', 'error');
       return;
     }
+    setFormErrors({});
     setFormLoading(true);
     try {
       const fd = new FormData();
@@ -136,9 +141,12 @@ export default function RecipientDashboard() {
         showToast('Custom request submitted!');
         setShowForm(false);
         setCustomReq({ food_name: '', quantity: '', needed_by: '', location: '' });
+        setFormErrors({});
         fetchAll();
       } else {
-        showToast(data.detail || data.message || 'Submission failed.', 'error');
+        const errs = parseApiErrors(data);
+        if (Object.keys(errs).length) setFormErrors(errs);
+        else showToast(data.detail || data.message || 'Submission failed.', 'error');
       }
     } catch {
       showToast('Network error.', 'error');
@@ -211,25 +219,29 @@ export default function RecipientDashboard() {
             <div className="form-row-2">
               <div className="form-group">
                 <label className="form-label">Food Item</label>
-                <input className="form-control" type="text" placeholder="What food do you need?"
-                  value={customReq.food_name} onChange={e => setCustomReq(p => ({ ...p, food_name: e.target.value }))} required />
+                <input className={`form-control${formErrors.food_name ? ' error' : ''}`} type="text" placeholder="What food do you need?"
+                  value={customReq.food_name} onChange={e => { setCustomReq(p => ({ ...p, food_name: e.target.value })); setFormErrors(p => ({ ...p, food_name: '' })); }} required />
+                {formErrors.food_name && <span className="form-error">{formErrors.food_name}</span>}
               </div>
               <div className="form-group">
                 <label className="form-label">Quantity</label>
-                <input className="form-control" type="text" placeholder="e.g. 5 kg"
-                  value={customReq.quantity} onChange={e => setCustomReq(p => ({ ...p, quantity: e.target.value }))} required />
+                <input className={`form-control${formErrors.quantity ? ' error' : ''}`} type="text" placeholder="e.g. 5 kg"
+                  value={customReq.quantity} onChange={e => { setCustomReq(p => ({ ...p, quantity: e.target.value })); setFormErrors(p => ({ ...p, quantity: '' })); }} required />
+                {formErrors.quantity && <span className="form-error">{formErrors.quantity}</span>}
               </div>
             </div>
             <div className="form-row-2">
               <div className="form-group">
                 <label className="form-label">Needed By</label>
-                <input className="form-control" type="date"
-                  value={customReq.needed_by} onChange={e => setCustomReq(p => ({ ...p, needed_by: e.target.value }))} required />
+                <input className={`form-control${formErrors.needed_by ? ' error' : ''}`} type="date"
+                  value={customReq.needed_by} onChange={e => { setCustomReq(p => ({ ...p, needed_by: e.target.value })); setFormErrors(p => ({ ...p, needed_by: '' })); }} required />
+                {formErrors.needed_by && <span className="form-error">{formErrors.needed_by}</span>}
               </div>
               <div className="form-group">
                 <label className="form-label">Delivery Location</label>
-                <input className="form-control" type="text" placeholder="City / District"
-                  value={customReq.location} onChange={e => setCustomReq(p => ({ ...p, location: e.target.value }))} required />
+                <input className={`form-control${formErrors.location ? ' error' : ''}`} type="text" placeholder="City / District"
+                  value={customReq.location} onChange={e => { setCustomReq(p => ({ ...p, location: e.target.value })); setFormErrors(p => ({ ...p, location: '' })); }} required />
+                {formErrors.location && <span className="form-error">{formErrors.location}</span>}
               </div>
             </div>
             <div className="dd-form-actions">
@@ -259,7 +271,7 @@ export default function RecipientDashboard() {
       </div>
 
       {loading ? (
-        <div className="dd-loading"><span className="dd-spinner" />Loading…</div>
+        <SkeletonGrid count={6} />
       ) : (
         <>
           {/* Available Listings */}

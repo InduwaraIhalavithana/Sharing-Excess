@@ -14,7 +14,7 @@ class User(Base):
     name              = Column(String(255), nullable=False)
     email             = Column(String(255), unique=True, nullable=False, index=True)
     password          = Column(String(255), nullable=False)
-    role              = Column(SAEnum("donor", "recipient", "officer", name="user_role"), nullable=False, default="recipient")
+    role              = Column(SAEnum("donor", "recipient", "officer", "admin", name="user_role"), nullable=False, default="recipient")
     phone_number      = Column(String(20), nullable=True)
     location          = Column(String(255), nullable=True)
     status            = Column(SAEnum("pending", "active", "suspended", name="user_status"), nullable=False, default="pending")
@@ -47,6 +47,9 @@ class FoodListing(Base):
     )
     accepted_by   = Column(String(255), nullable=True)
     requested_by  = Column(Integer, nullable=True)
+    # Officer verification gate: new listings wait for review before going public
+    verification_status = Column(String(20), nullable=False, server_default="pending_review")
+    rejection_reason    = Column(Text, nullable=True)
     created_at    = Column(DateTime, server_default=func.now())
 
     donor    = relationship("User", back_populates="listings", foreign_keys=[donor_id])
@@ -95,6 +98,22 @@ class Feedback(Base):
 
     recipient = relationship("User", back_populates="feedback")
     request   = relationship("FoodRequest", back_populates="feedback")
+
+
+class Escalation(Base):
+    __tablename__ = "escalations"
+
+    id          = Column(Integer, primary_key=True, index=True)
+    raised_by   = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    target_type = Column(String(20), nullable=False)   # "user" | "listing" | "request" | "feedback"
+    target_id   = Column(Integer, nullable=False)
+    reason      = Column(Text, nullable=False)
+    status      = Column(String(20), nullable=False, server_default="open")  # open | actioned | dismissed
+    admin_note  = Column(Text, nullable=True)
+    created_at  = Column(DateTime, server_default=func.now())
+    updated_at  = Column(DateTime, onupdate=func.now())
+
+    officer = relationship("User", foreign_keys=[raised_by])
 
 
 class MoneyDonation(Base):

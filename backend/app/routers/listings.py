@@ -23,6 +23,8 @@ def _listing_out(l: FoodListing) -> dict:
         "contact_email": l.contact_email,
         "image_path": l.image_path,
         "status": l.status,
+        "verification_status": l.verification_status,
+        "rejection_reason": l.rejection_reason,
         "accepted_by": l.accepted_by,
         "requested_by": l.requested_by,
         "created_at": l.created_at.isoformat() if l.created_at else None,
@@ -40,9 +42,14 @@ def get_listings(
 ):
     query = db.query(FoodListing)
     if donor_id:
+        # Donors see all their own listings, whatever the verification state
         query = query.filter(FoodListing.donor_id == donor_id)
     else:
-        query = query.filter(FoodListing.status == "available")
+        # Public browse shows only officer-approved, available listings
+        query = query.filter(
+            FoodListing.status == "available",
+            FoodListing.verification_status == "approved",
+        )
     if q:
         like = f"%{q}%"
         query = query.filter(
@@ -88,18 +95,23 @@ async def add_listing(
         contact_email=contact_email or None,
         image_path=image_path,
         status="available",
+        verification_status="pending_review",
     )
     db.add(listing)
     db.commit()
     db.refresh(listing)
-    return {"success": True, "message": "Listing added successfully", "listing": _listing_out(listing)}
+    return {"success": True,
+            "message": "Listing submitted — it will appear publicly once an officer approves it",
+            "listing": _listing_out(listing)}
 
 
 @router.delete("/{listing_id}")
-def delete_listing(listing_id: int, db: Session = Depends(get_db)):
+def delete_listing(listing_id: int, donor_id: Optional[int] = None, db: Session = Depends(get_db)):
     listing = db.query(FoodListing).filter(FoodListing.id == listing_id).first()
     if not listing:
         raise HTTPException(404, "Listing not found")
+    if donor_id is None or listing.donor_id != donor_id:
+        raise HTTPException(403, "You can only delete your own listings")
     db.delete(listing)
     db.commit()
     return {"success": True, "message": "Listing deleted"}
