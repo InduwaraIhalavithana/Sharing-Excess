@@ -50,11 +50,13 @@ export default function ImpactSection() {
   useEffect(() => {
     if (!sectionRef.current) return;
     const obs = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) setActive(true); },
-      { threshold: 0.25 }
+      ([entry]) => { if (entry.isIntersecting) { setActive(true); obs.disconnect(); } },
+      { threshold: 0.1 }
     );
     obs.observe(sectionRef.current);
-    return () => obs.disconnect();
+    // Fallback: never leave the counters stuck at 0 if the observer misses
+    const fallback = setTimeout(() => setActive(true), 2500);
+    return () => { obs.disconnect(); clearTimeout(fallback); };
   }, []);
 
   return (
