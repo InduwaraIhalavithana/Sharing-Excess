@@ -167,10 +167,25 @@ export default function Contact() {
           {/* Side panel */}
           <div className="contact-side">
             <div className="contact-side__map card">
-              <div className="contact-map-visual">
-                <div className="contact-map-pin">📍</div>
-                <p className="contact-map-label">Uva Wellassa University</p>
-                <p className="contact-map-sub">Badulla, Sri Lanka</p>
+              <iframe
+                title="Uva Wellassa University, Badulla — map"
+                className="contact-map-iframe"
+                src="https://www.openstreetmap.org/export/embed.html?bbox=81.0500%2C6.9600%2C81.1050%2C7.0050&layer=mapnik&marker=6.9825%2C81.0765"
+                loading="lazy"
+              />
+              <div className="contact-map-caption">
+                <span>📍</span>
+                <div>
+                  <p className="contact-map-label">Uva Wellassa University</p>
+                  <p className="contact-map-sub">Badulla, Sri Lanka</p>
+                </div>
+                <a
+                  href="https://www.openstreetmap.org/?mlat=6.9825&mlon=81.0765#map=14/6.9825/81.0765"
+                  target="_blank" rel="noopener noreferrer"
+                  className="contact-map-open"
+                >
+                  Open map ↗
+                </a>
               </div>
             </div>
 

@@ -39,6 +39,18 @@ export default function Donate() {
   });
   const [moneySuccess, setMoneySuccess] = useState(false);
 
+  // Recently shared listings — shown to signed-out visitors as social proof
+  const [recentListings, setRecentListings] = useState([]);
+  useEffect(() => {
+    if (user) return;
+    let cancelled = false;
+    fetch(`${API_BASE}/api/listings?limit=4`)
+      .then(r => r.json())
+      .then(d => { if (!cancelled && d.success) setRecentListings(d.listings || []); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [user]);
+
   const showToast = useCallback((msg, type = 'success') => setToast({ msg, type }), []);
 
   useEffect(() => {
@@ -187,15 +199,55 @@ export default function Donate() {
         {tab === 'food' && (
           <>
             {!user && (
-              <div className="donate-gate">
-                <p className="donate-gate__text">{t('donate', 'not_logged_in')}</p>
-                <button
-                  className="btn btn-primary"
-                  onClick={() => window.dispatchEvent(new Event('openLogin'))}
-                >
-                  Sign In
-                </button>
-              </div>
+              <>
+                <div className="donate-gate">
+                  <span className="donate-gate__icon" aria-hidden="true">🍱</span>
+                  <p className="donate-gate__text">{t('donate', 'not_logged_in')}</p>
+                  <p className="donate-gate__sub">
+                    Takes under a minute — list your surplus food, an officer verifies it,
+                    and a recipient nearby picks it up.
+                  </p>
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => window.dispatchEvent(new Event('openLogin'))}
+                  >
+                    Sign In
+                  </button>
+                </div>
+
+                {/* Impact explainer while signed out */}
+                <div className="donate-impact-row">
+                  {[
+                    { icon: '🥗', title: '1 listing', desc: 'can feed a family for a day' },
+                    { icon: '✅', title: 'Every item', desc: 'is safety-checked by a field officer' },
+                    { icon: '🚚', title: 'Same-day', desc: 'pickup coordinated for fresh food' },
+                    { icon: '📧', title: 'Full tracking', desc: 'email updates from listing to delivery' },
+                  ].map(c => (
+                    <div key={c.title} className="donate-impact-card card">
+                      <span className="donate-impact-card__icon">{c.icon}</span>
+                      <strong>{c.title}</strong>
+                      <p>{c.desc}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {recentListings.length > 0 && (
+                  <div className="donate-recent">
+                    <h3 className="donate-recent__title">🌾 Recently shared by donors</h3>
+                    <div className="donate-recent__grid">
+                      {recentListings.map(l => (
+                        <div key={l.id} className="donate-recent-card card">
+                          <span className="donate-recent-card__emoji">🍲</span>
+                          <div>
+                            <strong>{l.food_name}</strong>
+                            <p>📦 {l.quantity}{l.location ? ` · 📍 ${l.location}` : ''}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
             )}
 
             {user && String(user.role || '').toLowerCase() !== 'donor' && (

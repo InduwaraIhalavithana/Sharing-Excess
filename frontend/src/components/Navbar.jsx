@@ -7,10 +7,12 @@ import LoginModal from '../LoginModal.jsx';
 import SignupModal from './SignupModal.jsx';
 import ForgotPasswordModal from './ForgotPasswordModal.jsx';
 import VerificationModal from './VerificationModal.jsx';
+import { API_BASE } from '../config.js';
 import './Navbar.css';
 
 const LANG_LABELS = { en: 'EN', si: 'SI', ta: 'TA' };
 const LANGS = ['en', 'si', 'ta'];
+const NAV_ICONS = { '/': '🏠', '/about': '🌍', '/ngos': '🤝', '/donate': '🍽️', '/events': '📅', '/contact': '✉️', '/feedback': '💬' };
 
 export default function Navbar() {
   const { theme, toggleTheme } = useTheme();
@@ -22,6 +24,17 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [liveCount, setLiveCount] = useState(null);
+
+  // Live impact ticker — how many listings are open right now
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`${API_BASE}/api/listings?limit=1`)
+      .then(r => r.json())
+      .then(d => { if (!cancelled && d.success) setLiveCount(d.total ?? 0); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [location.pathname]);
 
   // Modal state
   const [showLogin, setShowLogin] = useState(false);
@@ -135,10 +148,19 @@ export default function Navbar() {
                 to={to}
                 className={`se-navbar__link${isActive(to) ? ' active' : ''}`}
               >
-                {label}
+                <span className="se-navbar__link-icon" aria-hidden="true">{NAV_ICONS[to]}</span>
+                <span className="se-navbar__link-label">{label}</span>
               </Link>
             ))}
           </nav>
+
+          {/* Live impact ticker */}
+          {liveCount !== null && liveCount > 0 && (
+            <Link to="/food-donations" className="se-navbar__ticker" title="Food available right now">
+              <span className="se-navbar__ticker-dot" aria-hidden="true" />
+              🍽️ {liveCount} listing{liveCount !== 1 ? 's' : ''} live
+            </Link>
+          )}
 
           {/* Right Controls */}
           <div className="se-navbar__controls">

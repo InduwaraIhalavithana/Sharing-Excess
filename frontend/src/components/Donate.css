@@ -107,11 +107,77 @@
   border-color: var(--clr-accent);
 }
 
+.donate-gate__icon { font-size: 2.75rem; }
+
 .donate-gate__text {
-  color: var(--text-secondary);
+  color: var(--text-primary);
+  font-weight: 700;
+  font-family: var(--font-sans);
   font-size: 1.0625rem;
   max-width: 480px;
 }
+
+.donate-gate__sub {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  max-width: 440px;
+  margin-top: -8px;
+  line-height: 1.6;
+}
+
+/* Impact explainer (signed-out) */
+.donate-impact-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.donate-impact-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+  padding: 22px 16px;
+  border-top: 4px solid var(--clr-primary);
+  transition: transform var(--t-base), box-shadow var(--t-base);
+}
+
+.donate-impact-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+.donate-impact-card__icon { font-size: 1.875rem; }
+.donate-impact-card strong { font-family: var(--font-sans); color: var(--clr-primary); font-size: 1.0625rem; }
+.donate-impact-card p { color: var(--text-muted); font-size: 0.875rem; margin: 0; }
+
+/* Recently shared feed (signed-out) */
+.donate-recent { margin-top: 28px; }
+
+.donate-recent__title {
+  font-family: var(--font-sans);
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 14px;
+  text-align: center;
+}
+
+.donate-recent__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.donate-recent-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-left: 4px solid var(--clr-primary);
+}
+
+.donate-recent-card__emoji { font-size: 1.625rem; }
+.donate-recent-card strong { display: block; font-family: var(--font-sans); font-size: 0.9375rem; color: var(--text-primary); }
+.donate-recent-card p { color: var(--text-muted); font-size: 0.8125rem; margin: 2px 0 0; }
 
 /* Food 2-column layout */
 .donate-food-layout {
