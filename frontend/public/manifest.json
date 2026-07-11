@@ -1,0 +1,15 @@
+{
+  "short_name": "Sharing Excess",
+  "name": "Sharing Excess — Food Redistribution Platform",
+  "icons": [
+    {
+      "src": "logo.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#16a34a",
+  "background_color": "#f0f6f1"
+}
