@@ -46,6 +46,14 @@ export default function DonorDashboard() {
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
   const [expanded, setExpanded] = useState({});
+  const [reqSearch, setReqSearch] = useState('');
+
+  // A pending request is urgent when it's needed within the next 3 days
+  const isUrgent = (req) => {
+    if (req.status !== 'pending' || !req.needed_by) return false;
+    const days = (new Date(req.needed_by) - new Date()) / 86400000;
+    return days >= -1 && days <= 3;
+  };
 
   const showToast = useCallback((msg, type = 'success') => {
     setToast({ msg, type });
@@ -159,6 +167,13 @@ export default function DonorDashboard() {
         <div>
           <h1 className="dd-title">{t('donor', 'dashboard_title')}</h1>
           <p className="dd-welcome">{t('donor', 'welcome')} <strong>{user?.name}</strong></p>
+          <div className="dd-header__chips">
+            <span className="dd-impact-chip">📦 {foodRequests.filter(r => r.status === 'delivered').length} delivered</span>
+            <span className="dd-impact-chip">🍽️ {totalListings} listing{totalListings !== 1 ? 's' : ''} shared</span>
+            {foodRequests.filter(isUrgent).length > 0 && (
+              <span className="dd-impact-chip">⚡ {foodRequests.filter(isUrgent).length} urgent request{foodRequests.filter(isUrgent).length !== 1 ? 's' : ''}</span>
+            )}
+          </div>
         </div>
         <Link to="/donate" className="btn btn-primary">
           + {t('donor', 'add_listing')}
@@ -196,14 +211,35 @@ export default function DonorDashboard() {
         <>
           {/* Incoming Requests Tab */}
           {tab === 'requests' && (
+            <>
+            <div className="dd-search-row">
+              <input
+                className="form-control"
+                type="text"
+                placeholder="Filter by food, recipient, location…"
+                value={reqSearch}
+                onChange={e => setReqSearch(e.target.value)}
+                style={{ maxWidth: 320 }}
+              />
+              {reqSearch && (
+                <button className="btn btn-outline btn-sm" onClick={() => setReqSearch('')}>✕ Clear</button>
+              )}
+            </div>
             <div className="cards-grid">
               {foodRequests.length === 0 ? (
                 <div className="dd-empty">
                   <span className="dd-empty__icon">📭</span>
                   <p>{t('donor', 'no_requests')}</p>
                 </div>
-              ) : foodRequests.map(req => (
-                <div key={req.id} className="dashboard-card">
+              ) : foodRequests
+                  .filter(req => {
+                    if (!reqSearch) return true;
+                    const q = reqSearch.toLowerCase();
+                    return [req.food_item, req.recipient_name, req.location]
+                      .some(v => (v || '').toLowerCase().includes(q));
+                  })
+                  .map(req => (
+                <div key={req.id} className={`dashboard-card dd-status-${req.status}`}>
                   <div className="dd-card-top">
                     {req.image_path && (
                       <img
@@ -214,7 +250,10 @@ export default function DonorDashboard() {
                       />
                     )}
                     <div className="dd-card-info">
-                      <div className="dd-card-title">{req.food_item}</div>
+                      <div className="dd-card-title">
+                        {req.food_item}
+                        {isUrgent(req) && <span className="dd-urgent-chip">⚡ urgent</span>}
+                      </div>
                       <p className="dd-card-meta">👤 {req.recipient_name}</p>
                       <p className="dd-card-meta">📦 {req.quantity}</p>
                       <p className="dd-card-meta">📍 {req.location}</p>
@@ -258,6 +297,7 @@ export default function DonorDashboard() {
                 </div>
               ))}
             </div>
+            </>
           )}
 
           {/* My Listings Tab */}

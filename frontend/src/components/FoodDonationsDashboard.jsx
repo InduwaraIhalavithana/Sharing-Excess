@@ -1,146 +1,139 @@
-import React, { useEffect, useState } from 'react';
-import { API_BASE } from '../config.js';
+import { useEffect, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext.jsx';
+import { API_BASE, APP_ROOT } from '../config.js';
+import { SkeletonGrid } from './SkeletonCard.jsx';
 
-function FoodDonationsDashboard() {
+export default function FoodDonationsDashboard() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [donations, setDonations] = useState([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [search, setSearch] = useState('');
 
-  useEffect(() => {
-    fetchDonations();
-  }, []);
-
-  const fetchDonations = async () => {
+  const fetchDonations = useCallback(async (q = '') => {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch(`${API_BASE}/api/listings`);
+      const response = await fetch(`${API_BASE}/api/listings${q ? `?q=${encodeURIComponent(q)}` : ''}`);
       const data = await response.json();
       if (data.success) {
-        setDonations(data.listings);
+        setDonations(data.listings || []);
+        setTotal(data.total ?? (data.listings || []).length);
       } else {
         setError(data.message || 'Failed to fetch food donations');
       }
-    } catch (err) {
+    } catch {
       setError('Network error. Please try again.');
     }
     setLoading(false);
+  }, []);
+
+  useEffect(() => { fetchDonations(); }, [fetchDonations]);
+
+  const handleRequest = () => {
+    if (!user) { window.dispatchEvent(new Event('openLogin')); return; }
+    const role = String(user.role || '').toLowerCase();
+    if (role === 'recipient') navigate('/recipient-dashboard');
+    else navigate('/donate');
   };
 
   return (
-    <div className="dashboard-container" style={{
-      backgroundImage: "url(/background.jpg)",
-      backgroundSize: "cover",
-      backgroundPosition: "center",
-      backgroundRepeat: "no-repeat",
-      minHeight: "100vh"
-    }}>
-      <h2 style={{
-        color: '#000',
-        textShadow: '2px 2px 8px rgba(255,255,255,0.8)',
-        fontFamily: "'Montserrat', sans-serif",
-        fontSize: '2.5rem',
-        fontWeight: '900',
-        marginBottom: '30px',
-        textAlign: 'center'
-      }}>
-        Food Donations
-      </h2>
-      <div className="dashboard-header" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, marginBottom: 24 }}>
-        <p style={{
-          color: '#000',
-          textShadow: '1px 1px 6px rgba(255,255,255,0.8)',
-          fontFamily: "'Montserrat', sans-serif",
-          fontSize: '1.1rem',
-          margin: 0
-        }}>
-          Browse all food donations from our generous donors
+    <div className="fd-page">
+      {/* Hero */}
+      <div className="fd-hero">
+        <h1 className="fd-hero__title">🍽️ Available Food Donations</h1>
+        <p className="fd-hero__sub">
+          Browse surplus food shared by our generous donors — every listing verified by a field officer.
         </p>
-        <button onClick={fetchDonations} className="refresh-btn" style={{ background: '#28a745', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 24px', fontSize: 16, fontWeight: 700, fontFamily: "'Montserrat', sans-serif", boxShadow: '0 2px 8px rgba(40,167,69,0.15)', cursor: 'pointer' }}>
-          <span>🔄</span> Refresh
-        </button>
+        <div className="fd-hero__stats">
+          <span className="fd-hero__chip">
+            <span className="fd-hero__pulse" aria-hidden="true" /> {total} listing{total !== 1 ? 's' : ''} available now
+          </span>
+        </div>
       </div>
-      {loading ? (
-        <div className="loading" style={{ textAlign: 'center', color: '#000', fontSize: '1.2rem', padding: '40px', fontFamily: "'Montserrat', sans-serif", textShadow: '1px 1px 6px rgba(255,255,255,0.8)' }}>
-          Loading food donations...
+
+      <div className="fd-body">
+        {/* Toolbar */}
+        <div className="fd-toolbar">
+          <input
+            className="form-control fd-search"
+            type="text"
+            placeholder="Search food, location…"
+            value={search}
+            onChange={e => { setSearch(e.target.value); fetchDonations(e.target.value); }}
+          />
+          {search && (
+            <button className="btn btn-outline btn-sm" onClick={() => { setSearch(''); fetchDonations(''); }}>
+              ✕ Clear
+            </button>
+          )}
+          <button className="btn btn-outline btn-sm fd-refresh" onClick={() => fetchDonations(search)}>
+            ↻ Refresh
+          </button>
         </div>
-      ) : error ? (
-        <div className="error-message" style={{ textAlign: 'center', color: '#dc3545', background: 'rgba(255, 255, 255, 0.9)', padding: '20px', borderRadius: '12px', border: '1px solid #fed7d7', margin: '20px', fontSize: '1.1rem', fontFamily: "'Montserrat', sans-serif" }}>
-          {error}
-        </div>
-      ) : donations.length === 0 ? (
-        <div className="no-requests" style={{ background: 'rgba(255, 255, 255, 0.9)', borderRadius: '12px', boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)', margin: '20px', padding: '40px', textAlign: 'center', color: '#000', fontFamily: "'Montserrat', sans-serif" }}>
-          <p style={{ margin: '10px 0', fontSize: '1.1rem', color: '#000', fontFamily: "'Montserrat', sans-serif" }}>
-            No food donations available at the moment.
-          </p>
-          <p style={{ margin: '10px 0', fontSize: '1.1rem', color: '#000', fontFamily: "'Montserrat', sans-serif" }}>
-            Check back later for new donations.
-          </p>
-        </div>
-      ) : (
-        <div className="dashboard-listings" style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-          gap: '24px',
-          margin: '0 24px'
-        }}>
-          {donations.map((donation) => (
-            <div key={donation.id} className="dashboard-card" style={{
-              background: 'rgba(255, 255, 255, 0.95)',
-              borderRadius: '16px',
-              padding: '1.5rem',
-              boxShadow: '0 4px 24px rgba(40, 167, 69, 0.10)',
-              border: '2px solid #28a745',
-              fontFamily: "'Montserrat', sans-serif",
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              minHeight: 300
-            }}>
-              {donation.image_path && (
-                <div style={{ 
-                  width: '100%', 
-                  height: '180px', 
-                  borderRadius: '12px', 
-                  overflow: 'hidden',
-                  marginBottom: '1rem',
-                  border: '1px solid #e0e0e0'
-                }}>
-                  <img 
-                    src={donation.image_path} 
-                    alt={donation.food_name}
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      objectPosition: 'center'
-                    }}
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = '/placeholder-food.jpg'; // Fallback image if the original fails to load
-                    }}
+
+        {loading ? (
+          <SkeletonGrid count={6} />
+        ) : error ? (
+          <div className="dd-empty">
+            <span className="dd-empty__icon">⚠️</span>
+            <p>{error}</p>
+            <button className="btn btn-primary btn-sm" onClick={() => fetchDonations(search)}>Try again</button>
+          </div>
+        ) : donations.length === 0 ? (
+          <div className="dd-empty">
+            <span className="dd-empty__icon">🌾</span>
+            <p>{search ? `No donations match "${search}".` : 'All current donations have been claimed — check back soon!'}</p>
+            {!search && (
+              <button className="btn btn-primary btn-sm" onClick={() => navigate('/donate')}>
+                🍱 Be the first donor
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="cards-grid">
+            {donations.map(d => (
+              <div key={d.id} className="dashboard-card fd-card">
+                {d.image_path && (
+                  <img
+                    className="dd-listing-img"
+                    src={`${APP_ROOT}${d.image_path}`}
+                    alt={d.food_name}
+                    onError={e => { e.target.style.display = 'none'; }}
                   />
+                )}
+                <div className="dd-card-top">
+                  <div className="dd-card-info">
+                    <div className="dd-card-title">{d.food_name}</div>
+                    <p className="dd-card-meta">📦 {d.quantity}</p>
+                    {d.expiry_date && <p className="dd-card-meta">📅 Best before {d.expiry_date}</p>}
+                    {d.location && <p className="dd-card-meta">📍 {d.location}</p>}
+                    <p className="dd-card-meta">🤝 {d.donor_name || 'Anonymous donor'}</p>
+                    {d.description && <p className="dd-card-meta fd-card__desc">{d.description}</p>}
+                  </div>
+                  <span className="badge badge-green">available</span>
                 </div>
-              )}
-              <div className="food-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                <strong className="food-name" style={{ color: '#000', fontFamily: "'Montserrat', sans-serif", fontSize: '1.2rem' }}>{donation.food_name}</strong>
-                <span className="quantity-badge" style={{ color: '#28a745', background: 'rgba(40, 167, 69, 0.12)', fontWeight: 700, borderRadius: 8, padding: '4px 12px', fontSize: 15 }}>{donation.quantity}</span>
+                <div className="dd-card-actions">
+                  <button className="btn btn-primary btn-sm" onClick={handleRequest}>
+                    📦 Request this
+                  </button>
+                  {d.location && (
+                    <button
+                      className="btn btn-outline btn-sm"
+                      onClick={() => window.open(`https://maps.google.com/?q=${encodeURIComponent(d.location)}`, '_blank')}
+                    >
+                      🗺️ Map
+                    </button>
+                  )}
+                </div>
               </div>
-              <div className="food-details" style={{ marginBottom: 12 }}>
-                <div className="detail-item"><span className="detail-label" style={{ color: '#000', fontWeight: 600 }}>📅 Expiry:</span> <span className="detail-value" style={{ color: '#000' }}>{donation.expiry_date}</span></div>
-                <div className="detail-item"><span className="detail-label" style={{ color: '#000', fontWeight: 600 }}>📍 Location:</span> <span className="detail-value" style={{ color: '#000' }}>{donation.location}</span></div>
-                <div className="detail-item"><span className="detail-label" style={{ color: '#000', fontWeight: 600 }}>🗓️ Listed:</span> <span className="detail-value" style={{ color: '#000' }}>{new Date(donation.created_at).toLocaleDateString()}</span></div>
-                <div className="detail-item"><span className="detail-label" style={{ color: '#000', fontWeight: 600 }}>👤 Donor:</span> <span className="detail-value" style={{ color: '#000' }}>{donation.donor_name}</span></div>
-                {donation.description && <div className="detail-item"><span className="detail-label" style={{ color: '#000', fontWeight: 600 }}>📝 Description:</span> <span className="detail-value" style={{ color: '#000' }}>{donation.description}</span></div>}
-                {donation.contact_phone && <div className="detail-item"><span className="detail-label" style={{ color: '#000', fontWeight: 600 }}>📞 Contact:</span> <span className="detail-value" style={{ color: '#000' }}>{donation.contact_phone}</span></div>}
-                {donation.contact_email && <div className="detail-item"><span className="detail-label" style={{ color: '#000', fontWeight: 600 }}>✉️ Email:</span> <span className="detail-value" style={{ color: '#000' }}>{donation.contact_email}</span></div>}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
-
-export default FoodDonationsDashboard; 
