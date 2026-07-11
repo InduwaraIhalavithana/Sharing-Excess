@@ -31,7 +31,13 @@ def _unique_email(role: str) -> str:
 
 @pytest.fixture(scope="session")
 def client():
-    with patch("app.utils.email.send_email", return_value=True):
+    # Each router does `from app.utils.email import send_email`, binding its
+    # own local reference at import time — patching app.utils.email.send_email
+    # alone would NOT intercept those calls. Patch every router's local name.
+    with patch("app.routers.auth.send_email", return_value=True), \
+         patch("app.routers.requests.send_email", return_value=True), \
+         patch("app.routers.donations.send_email", return_value=True), \
+         patch("app.routers.contact.send_email", return_value=True):
         with TestClient(app) as c:
             yield c
 
