@@ -338,7 +338,7 @@ export default function RecipientDashboard() {
                   <p>{t('recipient', 'no_requests')}</p>
                 </div>
               ) : myRequests.map(req => (
-                <div key={req.id} className="dashboard-card">
+                <div key={req.id} className={`dashboard-card dd-status-${req.status}`}>
                   <div className="dd-card-top">
                     <div className="dd-card-info">
                       <div className="dd-card-title">{req.food_name || req.food_item}</div>

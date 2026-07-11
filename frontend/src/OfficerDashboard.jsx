@@ -356,6 +356,29 @@ export default function OfficerDashboard() {
   const openFeedbackCount = feedback.filter(f => f.feedback_status === 'open').length;
   const openEscalationCount = escalations.filter(e => e.status === 'open').length;
 
+  // Merge the latest platform events into one activity feed
+  const recentActivity = [
+    ...requests.map(r => ({
+      key: `req-${r.id}`, icon: '📬', when: r.created_at, status: r.status,
+      text: `${r.recipient_name || 'A recipient'} requested ${r.food_name || r.food_item}`,
+    })),
+    ...listings.map(l => ({
+      key: `list-${l.id}`, icon: '🍽️', when: l.created_at, status: l.verification_status || l.status,
+      text: `${l.donor_name || 'A donor'} listed ${l.food_name}`,
+    })),
+    ...feedback.map(f => ({
+      key: `fb-${f.id}`, icon: '💬', when: f.created_at, status: f.feedback_status,
+      text: `${f.recipient_name || 'Someone'} left feedback${f.rating ? ` (${'⭐'.repeat(Math.min(f.rating, 5))})` : ''}`,
+    })),
+    ...escalations.map(e => ({
+      key: `esc-${e.id}`, icon: '🚩', when: e.created_at, status: e.status,
+      text: `${e.officer_name || 'An officer'} flagged ${e.target_type} #${e.target_id}`,
+    })),
+  ]
+    .filter(a => a.when)
+    .sort((a, b) => new Date(b.when) - new Date(a.when))
+    .slice(0, 8);
+
   const filteredFeedback = feedback.filter(f =>
     fbFilter === 'all' ? true : f.feedback_status === fbFilter
   );
@@ -586,6 +609,27 @@ export default function OfficerDashboard() {
                         <Line data={{ labels: distLabels, datasets: [{ label: 'Distributions', data: distLabels.map(m => distByMonth[m]), borderColor: '#16a34a', backgroundColor: 'rgba(22,163,74,0.12)', fill: true, tension: 0.4 }] }} options={chartOpts} />
                       ) : <p className="dd-empty-sm">No accepted distributions yet.</p>}
                     </div>
+                  </div>
+
+                  {/* Recent activity feed */}
+                  <div className="ad-activity">
+                    <h3 className="od-chart-title">🕐 Recent Activity</h3>
+                    {recentActivity.length === 0 ? (
+                      <p className="dd-empty-sm">No activity yet.</p>
+                    ) : (
+                      <div className="ad-activity__list">
+                        {recentActivity.map(a => (
+                          <div key={a.key} className="ad-activity__item">
+                            <span className="ad-activity__icon">{a.icon}</span>
+                            <div className="ad-activity__text">
+                              <span>{a.text}</span>
+                              <small>{a.when ? new Date(a.when).toLocaleString() : ''}</small>
+                            </div>
+                            <StatusBadge status={a.status} />
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
