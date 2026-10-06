@@ -7,7 +7,7 @@ import LoginModal from '../LoginModal.jsx';
 import SignupModal from './SignupModal.jsx';
 import ForgotPasswordModal from './ForgotPasswordModal.jsx';
 import VerificationModal from './VerificationModal.jsx';
-import { API_BASE } from '../config';
+import { usePublicStats } from '../hooks/queries';
 import './Navbar.css';
 
 const LANG_LABELS = { en: 'EN', si: 'SI', ta: 'TA' };
@@ -24,17 +24,9 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [liveCount, setLiveCount] = useState(null);
-
-  // Live impact ticker — how many listings are open right now
-  useEffect(() => {
-    let cancelled = false;
-    fetch(`${API_BASE}/api/listings?limit=1`)
-      .then(r => r.json())
-      .then(d => { if (!cancelled && d.success) setLiveCount(d.total ?? 0); })
-      .catch(() => {});
-    return () => { cancelled = true; };
-  }, [location.pathname]);
+  // Live impact ticker - how many listings are open right now
+  const { data: stats } = usePublicStats();
+  const liveCount = stats?.listings_available ?? null;
 
   // Modal state
   const [showLogin, setShowLogin] = useState(false);

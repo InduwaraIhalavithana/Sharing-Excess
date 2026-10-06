@@ -2,7 +2,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from './i18n/LanguageContext';
 import { useAuth } from './contexts/AuthContext';
-import { apiFetch } from './utils/api';
+import {
+  useDonorRequests, useMyListings, useRespondToRequest, useUpdateRequestStatus, useDeleteListing,
+} from './hooks/queries';
 import { API_BASE, APP_ROOT } from './config';
 import { SkeletonGrid } from './components/SkeletonCard.jsx';
 import Toast from './components/Toast';
@@ -32,12 +34,19 @@ export default function DonorDashboard() {
   const { t } = useLanguage();
   const { user } = useAuth();
   const [tab, setTab] = useState('requests');
-  const [foodRequests, setFoodRequests] = useState([]);
-  const [myDonations, setMyDonations] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
   const [expanded, setExpanded] = useState({});
   const [reqSearch, setReqSearch] = useState('');
+
+  const requestsQ = useDonorRequests(!!user);
+  const listingsQ = useMyListings(user?.id);
+  const respond = useRespondToRequest();
+  const updateStatus = useUpdateRequestStatus();
+  const removeListing = useDeleteListing();
+
+  const foodRequests = requestsQ.data?.requests ?? [];
+  const myDonations = listingsQ.data?.listings ?? [];
+  const loading = requestsQ.isPending || listingsQ.isPending;
 
   // A pending request is urgent when it's needed within the next 3 days
   const isUrgent = (req) => {
@@ -50,84 +59,35 @@ export default function DonorDashboard() {
     setToast({ msg, type });
   }, []);
 
-  const fetchAll = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [reqRes, donRes] = await Promise.all([
-        apiFetch(`${API_BASE}/api/requests?donor_view=true`).then(r => r.json()),
-        apiFetch(`${API_BASE}/api/listings?donor_id=${user?.id}`).then(r => r.json()),
-      ]);
-      if (reqRes.success) setFoodRequests(reqRes.requests || []);
-      if (donRes.success) setMyDonations(donRes.listings || []);
-    } catch {
-      showToast('Failed to load data.', 'error');
-    }
-    setLoading(false);
-  }, [user, showToast]);
+  useEffect(() => {
+    if (requestsQ.isError || listingsQ.isError) showToast('Failed to load data.', 'error');
+  }, [requestsQ.isError, listingsQ.isError, showToast]);
 
-  useEffect(() => { fetchAll(); }, [fetchAll]);
+  const fetchAll = () => { requestsQ.refetch(); listingsQ.refetch(); };
 
-  const handleRespond = async (requestId, status) => {
+  const run = async (action, okMessage) => {
     try {
-      const res = await apiFetch(`${API_BASE}/api/requests/${requestId}/respond`, {
-        method: 'PUT',
-        body: JSON.stringify({
-          request_id: requestId,
-          status,
-          user_id: user?.id || 0,
-          user_name: user?.name || ''
-        })
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        showToast(`Request ${status} successfully!`);
-        fetchAll();
-      } else {
-        showToast(data.detail || data.message || 'Action failed.', 'error');
-      }
-    } catch {
-      showToast('Network error.', 'error');
+      await action();
+      showToast(okMessage);
+    } catch (err) {
+      showToast(err.message || 'Action failed.', 'error');
     }
   };
+
+  const handleRespond = (requestId, status) =>
+    run(() => respond.mutateAsync({ requestId, status }), `Request ${status} successfully!`);
 
   const handleShareFeedback = () => {
     showToast('Feedback is visible on the community feedback page.');
   };
 
-  const handleMarkDelivered = async (requestId) => {
-    try {
-      const res = await apiFetch(`${API_BASE}/api/requests/${requestId}/status`, {
-        method: 'PUT',
-        body: JSON.stringify({ request_id: requestId, status: 'delivered' })
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        showToast('Marked as delivered — the recipient has been notified!');
-        fetchAll();
-      } else {
-        showToast(data.detail || data.message || 'Action failed.', 'error');
-      }
-    } catch {
-      showToast('Network error.', 'error');
-    }
-  };
+  const handleMarkDelivered = (requestId) =>
+    run(() => updateStatus.mutateAsync({ requestId, status: 'delivered' }),
+        'Marked as delivered — the recipient has been notified!');
 
-  const handleDeleteListing = async (listing) => {
+  const handleDeleteListing = (listing) => {
     if (!window.confirm(`Delete "${listing.food_name}"? This cannot be undone.`)) return;
-    try {
-      const res = await apiFetch(`${API_BASE}/api/listings/${listing.id}?donor_id=${user?.id}`, {
-        method: 'DELETE'
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        showToast('Listing deleted.');
-        fetchAll();
-      } else {
-        showToast(data.detail || data.message || 'Delete failed.', 'error');
-      }
-    } catch {
-      showToast('Network error.', 'error');
-    }
+    return run(() => removeListing.mutateAsync(listing.id), 'Listing deleted.');
   };
 
   // Stats

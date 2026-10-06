@@ -1,9 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from './i18n/LanguageContext';
 import { useAuth } from './contexts/AuthContext';
-import { apiFetch } from './utils/api';
 import { parseApiErrors } from './utils/formErrors';
-import { API_BASE, APP_ROOT } from './config';
+import { APP_ROOT } from './config';
+import { useDebounced } from './hooks/useDebounced';
+import {
+  usePublicListings, useMyRequests, useCreateWithForm, useDeleteRequest,
+} from './hooks/queries';
 import FeedbackForm from './components/FeedbackForm';
 import { SkeletonGrid } from './components/SkeletonCard.jsx';
 import Toast from './components/Toast';
@@ -44,14 +47,10 @@ export default function RecipientDashboard() {
   const { user } = useAuth();
 
   const [tab, setTab] = useState('available');
-  const [foodListings, setFoodListings] = useState([]);
-  const [myRequests, setMyRequests] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
 
   // Custom request form
   const [showForm, setShowForm] = useState(false);
-  const [formLoading, setFormLoading] = useState(false);
   const [customReq, setCustomReq] = useState({
     food_name: '', quantity: '', needed_by: '', location: ''
   });
@@ -60,32 +59,29 @@ export default function RecipientDashboard() {
   // Feedback
   const [feedbackFor, setFeedbackFor] = useState(null);
 
-  // Search
+  // Search (debounced so we don't hit the API on every keystroke)
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounced(search, 300);
+
+  const listingsQ = usePublicListings({ q: debouncedSearch, limit: 50 });
+  const requestsQ = useMyRequests(user?.id);
+  const createRequest = useCreateWithForm('/api/requests');
+  const removeRequest = useDeleteRequest();
+
+  const foodListings = listingsQ.data?.listings ?? [];
+  const myRequests = requestsQ.data?.requests ?? [];
+  const loading = listingsQ.isPending || requestsQ.isPending;
+  const formLoading = createRequest.isPending;
 
   const showToast = useCallback((msg, type = 'success') => {
     setToast({ msg, type });
   }, []);
 
-  const fetchAll = useCallback(async (searchVal = search) => {
-    setLoading(true);
-    try {
-      const listingUrl = searchVal
-        ? `${API_BASE}/api/listings?q=${encodeURIComponent(searchVal)}`
-        : `${API_BASE}/api/listings`;
-      const [listRes, reqRes] = await Promise.all([
-        apiFetch(listingUrl).then(r => r.json()),
-        user ? apiFetch(`${API_BASE}/api/requests?recipient_id=${user.id}`).then(r => r.json()) : Promise.resolve({ success: true, requests: [] }),
-      ]);
-      if (listRes.success) setFoodListings(listRes.listings || []);
-      if (reqRes.success) setMyRequests(reqRes.requests || []);
-    } catch {
-      showToast('Failed to load data.', 'error');
-    }
-    setLoading(false);
-  }, [user, showToast]);
+  useEffect(() => {
+    if (listingsQ.isError || requestsQ.isError) showToast('Failed to load data.', 'error');
+  }, [listingsQ.isError, requestsQ.isError, showToast]);
 
-  useEffect(() => { fetchAll(); }, [fetchAll]);
+  const fetchAll = () => { listingsQ.refetch(); requestsQ.refetch(); };
 
   const handleRequestListing = async (listing) => {
     if (!user || user.role !== 'recipient') {
@@ -99,16 +95,10 @@ export default function RecipientDashboard() {
       fd.append('needed_by', new Date().toISOString().split('T')[0]);
       fd.append('location', user.location || '');
       fd.append('listing_id', listing.id);
-      const res = await apiFetch(`${API_BASE}/api/requests`, { method: 'POST', body: fd });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        showToast('Food request submitted!');
-        fetchAll();
-      } else {
-        showToast(data.detail || data.message || 'Request failed.', 'error');
-      }
-    } catch {
-      showToast('Network error.', 'error');
+      await createRequest.mutateAsync(fd);
+      showToast('Food request submitted!');
+    } catch (err) {
+      showToast(err.message || 'Request failed.', 'error');
     }
   };
 
@@ -119,44 +109,29 @@ export default function RecipientDashboard() {
       return;
     }
     setFormErrors({});
-    setFormLoading(true);
     try {
       const fd = new FormData();
       fd.append('food_name', customReq.food_name);
       fd.append('quantity', customReq.quantity);
       fd.append('needed_by', customReq.needed_by);
       fd.append('location', customReq.location);
-      const res = await apiFetch(`${API_BASE}/api/requests`, { method: 'POST', body: fd });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        showToast('Custom request submitted!');
-        setShowForm(false);
-        setCustomReq({ food_name: '', quantity: '', needed_by: '', location: '' });
-        setFormErrors({});
-        fetchAll();
-      } else {
-        const errs = parseApiErrors(data);
-        if (Object.keys(errs).length) setFormErrors(errs);
-        else showToast(data.detail || data.message || 'Submission failed.', 'error');
-      }
-    } catch {
-      showToast('Network error.', 'error');
+      await createRequest.mutateAsync(fd);
+      showToast('Custom request submitted!');
+      setShowForm(false);
+      setCustomReq({ food_name: '', quantity: '', needed_by: '', location: '' });
+    } catch (err) {
+      const errs = parseApiErrors(err.body);
+      if (Object.keys(errs).length && !errs._) setFormErrors(errs);
+      else showToast(err.message || 'Submission failed.', 'error');
     }
-    setFormLoading(false);
   };
 
   const handleDeleteRequest = async (requestId) => {
     try {
-      const res = await apiFetch(`${API_BASE}/api/requests/${requestId}`, { method: 'DELETE' });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setMyRequests(p => p.filter(r => r.id !== requestId));
-        showToast('Request deleted.');
-      } else {
-        showToast(data.detail || data.message || 'Delete failed.', 'error');
-      }
-    } catch {
-      showToast('Network error.', 'error');
+      await removeRequest.mutateAsync(requestId);
+      showToast('Request deleted.');
+    } catch (err) {
+      showToast(err.message || 'Delete failed.', 'error');
     }
   };
 
@@ -274,11 +249,11 @@ export default function RecipientDashboard() {
                   type="text"
                   placeholder="Search food name, location…"
                   value={search}
-                  onChange={e => { setSearch(e.target.value); fetchAll(e.target.value); }}
+                  onChange={e => setSearch(e.target.value)}
                   style={{ maxWidth: 320 }}
                 />
                 {search && (
-                  <button className="btn btn-outline btn-sm" onClick={() => { setSearch(''); fetchAll(''); }}>
+                  <button className="btn btn-outline btn-sm" onClick={() => setSearch('')}>
                     ✕ Clear
                   </button>
                 )}

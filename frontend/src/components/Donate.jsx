@@ -6,6 +6,7 @@ import { API_BASE } from '../config';
 import './Donate.css';
 import Toast from './Toast';
 import { apiFetch } from '../utils/api';
+import { usePublicListings } from '../hooks/queries';
 
 const PRESET_AMOUNTS = [6000, 4000, 3500, 3000, 2500, 2000];
 
@@ -34,16 +35,8 @@ export default function Donate() {
   const [moneySuccess, setMoneySuccess] = useState(false);
 
   // Recently shared listings — shown to signed-out visitors as social proof
-  const [recentListings, setRecentListings] = useState([]);
-  useEffect(() => {
-    if (user) return;
-    let cancelled = false;
-    fetch(`${API_BASE}/api/listings?limit=4`)
-      .then(r => r.json())
-      .then(d => { if (!cancelled && d.success) setRecentListings(d.listings || []); })
-      .catch(() => {});
-    return () => { cancelled = true; };
-  }, [user]);
+  const recentQ = usePublicListings({ limit: 4 });
+  const recentListings = user ? [] : (recentQ.data?.listings ?? []);
 
   const showToast = useCallback((msg, type = 'success') => setToast({ msg, type }), []);
 
