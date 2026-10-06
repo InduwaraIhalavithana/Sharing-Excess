@@ -1,20 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { useLanguage } from './i18n/LanguageContext.jsx';
-import { useAuth } from './contexts/AuthContext.jsx';
-import { apiFetch } from './utils/api.js';
-import { API_BASE, APP_ROOT } from './config.js';
+import { useLanguage } from './i18n/LanguageContext';
+import { useAuth } from './contexts/AuthContext';
+import { apiFetch } from './utils/api';
+import { API_BASE, APP_ROOT } from './config';
 import { SkeletonGrid } from './components/SkeletonCard.jsx';
-
-function Toast({ msg, type = 'success', onDone }) {
-  useEffect(() => {
-    const t = setTimeout(onDone, 3000);
-    return () => clearTimeout(t);
-  }, [onDone]);
-  return (
-    <div className={`dd-toast dd-toast--${type}`}>{msg}</div>
-  );
-}
+import Toast from './components/Toast';
 
 function StatusBadge({ status }) {
   const map = {

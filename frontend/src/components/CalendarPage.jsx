@@ -1,16 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
-import { useAuth } from '../contexts/AuthContext.jsx';
-import { API_BASE } from '../config.js';
-
-function Toast({ msg, type = 'success', onDone }) {
-  useEffect(() => {
-    const id = setTimeout(onDone, 3200);
-    return () => clearTimeout(id);
-  }, [onDone]);
-  return <div className={`dd-toast dd-toast--${type}`}>{msg}</div>;
-}
+import { useAuth } from '../contexts/AuthContext';
+import { API_BASE } from '../config';
+import Toast from './Toast';
 
 const STATUS_LABELS = {
   pending:         'Pending',

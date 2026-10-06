@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext.jsx';
-import { apiFetch } from '../utils/api.js';
-import { API_BASE } from '../config.js';
+import { useAuth } from '../contexts/AuthContext';
+import { apiFetch } from '../utils/api';
+import { API_BASE } from '../config';
 
 function FeedbackForm({ requestId, onSuccess, onClose, onFeedbackSubmitted, foodImage, foodName }) {
   const { user } = useAuth();

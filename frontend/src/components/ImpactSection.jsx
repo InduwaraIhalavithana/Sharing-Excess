@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useLanguage } from '../i18n/LanguageContext.jsx';
+import { useLanguage } from '../i18n/LanguageContext';
 
 const STATS = [
   { final: 1575, suffix: '+', labelKey: 'impact_meals',     icon: '🍽️' },

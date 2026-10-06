@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useLanguage } from '../i18n/LanguageContext.jsx';
-import { API_BASE } from '../config.js';
+import { useLanguage } from '../i18n/LanguageContext';
+import { API_BASE } from '../config';
 
 export default function ForgotPasswordModal({ onClose, onBackToLogin }) {
   const { t } = useLanguage();
