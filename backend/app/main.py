@@ -11,9 +11,9 @@ from slowapi.middleware import SlowAPIMiddleware
 
 from app.config import settings
 from app.database import engine
+from app.routers import auth, calendar, contact, donations, feedback, listings, live, officer, public, requests
 from app.utils import events
 from app.utils.limiter import limiter
-from app.routers import auth, listings, requests, officer, calendar, feedback, contact, donations, public, live
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -25,9 +25,10 @@ def run_migrations() -> None:
     A database created before Alembic was introduced already has the tables but no
     version stamp - mark it as the baseline first so nothing is re-created.
     """
-    from alembic import command
     from alembic.config import Config
     from sqlalchemy import inspect
+
+    from alembic import command
 
     root = Path(__file__).resolve().parents[1]
     cfg = Config(str(root / "alembic.ini"))
@@ -103,5 +104,6 @@ def root():
 
 
 @app.get("/health")
+@app.get("/api/health")  # reachable through nginx too, for uptime checks
 def health():
     return {"status": "ok"}

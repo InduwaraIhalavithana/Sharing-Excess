@@ -32,7 +32,6 @@ export default function Donate() {
   const [money, setMoney] = useState({
     name: '', email: '', amount: '', phone: '', monthly: true,
   });
-  const [moneySuccess, setMoneySuccess] = useState(false);
 
   // Recently shared listings — shown to signed-out visitors as social proof
   const recentQ = usePublicListings({ limit: 4 });

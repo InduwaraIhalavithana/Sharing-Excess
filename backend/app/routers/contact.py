@@ -4,8 +4,8 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.database import get_db
 from app.schemas import ContactRequest
+from app.utils.email import contact_notification_email, send_email
 from app.utils.limiter import limiter
-from app.utils.email import send_email, contact_notification_email
 
 router = APIRouter(prefix="/api/contact", tags=["contact"])
 

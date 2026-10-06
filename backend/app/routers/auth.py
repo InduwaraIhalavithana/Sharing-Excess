@@ -5,15 +5,19 @@ from app.database import get_db
 from app.dependencies import get_current_user
 from app.models import User
 from app.schemas import (
-    SignupRequest, LoginRequest,
-    VerifyEmailRequest, ResendVerificationRequest,
-    ForgotPasswordRequest, ResetPasswordRequest,
-    ProfileUpdate, ChangePasswordRequest,
+    ChangePasswordRequest,
+    ForgotPasswordRequest,
+    LoginRequest,
+    ProfileUpdate,
+    ResendVerificationRequest,
+    ResetPasswordRequest,
+    SignupRequest,
+    VerifyEmailRequest,
 )
-from app.utils.security import hash_password, verify_password, generate_otp
-from app.utils.email import send_email, verification_email, forgot_password_email
+from app.utils.email import forgot_password_email, send_email, verification_email
 from app.utils.jwt import create_access_token
 from app.utils.limiter import limiter
+from app.utils.security import generate_otp, hash_password, verify_password
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 

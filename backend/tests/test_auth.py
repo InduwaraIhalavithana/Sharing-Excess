@@ -1,6 +1,5 @@
 """Integration tests for /api/auth/* endpoints."""
 import uuid
-from unittest.mock import patch
 
 
 class TestSignup:
@@ -103,7 +102,7 @@ class TestLogin:
 class TestVerifyEmail:
     def test_verify_email_success(self, client, db):
         from app.models import User
-        from app.utils.security import hash_password, generate_otp
+        from app.utils.security import generate_otp, hash_password
 
         code = generate_otp()
         email = f"pytest_verify_{uuid.uuid4().hex[:6]}@example.com"
@@ -199,6 +198,7 @@ class TestAccountSettings:
 
     def test_change_password_flow(self, client, db):
         import uuid
+
         from app.models import User
         from app.utils.security import hash_password
 

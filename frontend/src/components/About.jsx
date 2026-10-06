@@ -1,4 +1,3 @@
-import { useLanguage } from '../i18n/LanguageContext';
 import Reveal from './Reveal.jsx';
 
 const STATS = [
@@ -37,7 +36,6 @@ const TECH = [
 ];
 
 export default function About() {
-  const { t } = useLanguage();
 
   return (
     <div className="about-page">

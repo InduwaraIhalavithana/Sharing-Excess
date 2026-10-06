@@ -1,5 +1,6 @@
 from typing import Optional
-from fastapi import Depends, HTTPException, Header
+
+from fastapi import Depends, Header, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database import get_db

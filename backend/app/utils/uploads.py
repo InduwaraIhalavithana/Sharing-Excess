@@ -1,6 +1,7 @@
 import io
 import secrets
 from pathlib import Path
+
 from fastapi import HTTPException, UploadFile
 from PIL import Image, ImageOps, UnidentifiedImageError
 
@@ -53,7 +54,7 @@ def process_image(content: bytes) -> bytes:
             img.save(out, format="WEBP", quality=82, method=4)
             return out.getvalue()
     except (UnidentifiedImageError, OSError, Image.DecompressionBombError, ValueError):
-        raise HTTPException(400, "That file is not a valid image.")
+        raise HTTPException(400, "That file is not a valid image.") from None
 
 
 async def save_upload(file: UploadFile, prefix: str = "img") -> str:

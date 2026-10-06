@@ -1,35 +1,35 @@
 from typing import Optional
-from fastapi import APIRouter, Depends, Header, HTTPException, UploadFile, File, Form
+
+from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.dependencies import get_current_user, require_roles, is_staff
+from app.dependencies import get_current_user, is_staff, require_roles
 from app.models import FoodListing, User
-from app.schemas import ListingOut, ListingUpdate
 from app.utils.uploads import save_upload
 
 router = APIRouter(prefix="/api/listings", tags=["listings"])
 
 
-def _listing_out(l: FoodListing) -> dict:
+def _listing_out(item: FoodListing) -> dict:
     return {
-        "id": l.id,
-        "donor_id": l.donor_id,
-        "food_name": l.food_name,
-        "quantity": l.quantity,
-        "expiry_date": l.expiry_date,
-        "location": l.location,
-        "description": l.description,
-        "contact_phone": l.contact_phone,
-        "contact_email": l.contact_email,
-        "image_path": l.image_path,
-        "status": l.status,
-        "verification_status": l.verification_status,
-        "rejection_reason": l.rejection_reason,
-        "accepted_by": l.accepted_by,
-        "requested_by": l.requested_by,
-        "created_at": l.created_at.isoformat() if l.created_at else None,
-        "donor_name": l.donor.name if l.donor else None,
+        "id": item.id,
+        "donor_id": item.donor_id,
+        "food_name": item.food_name,
+        "quantity": item.quantity,
+        "expiry_date": item.expiry_date,
+        "location": item.location,
+        "description": item.description,
+        "contact_phone": item.contact_phone,
+        "contact_email": item.contact_email,
+        "image_path": item.image_path,
+        "status": item.status,
+        "verification_status": item.verification_status,
+        "rejection_reason": item.rejection_reason,
+        "accepted_by": item.accepted_by,
+        "requested_by": item.requested_by,
+        "created_at": item.created_at.isoformat() if item.created_at else None,
+        "donor_name": item.donor.name if item.donor else None,
     }
 
 
@@ -67,7 +67,7 @@ def get_listings(
     offset = (max(page, 1) - 1) * limit
     listings = query.order_by(FoodListing.created_at.desc()).offset(offset).limit(limit).all()
     return {"success": True, "total": total, "page": page, "limit": limit,
-            "listings": [_listing_out(l) for l in listings]}
+            "listings": [_listing_out(item) for item in listings]}
 
 
 @router.post("")

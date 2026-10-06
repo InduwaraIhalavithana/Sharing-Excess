@@ -18,9 +18,9 @@ from fastapi.testclient import TestClient
 
 os.environ.setdefault("RATE_LIMIT_ENABLED", "false")
 
-from app.main import app
 from app.database import SessionLocal
-from app.models import Escalation, FoodListing, FoodRequest, Feedback, User
+from app.main import app
+from app.models import Escalation, Feedback, FoodListing, FoodRequest, User
 from app.utils.security import hash_password
 
 _EMAIL_PREFIX = "pytest_"

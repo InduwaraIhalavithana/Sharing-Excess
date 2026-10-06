@@ -5,7 +5,6 @@ import {
   Chart as ChartJS, CategoryScale, LinearScale, BarElement,
   Title, Tooltip, Legend, ArcElement, PointElement, LineElement
 } from 'chart.js';
-import { useLanguage } from './i18n/LanguageContext';
 import { useAuth } from './contexts/AuthContext';
 import { apiFetch } from './utils/api';
 import { API_BASE } from './config';
@@ -84,7 +83,6 @@ const NAV_ITEMS = [
 ];
 
 export default function OfficerDashboard() {
-  const { t } = useLanguage();
   const { user: adminUser, logout } = useAuth();
   const navigate = useNavigate();
 

@@ -1,14 +1,14 @@
 import hashlib
 import secrets
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.database import get_db
 from app.models import MoneyDonation
 from app.schemas import MoneyDonationRequest, PayhereInitiateRequest
-from app.utils.email import send_email, money_donation_email
+from app.utils.email import money_donation_email, send_email
 
 router = APIRouter(prefix="/api/donations", tags=["donations"])
 

@@ -5,7 +5,7 @@ import { useAuth } from './contexts/AuthContext';
 import {
   useDonorRequests, useMyListings, useRespondToRequest, useUpdateRequestStatus, useDeleteListing,
 } from './hooks/queries';
-import { API_BASE, APP_ROOT } from './config';
+import { APP_ROOT } from './config';
 import { SkeletonGrid } from './components/SkeletonCard.jsx';
 import Toast from './components/Toast';
 import { TourKit, useTour, GettingStartedChecklist } from './components/tour/TourKit';

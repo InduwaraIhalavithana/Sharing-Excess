@@ -1,9 +1,18 @@
-from datetime import datetime
 from sqlalchemy import (
-    Column, Integer, String, Text, DateTime, Numeric,
-    ForeignKey, Enum as SAEnum, func,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    Numeric,
+    String,
+    Text,
+    func,
+)
+from sqlalchemy import (
+    Enum as SAEnum,
 )
 from sqlalchemy.orm import relationship
+
 from app.database import Base
 
 
