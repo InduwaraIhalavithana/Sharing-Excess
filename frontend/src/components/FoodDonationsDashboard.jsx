@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { APP_ROOT } from '../config';
@@ -6,10 +6,14 @@ import { useDebounced } from '../hooks/useDebounced';
 import { usePublicListings } from '../hooks/queries';
 import { SkeletonGrid } from './SkeletonCard.jsx';
 
+// The map (and Leaflet) only downloads when someone opens the map view
+const FoodMap = lazy(() => import('./FoodMap'));
+
 export default function FoodDonationsDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
+  const [view, setView] = useState('list'); // 'list' | 'map'
   const debouncedSearch = useDebounced(search, 300);
   const { data, isPending: loading, isError, refetch } = usePublicListings({ q: debouncedSearch, limit: 50 });
   const donations = data?.listings ?? [];
@@ -54,6 +58,10 @@ export default function FoodDonationsDashboard() {
               ✕ Clear
             </button>
           )}
+          <div className="fd-view-toggle" role="group" aria-label="Choose view">
+            <button type="button" className={view === 'list' ? 'active' : ''} onClick={() => setView('list')}>▦ List</button>
+            <button type="button" className={view === 'map' ? 'active' : ''} onClick={() => setView('map')}>🗺️ Map</button>
+          </div>
           <button className="btn btn-outline btn-sm fd-refresh" onClick={fetchDonations}>
             ↻ Refresh
           </button>
@@ -77,6 +85,10 @@ export default function FoodDonationsDashboard() {
               </button>
             )}
           </div>
+        ) : view === 'map' ? (
+          <Suspense fallback={<SkeletonGrid count={1} />}>
+            <FoodMap listings={donations} onRequest={handleRequest} />
+          </Suspense>
         ) : (
           <div className="cards-grid">
             {donations.map(d => (
