@@ -7,6 +7,11 @@ import pytest
 from tests.conftest import in_hours, listing_form, png_bytes
 
 
+def _soon():
+    from datetime import datetime, timedelta, timezone
+    return datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(minutes=10)
+
+
 class TestListingInputLimits:
     @pytest.mark.parametrize("over, needle", [
         ({"area": "x" * 121}, "area"),
@@ -74,14 +79,14 @@ class TestAccountInputLimits:
 
 class TestSuspendedAccountsStayOut:
     def test_a_suspended_user_cannot_reactivate_with_a_mailed_code(self, client, make_user, db):
-        u = make_user("recipient", status="suspended", verification_code="654321")
+        u = make_user("recipient", status="suspended", verification_code="654321", verification_expires_at=_soon())
         res = client.post("/api/auth/verify-email", json={"user_id": u.id, "code": "654321"})
         assert res.status_code == 400
         db.expire_all()
         assert db.get(type(u.user), u.id).status == "suspended"
 
     def test_an_active_user_cannot_use_verify_either(self, client, make_user):
-        u = make_user("recipient", verification_code="111222")
+        u = make_user("recipient", verification_code="111222", verification_expires_at=_soon())
         assert client.post("/api/auth/verify-email", json={"user_id": u.id, "code": "111222"}).status_code == 400
 
     def test_reset_password_needs_a_real_code(self, client, make_user):

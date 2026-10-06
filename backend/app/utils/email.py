@@ -50,7 +50,7 @@ def verification_email(name: str, code: str) -> str:
       <h2>Hello {name}!</h2>
       <p>Thank you for registering. Use the code below to activate your account:</p>
       <div style="background:#16a34a;color:#fff;padding:15px;text-align:center;font-size:28px;font-weight:bold;border-radius:5px;margin:20px 0;letter-spacing:6px">{code}</div>
-      <p>This code is valid for one use. If you did not create this account, ignore this email.</p>
+      <p>This code works once and expires in 15 minutes. If you did not create this account, ignore this email.</p>
       <p>Best regards,<br>The Sharing Excess Team</p>
     </div>
   </div>
@@ -65,7 +65,7 @@ def forgot_password_email(code: str) -> str:
     <h2 style="color:#16a34a">Password Reset – Sharing Excess</h2>
     <p>Use the code below to reset your password:</p>
     <div style="background:#16a34a;color:#fff;padding:15px;text-align:center;font-size:28px;font-weight:bold;border-radius:5px;margin:20px 0;letter-spacing:6px">{code}</div>
-    <p>If you did not request a reset, ignore this email.</p>
+    <p>This code works once and expires in 15 minutes. If you did not request a reset, ignore this email.</p>
     <p>— The Sharing Excess Team</p>
   </div>
 </body></html>"""
