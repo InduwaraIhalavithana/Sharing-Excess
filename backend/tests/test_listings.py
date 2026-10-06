@@ -242,7 +242,7 @@ class TestExpiry:
         assert row.status == "expired" and float(row.quantity_available) == 10.0
         got = client.get(f"/api/requests/{req['id']}", headers=r.h).json()["request"]
         assert got["status"] == "expired"
-        assert not any(i["id"] == item["id"] for i in client.get("/api/listings").json()["listings"])
+        assert not any(i["id"] == item["id"] for i in client.get("/api/listings?limit=100").json()["listings"])
         assert any("expired" in m["subject"].lower() for m in outbox if m["to"] == r.email)
 
     def test_an_accepted_request_survives_the_listing_expiring(self, client, make_user, post_listing, request_food, db):
