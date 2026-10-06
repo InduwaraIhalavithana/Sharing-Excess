@@ -262,3 +262,25 @@ class TestFeedbackFlag:
         db.commit()
         after = client.get(f"/api/requests?recipient_id={recipient.id}", headers=bearer(recipient_token)).json()["requests"]
         assert [r for r in after if r["id"] == req.id][0]["feedback_given"] is True
+
+
+class TestDonorPhoneIsSharedOnlyAfterAcceptance:
+    def test_phone_appears_once_the_request_is_accepted(self, client, donor, donor_token, recipient, recipient_token, db):
+        from app.models import FoodListing
+
+        donor.phone_number = "0771234567"
+        listing = FoodListing(donor_id=donor.id, food_name="Phone Rule", quantity="1", status="available",
+                              verification_status="approved")
+        db.add(listing)
+        db.commit()
+        db.refresh(listing)
+        req = _request(db, recipient.id, "Phone Rule", listing_id=listing.id)
+
+        def seen():
+            rows = client.get(f"/api/requests?recipient_id={recipient.id}", headers=bearer(recipient_token)).json()["requests"]
+            return [r for r in rows if r["id"] == req.id][0]["donor_phone"]
+
+        assert seen() is None
+        client.put(f"/api/requests/{req.id}/respond", headers=bearer(donor_token),
+                   json={"request_id": req.id, "status": "accepted"})
+        assert seen() == "0771234567"

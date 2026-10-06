@@ -22,6 +22,8 @@ const Contact = lazy(() => import('./components/Contact'));
 const Events = lazy(() => import('./components/Events'));
 const FeedbackPage = lazy(() => import('./FeedbackPage'));
 const AccountSettings = lazy(() => import('./components/AccountSettings'));
+const Privacy = lazy(() => import('./components/LegalPages').then((m) => ({ default: m.Privacy })));
+const Terms = lazy(() => import('./components/LegalPages').then((m) => ({ default: m.Terms })));
 const NotFound = lazy(() => import('./components/NotFound'));
 
 function PageFallback() {
@@ -72,6 +74,8 @@ function AppContent() {
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/feedback" element={<FeedbackPage />} />
                 <Route path="/account" element={<AccountSettings />} />
+                <Route path="/privacy" element={<Privacy />} />
+                <Route path="/terms" element={<Terms />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>

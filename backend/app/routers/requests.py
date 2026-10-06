@@ -25,6 +25,9 @@ def _request_out(r: FoodRequest) -> dict:
         donor_id    = r.listing.donor_id
         donor_name  = r.listing.donor.name
         donor_phone = r.listing.donor.phone_number
+        # The donor's number is for arranging a handover that has been agreed - not before
+        if r.status in ("pending", "declined", "cancelled"):
+            donor_phone = None
     elif r.accepted_by:
         donor_name = r.accepted_by
 

@@ -182,3 +182,27 @@ class TestImageProcessing:
                           files={"food_image": ("evil.png", io.BytesIO(b"<script>alert(1)</script>"), "image/png")})
         assert res.status_code == 400
         assert "not a valid image" in res.json()["detail"]
+
+
+class TestContactDetailsArePrivate:
+    def test_public_listing_hides_donor_phone_and_email(self, client, donor, donor_token):
+        made = client.post("/api/listings", headers=bearer(donor_token), data={
+            "food_name": "Contact Privacy Rice", "quantity": "3 kg", "contact_phone": "0771112233",
+            "contact_email": donor.email})
+        listing = made.json()["listing"]
+        assert listing["contact_phone"] == "0771112233"  # the owner gets their own details back
+
+        # approve it so it appears in the public list
+        from app.database import SessionLocal
+        from app.models import FoodListing
+
+        with SessionLocal() as s:
+            s.query(FoodListing).filter(FoodListing.id == listing["id"]).update({"verification_status": "approved"})
+            s.commit()
+
+        public = [x for x in client.get("/api/listings?q=Contact Privacy").json()["listings"] if x["id"] == listing["id"]][0]
+        assert public["contact_phone"] is None and public["contact_email"] is None
+
+        mine = [x for x in client.get(f"/api/listings?donor_id={donor.id}", headers=bearer(donor_token)).json()["listings"]
+                if x["id"] == listing["id"]][0]
+        assert mine["contact_phone"] == "0771112233"
