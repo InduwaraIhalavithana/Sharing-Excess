@@ -6,6 +6,7 @@ from sqlalchemy import (
     Numeric,
     String,
     Text,
+    UniqueConstraint,
     func,
 )
 from sqlalchemy import (
@@ -135,4 +136,42 @@ class MoneyDonation(Base):
     email      = Column(String(255), nullable=False, index=True)
     amount     = Column(Numeric(12, 2), nullable=False)
     card_last4 = Column(String(4), nullable=False)
+    created_at = Column(DateTime, server_default=func.now())
+
+
+class CommunityEvent(Base):
+    """A food drive / volunteer session that staff publish on the Events page."""
+    __tablename__ = "community_events"
+
+    id          = Column(Integer, primary_key=True, index=True)
+    title       = Column(String(200), nullable=False)
+    description = Column(Text, nullable=False, default="")
+    location    = Column(String(255), nullable=False)
+    starts_at   = Column(DateTime, nullable=False, index=True)   # Sri Lanka local time
+    ends_at     = Column(DateTime, nullable=True)
+    capacity    = Column(Integer, nullable=True)                 # None = unlimited
+    created_by  = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    created_at  = Column(DateTime, server_default=func.now())
+
+    signups = relationship("EventSignup", back_populates="event", cascade="all, delete-orphan")
+
+
+class EventSignup(Base):
+    __tablename__ = "event_signups"
+    __table_args__ = (UniqueConstraint("event_id", "user_id", name="uq_event_signup"),)
+
+    id         = Column(Integer, primary_key=True)
+    event_id   = Column(Integer, ForeignKey("community_events.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id    = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    created_at = Column(DateTime, server_default=func.now())
+
+    event = relationship("CommunityEvent", back_populates="signups")
+
+
+class EventSubscriber(Base):
+    """Email addresses that asked to hear about new events."""
+    __tablename__ = "event_subscribers"
+
+    id         = Column(Integer, primary_key=True)
+    email      = Column(String(255), unique=True, nullable=False, index=True)
     created_at = Column(DateTime, server_default=func.now())

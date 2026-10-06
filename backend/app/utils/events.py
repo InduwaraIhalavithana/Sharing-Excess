@@ -41,6 +41,7 @@ TOPICS = (
     ("/api/officer/listings", "listings"),
     ("/api/requests", "requests"),
     ("/api/officer/requests", "requests"),
+    ("/api/community-events", "events"),
     ("/api/feedback", "feedback"),
     ("/api/officer/feedback", "feedback"),
 )

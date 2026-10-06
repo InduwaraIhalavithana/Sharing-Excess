@@ -11,7 +11,19 @@ from slowapi.middleware import SlowAPIMiddleware
 
 from app.config import settings
 from app.database import engine
-from app.routers import auth, calendar, contact, donations, feedback, listings, live, officer, public, requests
+from app.routers import (
+    auth,
+    calendar,
+    community_events,
+    contact,
+    donations,
+    feedback,
+    listings,
+    live,
+    officer,
+    public,
+    requests,
+)
 from app.utils import events
 from app.utils.limiter import limiter
 
@@ -96,6 +108,7 @@ app.include_router(contact.router)
 app.include_router(donations.router)
 app.include_router(public.router)
 app.include_router(live.router)
+app.include_router(community_events.router)
 
 
 @app.get("/")

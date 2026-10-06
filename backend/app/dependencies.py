@@ -51,3 +51,17 @@ def require_roles(*roles: str):
             raise HTTPException(status_code=403, detail="You do not have permission to do this")
         return current_user
     return _dep
+
+
+def optional_user(
+    authorization: Optional[str] = Header(default=None),
+    db: Session = Depends(get_db),
+) -> Optional[User]:
+    """The signed-in user if a valid token was sent, otherwise None (never raises)."""
+    if not authorization or not authorization.startswith("Bearer "):
+        return None
+    payload = decode_access_token(authorization[7:])
+    if not payload:
+        return None
+    user = db.query(User).filter(User.id == int(payload["sub"])).first()
+    return user if user and user.status != "suspended" else None

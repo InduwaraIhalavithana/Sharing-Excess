@@ -1,6 +1,6 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../utils/api';
-import type { Feedback, ListingsPage, RequestsResponse } from '../types/api';
+import type { Attendee, CommunityEvent, Feedback, ListingsPage, RequestsResponse } from '../types/api';
 
 /** Query keys in one place so invalidation stays consistent. */
 export const keys = {
@@ -8,6 +8,7 @@ export const keys = {
   requests: ['requests'] as const,
   feedback: ['feedback'] as const,
   stats: ['public-stats'] as const,
+  events: ['events'] as const,
 };
 
 export interface PublicStats {
@@ -134,5 +135,71 @@ export function useCreateWithForm(path: '/api/listings' | '/api/requests') {
   return useMutation({
     mutationFn: (form: FormData) => api<{ success: boolean; message?: string }>(path, { method: 'POST', body: form }),
     onSuccess: refresh,
+  });
+}
+
+
+// ── Community events ─────────────────────────────────────────────────────────
+
+export interface EventInput {
+  title: string;
+  description: string;
+  location: string;
+  starts_at: string;
+  ends_at: string | null;
+  capacity: number | null;
+}
+
+/** Everyone sees events; when signed in, each one also says whether *you* joined. */
+export function useEvents() {
+  return useQuery({
+    queryKey: keys.events,
+    queryFn: () => api<{ success: boolean; events: CommunityEvent[] }>('/api/community-events'),
+    staleTime: 15_000,
+  });
+}
+
+export function useJoinEvent() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, join }: { id: number; join: boolean }) =>
+      api<{ success: boolean; message: string }>(`/api/community-events/${id}/join`, { method: join ? 'POST' : 'DELETE' }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: keys.events }),
+  });
+}
+
+export function useSubscribeToEvents() {
+  return useMutation({
+    mutationFn: (email: string) =>
+      api<{ success: boolean }>('/api/community-events/subscribe', { method: 'POST', body: JSON.stringify({ email }) }),
+  });
+}
+
+/** Staff: create (no id) or update (id) an event. */
+export function useSaveEvent() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id?: number; data: EventInput }) =>
+      api<{ success: boolean; event: CommunityEvent }>(id ? `/api/community-events/${id}` : '/api/community-events', {
+        method: id ? 'PUT' : 'POST',
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: keys.events }),
+  });
+}
+
+export function useDeleteEvent() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => api<{ success: boolean }>(`/api/community-events/${id}`, { method: 'DELETE' }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: keys.events }),
+  });
+}
+
+export function useAttendees(eventId: number | null) {
+  return useQuery({
+    queryKey: [...keys.events, 'attendees', eventId],
+    queryFn: () => api<{ success: boolean; attendees: Attendee[] }>(`/api/community-events/${eventId}/attendees`),
+    enabled: eventId !== null,
   });
 }
