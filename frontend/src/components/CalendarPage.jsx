@@ -4,6 +4,7 @@ import 'react-calendar/dist/Calendar.css';
 import { useAuth } from '../contexts/AuthContext';
 import { API_BASE } from '../config';
 import Toast from './Toast';
+import { apiFetch } from '../utils/api';
 
 const STATUS_LABELS = {
   pending:         'Pending',
@@ -33,9 +34,10 @@ export default function CalendarPage() {
   const showToast = useCallback((msg, type = 'success') => setToast({ msg, type }), []);
 
   const fetchEvents = useCallback(async () => {
+    if (!user) { setEvents([]); setLoading(false); return; }
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/api/calendar/events`);
+      const res = await apiFetch(`${API_BASE}/api/calendar/events`);
       const data = await res.json();
       if (data.success && data.events) {
         setEvents(data.events.map(e => ({ ...e, start: new Date(e.date), end: new Date(e.date) })));
@@ -44,7 +46,7 @@ export default function CalendarPage() {
       showToast('Failed to load events.', 'error');
     }
     setLoading(false);
-  }, [showToast]);
+  }, [showToast, user]);
 
   useEffect(() => { fetchEvents(); }, [fetchEvents]);
 
@@ -65,9 +67,8 @@ export default function CalendarPage() {
 
   const handleStatusUpdate = async (eventId, newStatus) => {
     try {
-      const res = await fetch(`${API_BASE}/api/requests/${eventId}/status`, {
+      const res = await apiFetch(`${API_BASE}/api/requests/${eventId}/status`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ request_id: eventId, status: newStatus }),
       });
       const result = await res.json();
@@ -75,7 +76,7 @@ export default function CalendarPage() {
         showToast('Status updated.');
         fetchEvents();
       } else {
-        showToast(result.message || 'Update failed.', 'error');
+        showToast(result.detail || result.message || 'Update failed.', 'error');
       }
     } catch {
       showToast('Network error.', 'error');
@@ -106,7 +107,12 @@ export default function CalendarPage() {
             Events for {date.toLocaleDateString('en-LK', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </h3>
 
-          {loading ? (
+          {!user ? (
+            <div className="dd-empty">
+              <span className="dd-empty__icon">🔒</span>
+              <p>Sign in to see pickups and deliveries on the calendar.</p>
+            </div>
+          ) : loading ? (
             <div className="dd-loading"><span className="dd-spinner" /> Loading…</div>
           ) : selectedEvents.length === 0 ? (
             <div className="dd-empty">

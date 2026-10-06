@@ -58,14 +58,14 @@ export default function Home() {
       .then(d => {
         if (cancelled || !d.success) return;
         setLiveListings(d.listings || []);
-        setLiveTotals(p => ({ ...p, listings: d.total ?? (d.listings || []).length }));
       })
       .catch(() => {});
-    fetch(`${API_BASE}/api/requests`)
+    // Counts only - the request list itself is private to logged-in users
+    fetch(`${API_BASE}/api/public/stats`)
       .then(r => r.json())
       .then(d => {
         if (cancelled || !d.success) return;
-        setLiveTotals(p => ({ ...p, requests: (d.requests || []).length }));
+        setLiveTotals({ listings: d.listings_available ?? 0, requests: d.requests_open ?? 0 });
       })
       .catch(() => {});
     fetch(`${API_BASE}/api/feedback`)

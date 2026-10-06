@@ -3,12 +3,17 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.dependencies import get_current_user, is_staff
 from app.models import FoodRequest, FoodListing, User
 from app.schemas import RespondRequest, UpdateDeliveryStatus
 from app.utils.uploads import save_upload
 from app.utils.email import send_email, request_accepted_email, request_declined_email, request_delivered_email
 
 router = APIRouter(prefix="/api/requests", tags=["requests"])
+
+VALID_STATUSES = {"pending", "accepted", "declined", "quality_checked", "delivering",
+                  "delivered", "picked_up", "cancelled"}
+RECIPIENT_STATUSES = {"picked_up", "cancelled"}
 
 
 def _request_out(r: FoodRequest) -> dict:
@@ -50,21 +55,33 @@ def get_requests(
     recipient_id: Optional[int] = None,
     donor_view:   Optional[str] = None,
     db: Session = Depends(get_db),
+    me: User = Depends(get_current_user),
 ):
     q = db.query(FoodRequest)
     if recipient_id:
+        # Recipients only ever see their own requests
+        if recipient_id != me.id and not is_staff(me):
+            raise HTTPException(403, "You can only view your own requests")
         q = q.filter(FoodRequest.recipient_id == recipient_id)
-    elif donor_view == "true":
-        q = q.filter(FoodRequest.status.in_(["pending", "accepted"]))
     else:
-        q = q.filter(FoodRequest.status == "pending")
+        # The open board (with recipient contact details) is for donors and staff
+        if me.role not in ("donor", "officer", "admin"):
+            raise HTTPException(403, "Only donors can browse open requests")
+        if donor_view == "true":
+            q = q.filter(FoodRequest.status.in_(["pending", "accepted"]))
+        else:
+            q = q.filter(FoodRequest.status == "pending")
+        if me.role == "donor":
+            # Open requests, plus requests made on this donor's own listings
+            q = q.outerjoin(FoodListing, FoodRequest.listing_id == FoodListing.id).filter(
+                (FoodRequest.listing_id.is_(None)) | (FoodListing.donor_id == me.id)
+            )
     requests = q.order_by(FoodRequest.created_at.desc()).all()
     return {"success": True, "requests": [_request_out(r) for r in requests]}
 
 
 @router.post("")
 async def add_request(
-    recipient_id: int            = Form(...),
     food_name:    str            = Form(...),
     quantity:     str            = Form(...),
     needed_by:    str            = Form(""),
@@ -73,9 +90,11 @@ async def add_request(
     listing_id:   Optional[int]  = Form(None),
     food_image:   Optional[UploadFile] = File(None),
     db: Session = Depends(get_db),
+    me: User = Depends(get_current_user),
 ):
-    if not db.query(User).filter(User.id == recipient_id).first():
-        raise HTTPException(404, "Recipient not found")
+    if me.role != "recipient":
+        raise HTTPException(403, "Only recipients can request food")
+    recipient_id = me.id
 
     if listing_id and not db.query(FoodListing).filter(FoodListing.id == listing_id).first():
         raise HTTPException(404, "Listing not found")
@@ -102,13 +121,26 @@ async def add_request(
 
 
 @router.put("/{request_id}/respond")
-def respond_to_request(request_id: int, body: RespondRequest, db: Session = Depends(get_db)):
+def respond_to_request(
+    request_id: int, body: RespondRequest,
+    db: Session = Depends(get_db), me: User = Depends(get_current_user),
+):
     if body.status not in ("accepted", "declined"):
         raise HTTPException(400, "status must be 'accepted' or 'declined'")
+    if me.role not in ("donor", "officer", "admin"):
+        raise HTTPException(403, "Only donors can respond to requests")
 
     req = db.query(FoodRequest).filter(FoodRequest.id == request_id).first()
     if not req:
         raise HTTPException(404, "Request not found")
+    if req.status != "pending":
+        raise HTTPException(400, f"This request is already {req.status}")
+    # A request tied to a listing can only be answered by that listing's donor (or staff)
+    if req.listing and req.listing.donor_id != me.id and not is_staff(me):
+        raise HTTPException(403, "This request is for another donor's listing")
+    # Identity comes from the token, never from the request body
+    body.user_id = me.id
+    body.user_name = me.name
 
     req.status = body.status
     recipient = req.recipient
@@ -147,10 +179,25 @@ def respond_to_request(request_id: int, body: RespondRequest, db: Session = Depe
 
 
 @router.put("/{request_id}/status")
-def update_delivery_status(request_id: int, body: UpdateDeliveryStatus, db: Session = Depends(get_db)):
+def update_delivery_status(
+    request_id: int, body: UpdateDeliveryStatus,
+    db: Session = Depends(get_db), me: User = Depends(get_current_user),
+):
+    if body.status not in VALID_STATUSES:
+        raise HTTPException(400, f"Invalid status. Use one of: {', '.join(sorted(VALID_STATUSES))}")
     req = db.query(FoodRequest).filter(FoodRequest.id == request_id).first()
     if not req:
         raise HTTPException(404, "Request not found")
+    if not is_staff(me):
+        is_owner = req.recipient_id == me.id
+        is_donor = me.role == "donor" and (
+            (req.listing is not None and req.listing.donor_id == me.id)
+            or (req.listing is None and req.accepted_by == me.name)
+        )
+        if not (is_owner or is_donor):
+            raise HTTPException(403, "You are not part of this request")
+        if not is_donor and body.status not in RECIPIENT_STATUSES:
+            raise HTTPException(403, "Recipients can only mark a request picked up or cancelled")
     prev_status = req.status
     req.status = body.status
     db.commit()
@@ -164,10 +211,12 @@ def update_delivery_status(request_id: int, body: UpdateDeliveryStatus, db: Sess
 
 
 @router.delete("/{request_id}")
-def delete_request(request_id: int, db: Session = Depends(get_db)):
+def delete_request(request_id: int, db: Session = Depends(get_db), me: User = Depends(get_current_user)):
     req = db.query(FoodRequest).filter(FoodRequest.id == request_id).first()
     if not req:
         raise HTTPException(404, "Request not found")
+    if req.recipient_id != me.id and me.role != "admin":
+        raise HTTPException(403, "You can only delete your own requests")
     db.delete(req)
     db.commit()
     return {"success": True, "message": "Request deleted"}

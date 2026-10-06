@@ -3,6 +3,7 @@ import { useLanguage } from './i18n/LanguageContext';
 import { useAuth } from './contexts/AuthContext';
 import { API_BASE, APP_ROOT } from './config';
 import Toast from './components/Toast';
+import { apiFetch } from './utils/api';
 
 export default function FeedbackPage() {
   const { t } = useLanguage();
@@ -55,10 +56,9 @@ export default function FeedbackPage() {
     setFormError('');
     try {
       const fd = new FormData();
-      fd.append('recipient_id', user.id);
       fd.append('comment', form.comment);
       if (form.image) fd.append('image', form.image);
-      const res = await fetch(`${API_BASE}/api/feedback`, { method: 'POST', body: fd });
+      const res = await apiFetch(`${API_BASE}/api/feedback`, { method: 'POST', body: fd });
       const data = await res.json();
       if (data.success) {
         showToast('Feedback submitted!');

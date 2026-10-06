@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { API_BASE } from '../config';
 import './Donate.css';
 import Toast from './Toast';
+import { apiFetch } from '../utils/api';
 
 const PRESET_AMOUNTS = [6000, 4000, 3500, 3000, 2500, 2000];
 
@@ -84,7 +85,6 @@ export default function Donate() {
     setSubmitting(true);
     try {
       const fd = new FormData();
-      fd.append('donor_id', user.id);
       fd.append('food_name', food.foodName);
       fd.append('quantity', food.quantity);
       fd.append('expiry_date', food.expiryDate);
@@ -94,7 +94,7 @@ export default function Donate() {
       fd.append('contact_email', food.contactEmail);
       if (image) fd.append('food_image', image);
 
-      const res = await fetch(`${API_BASE}/api/listings`, { method: 'POST', body: fd });
+      const res = await apiFetch(`${API_BASE}/api/listings`, { method: 'POST', body: fd });
       const data = await res.json();
       if (data.success) {
         setSuccessMsg(t('donate', 'success'));
@@ -103,7 +103,7 @@ export default function Donate() {
         setPreview('');
         setTimeout(() => navigate('/donor-dashboard'), 1600);
       } else {
-        showToast(data.message || 'Submission failed.', 'error');
+        showToast(data.detail || data.message || 'Submission failed.', 'error');
       }
     } catch {
       showToast('Network error. Please try again.', 'error');

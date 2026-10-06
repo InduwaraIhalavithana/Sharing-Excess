@@ -2,22 +2,33 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import FoodRequest, FoodListing
+from app.dependencies import get_current_user, is_staff
+from app.models import FoodRequest, FoodListing, User
 
 router = APIRouter(prefix="/api/calendar", tags=["calendar"])
 
 
 @router.get("/events")
-def get_calendar_events(db: Session = Depends(get_db)):
+def get_calendar_events(db: Session = Depends(get_db), me: User = Depends(get_current_user)):
     events = []
+
+    def person(u, *party_ids):
+        """Contact details are shown only to staff, to the person themself, or to the
+        other side of the same food exchange - never to every logged-in user."""
+        if not u:
+            return None
+        visible = is_staff(me) or me.id == u.id or me.id in party_ids
+        return {
+            "id": u.id,
+            "name": u.name,
+            "email": u.email if visible else None,
+            "phone": u.phone_number if visible else None,
+        }
 
     # Food requests
     requests = db.query(FoodRequest).order_by(FoodRequest.needed_by.asc()).all()
     for r in requests:
-        donor = None
-        if r.listing and r.listing.donor:
-            d = r.listing.donor
-            donor = {"id": d.id, "name": d.name, "email": d.email, "phone": d.phone_number}
+        donor = person(r.listing.donor, r.recipient_id) if r.listing and r.listing.donor else None
         events.append({
             "id":       f"req_{r.id}",
             "title":    r.food_name,
@@ -26,12 +37,7 @@ def get_calendar_events(db: Session = Depends(get_db)):
             "type":     "request",
             "status":   r.status,
             "location": r.location,
-            "recipient": {
-                "id":    r.recipient.id    if r.recipient else None,
-                "name":  r.recipient.name  if r.recipient else None,
-                "email": r.recipient.email if r.recipient else None,
-                "phone": r.recipient.phone_number if r.recipient else None,
-            } if r.recipient else None,
+            "recipient": person(r.recipient, r.listing.donor_id if r.listing else None),
             "donor": donor,
         })
 
@@ -47,8 +53,7 @@ def get_calendar_events(db: Session = Depends(get_db)):
         if l.requests:
             req = l.requests[0]
             if req.recipient:
-                rec = req.recipient
-                recipient = {"id": rec.id, "name": rec.name, "email": rec.email, "phone": rec.phone_number}
+                recipient = person(req.recipient, l.donor_id)
         events.append({
             "id":       f"list_{l.id}",
             "title":    l.food_name,
@@ -58,12 +63,7 @@ def get_calendar_events(db: Session = Depends(get_db)):
             "status":   l.status,
             "notes":    l.description,
             "location": l.location,
-            "donor": {
-                "id":    l.donor.id    if l.donor else None,
-                "name":  l.donor.name  if l.donor else None,
-                "email": l.donor.email if l.donor else None,
-                "phone": l.donor.phone_number if l.donor else None,
-            } if l.donor else None,
+            "donor": person(l.donor, l.requests[0].recipient_id if l.requests else None),
             "recipient": recipient,
         })
 

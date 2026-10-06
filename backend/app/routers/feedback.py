@@ -3,7 +3,8 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import Feedback, FoodRequest
+from app.dependencies import get_current_user
+from app.models import Feedback, FoodRequest, User
 from app.utils.uploads import save_upload
 
 router = APIRouter(prefix="/api/feedback", tags=["feedback"])
@@ -29,13 +30,14 @@ def get_feedback(db: Session = Depends(get_db)):
 
 @router.post("")
 async def submit_feedback(
-    recipient_id: int            = Form(...),
     comment:      str            = Form(...),
     request_id:   int            = Form(0),
     rating:       Optional[int]  = Form(None),
     image:        Optional[UploadFile] = File(None),
     db: Session = Depends(get_db),
+    me: User = Depends(get_current_user),
 ):
+    recipient_id = me.id
     if not comment.strip():
         raise HTTPException(400, "Comment is required")
 

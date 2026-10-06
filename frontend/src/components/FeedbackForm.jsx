@@ -54,7 +54,6 @@ function FeedbackForm({ requestId, onSuccess, onClose, onFeedbackSubmitted, food
     try {
       const formData = new FormData();
       formData.append('request_id', requestId || 0);
-      formData.append('recipient_id', user.id);
       formData.append('comment', comment);
       if (foodName) formData.append('food_name', foodName);
       if (selectedImage) formData.append('image', selectedImage);
