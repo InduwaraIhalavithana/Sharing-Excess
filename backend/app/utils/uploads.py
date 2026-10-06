@@ -2,6 +2,7 @@ import io
 import secrets
 from pathlib import Path
 from fastapi import HTTPException, UploadFile
+from PIL import Image, ImageOps, UnidentifiedImageError
 
 from app.config import settings
 
@@ -11,6 +12,9 @@ UPLOAD_DIR.mkdir(exist_ok=True)
 ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "gif", "webp"}
 ALLOWED_MIMES      = {"image/jpeg", "image/png", "image/gif", "image/webp"}
 MAX_SIZE_BYTES     = 5 * 1024 * 1024  # 5 MB
+MAX_DIMENSION      = 1600             # longest side after resizing, in pixels
+MAX_PIXELS         = 40_000_000       # refuse "decompression bomb" images
+Image.MAX_IMAGE_PIXELS = MAX_PIXELS
 
 # Cloudinary — active only when all three env vars are set
 _cloud_name = settings.cloudinary_cloud_name
@@ -33,6 +37,25 @@ if _cloud_name and _api_key and _api_secret:
         pass  # cloudinary package not installed; fall back to local
 
 
+def process_image(content: bytes) -> bytes:
+    """Decode, fix orientation, shrink and re-encode as WebP.
+
+    Re-encoding proves the file really is an image and drops EXIF metadata
+    (phone photos carry the GPS position of the donor's home).
+    """
+    try:
+        with Image.open(io.BytesIO(content)) as img:
+            img = ImageOps.exif_transpose(img)
+            if img.mode not in ("RGB", "RGBA"):
+                img = img.convert("RGBA" if "A" in img.getbands() else "RGB")
+            img.thumbnail((MAX_DIMENSION, MAX_DIMENSION))
+            out = io.BytesIO()
+            img.save(out, format="WEBP", quality=82, method=4)
+            return out.getvalue()
+    except (UnidentifiedImageError, OSError, Image.DecompressionBombError, ValueError):
+        raise HTTPException(400, "That file is not a valid image.")
+
+
 async def save_upload(file: UploadFile, prefix: str = "img") -> str:
     """Validate and store an uploaded image. Returns a public URL."""
     if file.content_type not in ALLOWED_MIMES:
@@ -45,6 +68,7 @@ async def save_upload(file: UploadFile, prefix: str = "img") -> str:
     content = await file.read()
     if len(content) > MAX_SIZE_BYTES:
         raise HTTPException(400, "File too large. Maximum size is 5 MB.")
+    content = process_image(content)
 
     if _USE_CLOUDINARY:
         import cloudinary.uploader
@@ -58,6 +82,6 @@ async def save_upload(file: UploadFile, prefix: str = "img") -> str:
         return result["secure_url"]
 
     # Local fallback
-    filename = f"{prefix}_{secrets.token_hex(16)}.{ext}"
+    filename = f"{prefix}_{secrets.token_hex(16)}.webp"
     (UPLOAD_DIR / filename).write_bytes(content)
     return f"/uploads/{filename}"

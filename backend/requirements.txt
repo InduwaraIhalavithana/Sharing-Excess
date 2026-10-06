@@ -15,4 +15,5 @@ psycopg2-binary==2.9.12
 passlib==1.7.4                    # pbkdf2_sha256 scheme — bcrypt extra incompatible with Python 3.14+
 python-jose[cryptography]==3.5.0  # JWT tokens
 slowapi==0.1.10                   # rate limiting
+Pillow==12.2.0                    # validates, resizes and strips metadata from uploaded images
 cloudinary==1.46.3                # cloud image storage (optional, falls back to local uploads/)

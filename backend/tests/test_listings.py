@@ -4,12 +4,12 @@ import uuid
 
 
 def _png_bytes() -> bytes:
-    """Minimal valid 1x1 PNG for upload tests."""
-    return (
-        b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01"
-        b"\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\x0cIDATx\x9cc\xf8\x0f\x00"
-        b"\x00\x11\x00\x01\x9a`\x0e\x1b\x00\x00\x00\x00IEND\xaeB`\x82"
-    )
+    """A real (tiny) PNG - uploads are now decoded, so hand-made bytes are rejected."""
+    from PIL import Image
+
+    buf = io.BytesIO()
+    Image.new("RGB", (4, 4), (20, 160, 80)).save(buf, format="PNG")
+    return buf.getvalue()
 
 
 def bearer(token: str) -> dict:
@@ -144,3 +144,39 @@ class TestDeleteListing:
 
         res = client.delete(f"/api/listings/{listing.id}", headers=bearer(recipient_token))
         assert res.status_code == 403
+
+
+class TestImageProcessing:
+    def _jpeg_with_exif(self, size=(3000, 2000)):
+        from PIL import Image
+
+        buf = io.BytesIO()
+        img = Image.new("RGB", size, (200, 30, 30))
+        exif = Image.Exif()
+        exif[0x010F] = "SecretCameraMaker"  # stands in for GPS / device metadata
+        img.save(buf, format="JPEG", exif=exif)
+        return buf.getvalue()
+
+    def test_upload_is_resized_and_metadata_stripped(self, client, donor_token):
+        from pathlib import Path
+        from PIL import Image
+        from app.utils.uploads import UPLOAD_DIR
+
+        res = client.post("/api/listings", headers=bearer(donor_token),
+                          data={"food_name": "Big Photo", "quantity": "1"},
+                          files={"food_image": ("big.jpg", io.BytesIO(self._jpeg_with_exif()), "image/jpeg")})
+        assert res.status_code == 200
+        url = res.json()["listing"]["image_path"]
+        assert url.endswith(".webp")
+        saved = Path(UPLOAD_DIR) / url.rsplit("/", 1)[-1]
+        with Image.open(saved) as img:
+            assert max(img.size) <= 1600
+            assert not img.getexif()
+        saved.unlink()
+
+    def test_a_non_image_with_an_image_name_is_rejected(self, client, donor_token):
+        res = client.post("/api/listings", headers=bearer(donor_token),
+                          data={"food_name": "Fake", "quantity": "1"},
+                          files={"food_image": ("evil.png", io.BytesIO(b"<script>alert(1)</script>"), "image/png")})
+        assert res.status_code == 400
+        assert "not a valid image" in res.json()["detail"]
