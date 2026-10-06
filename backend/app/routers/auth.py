@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -11,12 +11,14 @@ from app.schemas import (
 from app.utils.security import hash_password, verify_password, generate_otp
 from app.utils.email import send_email, verification_email, forgot_password_email
 from app.utils.jwt import create_access_token
+from app.utils.limiter import limiter
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 
 @router.post("/signup")
-def signup(body: SignupRequest, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+def signup(request: Request, body: SignupRequest, db: Session = Depends(get_db)):
     if not body.name or not body.email or not body.password:
         raise HTTPException(400, "Name, email and password are required")
     if len(body.password) < 8:
@@ -48,7 +50,8 @@ def signup(body: SignupRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/login")
-def login(body: LoginRequest, db: Session = Depends(get_db)):
+@limiter.limit("10/minute")
+def login(request: Request, body: LoginRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == body.email).first()
     if not user or not verify_password(body.password, user.password):
         raise HTTPException(401, "Invalid email or password")
@@ -69,7 +72,8 @@ def login(body: LoginRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/officer-login")
-def officer_login(body: LoginRequest, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+def officer_login(request: Request, body: LoginRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == body.email, User.role.in_(["officer", "admin"])).first()
     if not user or not verify_password(body.password, user.password):
         raise HTTPException(401, "Invalid email or password")
@@ -87,7 +91,8 @@ def officer_login(body: LoginRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/verify-email")
-def verify_email(body: VerifyEmailRequest, db: Session = Depends(get_db)):
+@limiter.limit("10/minute")
+def verify_email(request: Request, body: VerifyEmailRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == body.user_id).first()
     if not user:
         raise HTTPException(404, "User not found")
@@ -100,7 +105,8 @@ def verify_email(body: VerifyEmailRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/resend-verification")
-def resend_verification(body: ResendVerificationRequest, db: Session = Depends(get_db)):
+@limiter.limit("3/minute")
+def resend_verification(request: Request, body: ResendVerificationRequest, db: Session = Depends(get_db)):
     # Always return success to prevent email enumeration
     user = db.query(User).filter(User.email == body.email).first()
     if user and user.status == "pending":
@@ -113,7 +119,8 @@ def resend_verification(body: ResendVerificationRequest, db: Session = Depends(g
 
 
 @router.post("/forgot-password")
-def forgot_password(body: ForgotPasswordRequest, db: Session = Depends(get_db)):
+@limiter.limit("3/minute")
+def forgot_password(request: Request, body: ForgotPasswordRequest, db: Session = Depends(get_db)):
     # Always return success to prevent email enumeration
     user = db.query(User).filter(User.email == body.email).first()
     if user:
@@ -126,7 +133,8 @@ def forgot_password(body: ForgotPasswordRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/reset-password")
-def reset_password(body: ResetPasswordRequest, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+def reset_password(request: Request, body: ResetPasswordRequest, db: Session = Depends(get_db)):
     if len(body.new_password) < 8:
         raise HTTPException(400, "Password must be at least 8 characters")
     user = db.query(User).filter(User.email == body.email).first()
