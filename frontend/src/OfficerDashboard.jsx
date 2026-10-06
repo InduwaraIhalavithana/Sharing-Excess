@@ -350,7 +350,7 @@ export default function OfficerDashboard() {
   const donorCount     = users.filter(u => u.role === 'donor').length;
   const recipientCount = users.filter(u => u.role === 'recipient').length;
   const chartColors    = ['#16a34a', '#22c55e', '#4ade80', '#86efac', '#bbf7d0'];
-  const chartOpts      = { responsive: true, plugins: { legend: { position: 'bottom' } } };
+  const chartOpts      = { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } };
 
   const openFeedbackCount = feedback.filter(f => f.feedback_status === 'open').length;
   const openEscalationCount = escalations.filter(e => e.status === 'open').length;
@@ -395,7 +395,7 @@ export default function OfficerDashboard() {
   const currentLabel = NAV_ITEMS.find(n => n.key === tab)?.label || 'Dashboard';
 
   return (
-    <div className="ad-shell">
+    <div className="adm-shell">
       {toast && <Toast msg={toast.msg} type={toast.type} onDone={() => setToast(null)} />}
 
       {/* Delete confirm */}
@@ -426,19 +426,19 @@ export default function OfficerDashboard() {
               <button className="modal-close" onClick={() => setFbReply({ open: false, item: null, text: '' })}>✕</button>
             </div>
             <div className="modal-body">
-              <div className="ad-fb-preview">
-                <p className="ad-fb-preview__from">
+              <div className="adm-fb-preview">
+                <p className="adm-fb-preview__from">
                   From <strong>{fbReply.item?.recipient_name}</strong>
                   {fbReply.item?.rating && <span> · {'⭐'.repeat(fbReply.item.rating)}</span>}
                 </p>
-                <p className="ad-fb-preview__comment">{fbReply.item?.comment}</p>
+                <p className="adm-fb-preview__comment">{fbReply.item?.comment}</p>
               </div>
               <textarea
                 rows={4}
                 value={fbReply.text}
                 onChange={e => setFbReply(p => ({ ...p, text: e.target.value }))}
                 placeholder="Type your reply (optional)…"
-                className="ad-fb-textarea"
+                className="adm-fb-textarea"
               />
               <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
                 <button className="btn btn-outline" onClick={() => setFbReply({ open: false, item: null, text: '' })}>Cancel</button>
@@ -466,7 +466,7 @@ export default function OfficerDashboard() {
                 value={rejectModal.reason}
                 onChange={e => setRejectModal(p => ({ ...p, reason: e.target.value }))}
                 placeholder="e.g., Expiry date too close, unclear photo, unsafe food type…"
-                className="ad-fb-textarea"
+                className="adm-fb-textarea"
               />
               <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
                 <button className="btn btn-outline" onClick={() => setRejectModal({ open: false, listing: null, reason: '' })}>Cancel</button>
@@ -494,7 +494,7 @@ export default function OfficerDashboard() {
                 value={flagModal.reason}
                 onChange={e => setFlagModal(p => ({ ...p, reason: e.target.value }))}
                 placeholder="Why does this need admin attention?"
-                className="ad-fb-textarea"
+                className="adm-fb-textarea"
               />
               <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
                 <button className="btn btn-outline" onClick={() => setFlagModal({ open: false, targetType: null, targetId: null, label: '', reason: '' })}>Cancel</button>
@@ -506,58 +506,58 @@ export default function OfficerDashboard() {
       )}
 
       {/* ── Sidebar ── */}
-      <aside className="ad-sidebar">
-        <div className="ad-sidebar__brand">
-          <div className="ad-sidebar__brand-icon">🌿</div>
+      <aside className="adm-sidebar">
+        <div className="adm-sidebar__brand">
+          <div className="adm-sidebar__brand-icon">🌿</div>
           <div>
-            <div className="ad-sidebar__brand-name">Sharing Excess</div>
-            <div className="ad-sidebar__brand-sub">Admin Panel</div>
+            <div className="adm-sidebar__brand-name">Sharing Excess</div>
+            <div className="adm-sidebar__brand-sub">Admin Panel</div>
           </div>
         </div>
 
-        <nav className="ad-sidebar__nav" data-tour="admin-nav">
+        <nav className="adm-sidebar__nav" data-tour="admin-nav">
           {NAV_ITEMS.map(({ key, icon, label }) => (
             <button
               key={key}
               data-tour={key === 'verify' ? 'admin-verify' : undefined}
-              className={`ad-sidebar__link${tab === key ? ' active' : ''}`}
+              className={`adm-sidebar__link${tab === key ? ' active' : ''}`}
               onClick={() => setTab(key)}
             >
-              <span className="ad-sidebar__link-icon">{icon}</span>
+              <span className="adm-sidebar__link-icon">{icon}</span>
               <span>{label}</span>
               {key === 'feedback' && openFeedbackCount > 0 && (
-                <span className="ad-sidebar__badge">{openFeedbackCount}</span>
+                <span className="adm-sidebar__badge">{openFeedbackCount}</span>
               )}
               {key === 'verify' && pending.length > 0 && (
-                <span className="ad-sidebar__badge">{pending.length}</span>
+                <span className="adm-sidebar__badge">{pending.length}</span>
               )}
               {key === 'escalations' && openEscalationCount > 0 && (
-                <span className="ad-sidebar__badge">{openEscalationCount}</span>
+                <span className="adm-sidebar__badge">{openEscalationCount}</span>
               )}
             </button>
           ))}
         </nav>
 
-        <div className="ad-sidebar__user">
-          <div className="ad-sidebar__user-avatar">{initials}</div>
-          <div className="ad-sidebar__user-info">
-            <div className="ad-sidebar__user-name">{adminUser?.name || 'Staff'}</div>
-            <div className="ad-sidebar__user-role">Admin Officer</div>
+        <div className="adm-sidebar__user">
+          <div className="adm-sidebar__user-avatar">{initials}</div>
+          <div className="adm-sidebar__user-info">
+            <div className="adm-sidebar__user-name">{adminUser?.name || 'Staff'}</div>
+            <div className="adm-sidebar__user-role">Admin Officer</div>
           </div>
         </div>
       </aside>
 
       {/* ── Main ── */}
-      <div className="ad-main">
-        <header className="ad-topbar">
-          <div className="ad-topbar__title">{currentLabel}</div>
-          <div className="ad-topbar__right">
-            <button className="ad-refresh-btn" data-tour="admin-refresh" onClick={fetchAll} title="Refresh data">↻ Refresh</button>
-            <button className="ad-logout-btn" onClick={handleLogout}>🚪 Logout</button>
+      <div className="adm-main">
+        <header className="adm-topbar">
+          <div className="adm-topbar__title">{currentLabel}</div>
+          <div className="adm-topbar__right">
+            <button className="adm-refresh-btn" data-tour="admin-refresh" onClick={fetchAll} title="Refresh data">↻ Refresh</button>
+            <button className="adm-logout-btn" onClick={handleLogout}>🚪 Logout</button>
           </div>
         </header>
 
-        <main className="ad-content">
+        <main className="adm-content">
           {loading ? (
             <div className="dd-loading"><span className="dd-spinner" />Loading…</div>
           ) : (
@@ -591,35 +591,39 @@ export default function OfficerDashboard() {
                     <div className="od-chart-card">
                       <h3 className="od-chart-title">Top Requested Foods</h3>
                       {topFoods.length > 0 ? (
-                        <Bar data={{ labels: topFoods.map(([n]) => n), datasets: [{ label: 'Requests', data: topFoods.map(([, c]) => c), backgroundColor: chartColors }] }} options={chartOpts} />
+                        <div className="od-chart-box">
+                          <Bar data={{ labels: topFoods.map(([n]) => n), datasets: [{ label: 'Requests', data: topFoods.map(([, c]) => c), backgroundColor: chartColors }] }} options={chartOpts} />
+                        </div>
                       ) : <p className="dd-empty-sm">No data yet.</p>}
                     </div>
                     <div className="od-chart-card">
                       <h3 className="od-chart-title">User Distribution</h3>
-                      <Pie
+                      <div className="od-chart-box"><Pie
                         data={{ labels: ['Donors', 'Recipients'], datasets: [{ data: [donorCount, recipientCount], backgroundColor: ['#16a34a', '#3b82f6'] }] }}
                         options={chartOpts}
-                      />
+                      /></div>
                     </div>
                     <div className="od-chart-card od-chart-card--wide">
                       <h3 className="od-chart-title">Accepted Distributions by Month</h3>
                       {distLabels.length > 0 ? (
-                        <Line data={{ labels: distLabels, datasets: [{ label: 'Distributions', data: distLabels.map(m => distByMonth[m]), borderColor: '#16a34a', backgroundColor: 'rgba(22,163,74,0.12)', fill: true, tension: 0.4 }] }} options={chartOpts} />
+                        <div className="od-chart-box">
+                          <Line data={{ labels: distLabels, datasets: [{ label: 'Distributions', data: distLabels.map(m => distByMonth[m]), borderColor: '#16a34a', backgroundColor: 'rgba(22,163,74,0.12)', fill: true, tension: 0.4 }] }} options={chartOpts} />
+                        </div>
                       ) : <p className="dd-empty-sm">No accepted distributions yet.</p>}
                     </div>
                   </div>
 
                   {/* Recent activity feed */}
-                  <div className="ad-activity">
+                  <div className="adm-activity">
                     <h3 className="od-chart-title">🕐 Recent Activity</h3>
                     {recentActivity.length === 0 ? (
                       <p className="dd-empty-sm">No activity yet.</p>
                     ) : (
-                      <div className="ad-activity__list">
+                      <div className="adm-activity__list">
                         {recentActivity.map(a => (
-                          <div key={a.key} className="ad-activity__item">
-                            <span className="ad-activity__icon">{a.icon}</span>
-                            <div className="ad-activity__text">
+                          <div key={a.key} className="adm-activity__item">
+                            <span className="adm-activity__icon">{a.icon}</span>
+                            <div className="adm-activity__text">
                               <span>{a.text}</span>
                               <small>{a.when ? new Date(a.when).toLocaleString() : ''}</small>
                             </div>
@@ -641,15 +645,15 @@ export default function OfficerDashboard() {
                       <p style={{ color: 'var(--text-secondary)' }}>No listings waiting for review. All caught up!</p>
                     </div>
                   ) : (
-                    <div className="ad-fb-list">
+                    <div className="adm-fb-list">
                       {pending.map(l => (
-                        <div key={l.id} className="ad-fb-card">
-                          <div className="ad-fb-card__header">
-                            <div className="ad-fb-card__user">
-                              <div className="ad-fb-card__avatar">🍽️</div>
+                        <div key={l.id} className="adm-fb-card">
+                          <div className="adm-fb-card__header">
+                            <div className="adm-fb-card__user">
+                              <div className="adm-fb-card__avatar">🍽️</div>
                               <div>
-                                <div className="ad-fb-card__name">{l.food_name}</div>
-                                <div className="ad-fb-card__meta">
+                                <div className="adm-fb-card__name">{l.food_name}</div>
+                                <div className="adm-fb-card__meta">
                                   <span>{l.donor_name}</span>
                                   <span>{l.quantity}</span>
                                   {l.expiry_date && <span>Expires {l.expiry_date}</span>}
@@ -659,19 +663,19 @@ export default function OfficerDashboard() {
                             </div>
                             <StatusBadge status="pending_review" />
                           </div>
-                          {l.description && <p className="ad-fb-card__comment">{l.description}</p>}
+                          {l.description && <p className="adm-fb-card__comment">{l.description}</p>}
                           {l.image_path && (
                             <img
                               src={`${API_BASE.replace('/api', '')}/uploads/${l.image_path.split('/').pop()}`}
                               alt={l.food_name}
-                              className="ad-fb-card__img"
+                              className="adm-fb-card__img"
                             />
                           )}
-                          <div className="ad-fb-card__actions">
-                            <button className="btn btn-sm ad-btn-success" onClick={() => verifyListing(l.id, 'approve')}>
+                          <div className="adm-fb-card__actions">
+                            <button className="btn btn-sm adm-btn-success" onClick={() => verifyListing(l.id, 'approve')}>
                               ✓ Approve
                             </button>
-                            <button className="btn btn-sm ad-btn-danger" onClick={() => setRejectModal({ open: true, listing: l, reason: '' })}>
+                            <button className="btn btn-sm adm-btn-danger" onClick={() => setRejectModal({ open: true, listing: l, reason: '' })}>
                               ✕ Reject
                             </button>
                           </div>
@@ -694,17 +698,17 @@ export default function OfficerDashboard() {
                       <p style={{ color: 'var(--text-secondary)' }}>No escalations yet.</p>
                     </div>
                   ) : (
-                    <div className="ad-fb-list">
+                    <div className="adm-fb-list">
                       {escalations.map(e => (
-                        <div key={e.id} className={`ad-fb-card${e.status !== 'open' ? ' resolved' : ''}`}>
-                          <div className="ad-fb-card__header">
-                            <div className="ad-fb-card__user">
-                              <div className="ad-fb-card__avatar">🚩</div>
+                        <div key={e.id} className={`adm-fb-card${e.status !== 'open' ? ' resolved' : ''}`}>
+                          <div className="adm-fb-card__header">
+                            <div className="adm-fb-card__user">
+                              <div className="adm-fb-card__avatar">🚩</div>
                               <div>
-                                <div className="ad-fb-card__name">
+                                <div className="adm-fb-card__name">
                                   {e.target_type} #{e.target_id}
                                 </div>
-                                <div className="ad-fb-card__meta">
+                                <div className="adm-fb-card__meta">
                                   <span>Flagged by {e.officer_name || 'staff'}</span>
                                   <span>{new Date(e.created_at).toLocaleDateString()}</span>
                                 </div>
@@ -712,19 +716,19 @@ export default function OfficerDashboard() {
                             </div>
                             <StatusBadge status={e.status} />
                           </div>
-                          <p className="ad-fb-card__comment">{e.reason}</p>
+                          <p className="adm-fb-card__comment">{e.reason}</p>
                           {e.admin_note && (
-                            <div className="ad-fb-card__reply">
-                              <div className="ad-fb-card__reply-label">Admin note</div>
+                            <div className="adm-fb-card__reply">
+                              <div className="adm-fb-card__reply-label">Admin note</div>
                               <p>{e.admin_note}</p>
                             </div>
                           )}
                           {e.status === 'open' && (
-                            <div className="ad-fb-card__actions">
-                              <button className="btn btn-sm ad-btn-success" onClick={() => updateEscalation(e.id, 'actioned')}>
+                            <div className="adm-fb-card__actions">
+                              <button className="btn btn-sm adm-btn-success" onClick={() => updateEscalation(e.id, 'actioned')}>
                                 ✓ Mark Actioned
                               </button>
-                              <button className="btn btn-sm ad-btn-warn" onClick={() => updateEscalation(e.id, 'dismissed')}>
+                              <button className="btn btn-sm adm-btn-warn" onClick={() => updateEscalation(e.id, 'dismissed')}>
                                 Dismiss
                               </button>
                             </div>
@@ -754,8 +758,8 @@ export default function OfficerDashboard() {
                           <td><EditableCell value={r.status} options={['pending','accepted','delivering','delivered','declined']} onSave={v => updateRequest(r.id, { status: v })} /></td>
                           <td>
                             <div style={{ display: 'flex', gap: 6 }}>
-                              <button className="btn btn-sm ad-btn-danger" onClick={() => setConfirmDel({ type: 'request', id: r.id })}>Delete</button>
-                              <button className="btn btn-sm ad-btn-warn" onClick={() => openFlag('request', r.id, r.food_name || r.food_item)}>🚩 Flag</button>
+                              <button className="btn btn-sm adm-btn-danger" onClick={() => setConfirmDel({ type: 'request', id: r.id })}>Delete</button>
+                              <button className="btn btn-sm adm-btn-warn" onClick={() => openFlag('request', r.id, r.food_name || r.food_item)}>🚩 Flag</button>
                             </div>
                           </td>
                         </tr>
@@ -785,8 +789,8 @@ export default function OfficerDashboard() {
                           <td><StatusBadge status={l.verification_status} /></td>
                           <td>
                             <div style={{ display: 'flex', gap: 6 }}>
-                              <button className="btn btn-sm ad-btn-danger" onClick={() => setConfirmDel({ type: 'listing', id: l.id })}>Delete</button>
-                              <button className="btn btn-sm ad-btn-warn" onClick={() => openFlag('listing', l.id, l.food_name)}>🚩 Flag</button>
+                              <button className="btn btn-sm adm-btn-danger" onClick={() => setConfirmDel({ type: 'listing', id: l.id })}>Delete</button>
+                              <button className="btn btn-sm adm-btn-warn" onClick={() => openFlag('listing', l.id, l.food_name)}>🚩 Flag</button>
                             </div>
                           </td>
                         </tr>
@@ -800,16 +804,16 @@ export default function OfficerDashboard() {
               {/* ═══ USERS ═══════════════════════════════════════════════════════ */}
               {tab === 'users' && (
                 <div>
-                  <div className="ad-filter-row">
+                  <div className="adm-filter-row">
                     <input
-                      className="ad-search-input"
+                      className="adm-search-input"
                       type="text"
                       placeholder="Search name or email…"
                       value={userSearch}
                       onChange={e => setUserSearch(e.target.value)}
                     />
                     <select
-                      className="ad-role-select"
+                      className="adm-role-select"
                       value={userRoleFilter}
                       onChange={e => setUserRoleFilter(e.target.value)}
                     >
@@ -817,7 +821,7 @@ export default function OfficerDashboard() {
                       <option value="donor">Donor</option>
                       <option value="recipient">Recipient</option>
                     </select>
-                    <span className="ad-filter-count">{filteredUsers.length} user{filteredUsers.length !== 1 ? 's' : ''}</span>
+                    <span className="adm-filter-count">{filteredUsers.length} user{filteredUsers.length !== 1 ? 's' : ''}</span>
                   </div>
                   <div className="od-table-wrap">
                     <table className="od-table">
@@ -838,12 +842,12 @@ export default function OfficerDashboard() {
                             <td>
                               <div style={{ display: 'flex', gap: 6 }}>
                                 <button
-                                  className={`btn btn-sm ${u.status === 'suspended' ? 'ad-btn-success' : 'ad-btn-warn'}`}
+                                  className={`btn btn-sm ${u.status === 'suspended' ? 'adm-btn-success' : 'adm-btn-warn'}`}
                                   onClick={() => suspendUser(u)}
                                 >
                                   {u.status === 'suspended' ? 'Unsuspend' : 'Suspend'}
                                 </button>
-                                <button className="btn btn-sm ad-btn-danger" onClick={() => deleteUser(u)}>Delete</button>
+                                <button className="btn btn-sm adm-btn-danger" onClick={() => deleteUser(u)}>Delete</button>
                               </div>
                             </td>
                           </tr>
@@ -858,7 +862,7 @@ export default function OfficerDashboard() {
               {/* ═══ MONEY DONATIONS ═════════════════════════════════════════════ */}
               {tab === 'money' && (
                 <div>
-                  <div className="ad-money-total">
+                  <div className="adm-money-total">
                     💵 Total raised: <strong>LKR {moneyDon.reduce((s, m) => s + Number(m.amount || 0), 0).toLocaleString()}</strong>
                   </div>
                   <div className="od-table-wrap">
@@ -887,16 +891,16 @@ export default function OfficerDashboard() {
               {/* ═══ FEEDBACK ════════════════════════════════════════════════════ */}
               {tab === 'feedback' && (
                 <div>
-                  <div className="ad-fb-tabs">
+                  <div className="adm-fb-tabs">
                     {[['open','Open'],['resolved','Resolved'],['all','All']].map(([val, label]) => (
                       <button
                         key={val}
-                        className={`ad-fb-tab${fbFilter === val ? ' active' : ''}`}
+                        className={`adm-fb-tab${fbFilter === val ? ' active' : ''}`}
                         onClick={() => setFbFilter(val)}
                       >
                         {label}
                         {val === 'open' && openFeedbackCount > 0 && (
-                          <span className="ad-fb-tab-count">{openFeedbackCount}</span>
+                          <span className="adm-fb-tab-count">{openFeedbackCount}</span>
                         )}
                       </button>
                     ))}
@@ -905,15 +909,15 @@ export default function OfficerDashboard() {
                   {filteredFeedback.length === 0 ? (
                     <p className="dd-empty-sm">No feedback in this category.</p>
                   ) : (
-                    <div className="ad-fb-list">
+                    <div className="adm-fb-list">
                       {filteredFeedback.map(f => (
-                        <div key={f.id} className={`ad-fb-card${f.feedback_status === 'resolved' ? ' resolved' : ''}`}>
-                          <div className="ad-fb-card__header">
-                            <div className="ad-fb-card__user">
-                              <div className="ad-fb-card__avatar">{f.recipient_name?.charAt(0)?.toUpperCase() || '?'}</div>
+                        <div key={f.id} className={`adm-fb-card${f.feedback_status === 'resolved' ? ' resolved' : ''}`}>
+                          <div className="adm-fb-card__header">
+                            <div className="adm-fb-card__user">
+                              <div className="adm-fb-card__avatar">{f.recipient_name?.charAt(0)?.toUpperCase() || '?'}</div>
                               <div>
-                                <div className="ad-fb-card__name">{f.recipient_name}</div>
-                                <div className="ad-fb-card__meta">
+                                <div className="adm-fb-card__name">{f.recipient_name}</div>
+                                <div className="adm-fb-card__meta">
                                   {f.rating && <span>{'⭐'.repeat(f.rating)}</span>}
                                   <span>{new Date(f.created_at).toLocaleDateString()}</span>
                                   {f.request_id && <span>Request #{f.request_id}</span>}
@@ -923,37 +927,37 @@ export default function OfficerDashboard() {
                             <StatusBadge status={f.feedback_status} />
                           </div>
 
-                          <p className="ad-fb-card__comment">{f.comment}</p>
+                          <p className="adm-fb-card__comment">{f.comment}</p>
 
                           {f.image_path && (
                             <img
                               src={`${API_BASE.replace('/api', '')}/uploads/${f.image_path.split('/').pop()}`}
                               alt="Feedback"
-                              className="ad-fb-card__img"
+                              className="adm-fb-card__img"
                             />
                           )}
 
                           {f.admin_reply && (
-                            <div className="ad-fb-card__reply">
-                              <div className="ad-fb-card__reply-label">Admin reply</div>
+                            <div className="adm-fb-card__reply">
+                              <div className="adm-fb-card__reply-label">Admin reply</div>
                               <p>{f.admin_reply}</p>
                             </div>
                           )}
 
-                          <div className="ad-fb-card__actions">
+                          <div className="adm-fb-card__actions">
                             {f.feedback_status === 'open' ? (
                               <button className="btn btn-sm btn-primary" onClick={() => setFbReply({ open: true, item: f, text: '' })}>
                                 💬 Reply &amp; Resolve
                               </button>
                             ) : (
-                              <button className="btn btn-sm ad-btn-warn" onClick={() => reopenFeedback(f.id)}>
+                              <button className="btn btn-sm adm-btn-warn" onClick={() => reopenFeedback(f.id)}>
                                 ↺ Reopen
                               </button>
                             )}
-                            <button className="btn btn-sm ad-btn-danger" onClick={() => deleteFeedback(f.id)}>
+                            <button className="btn btn-sm adm-btn-danger" onClick={() => deleteFeedback(f.id)}>
                               🗑 Delete
                             </button>
-                            <button className="btn btn-sm ad-btn-warn" onClick={() => openFlag('feedback', f.id, `feedback from ${f.recipient_name}`)}>
+                            <button className="btn btn-sm adm-btn-warn" onClick={() => openFlag('feedback', f.id, `feedback from ${f.recipient_name}`)}>
                               🚩 Flag
                             </button>
                           </div>
@@ -986,73 +990,73 @@ export default function OfficerDashboard() {
                     ))}
                   </div>
 
-                  <div className="ad-report-grid">
-                    <div className="ad-report-card">
-                      <h3 className="ad-report-card__title">Requests by Status</h3>
+                  <div className="adm-report-grid">
+                    <div className="adm-report-card">
+                      <h3 className="adm-report-card__title">Requests by Status</h3>
                       {Object.entries(stats?.requests_by_status || {}).length === 0
                         ? <p className="dd-empty-sm">No data yet.</p>
                         : Object.entries(stats.requests_by_status).map(([status, count]) => {
                           const max = Math.max(...Object.values(stats.requests_by_status));
                           return (
-                            <div key={status} className="ad-bar-row">
-                              <span className="ad-bar-label">{status}</span>
-                              <div className="ad-bar-track">
-                                <div className="ad-bar-fill" style={{ width: `${max > 0 ? Math.round((count / max) * 100) : 0}%` }} />
+                            <div key={status} className="adm-bar-row">
+                              <span className="adm-bar-label">{status}</span>
+                              <div className="adm-bar-track">
+                                <div className="adm-bar-fill" style={{ width: `${max > 0 ? Math.round((count / max) * 100) : 0}%` }} />
                               </div>
-                              <span className="ad-bar-value">{count}</span>
+                              <span className="adm-bar-value">{count}</span>
                             </div>
                           );
                         })}
                     </div>
 
-                    <div className="ad-report-card">
-                      <h3 className="ad-report-card__title">Users by Role</h3>
+                    <div className="adm-report-card">
+                      <h3 className="adm-report-card__title">Users by Role</h3>
                       {Object.entries(stats?.users_by_role || {}).map(([role, count]) => {
                         const max = Math.max(...Object.values(stats.users_by_role));
                         const color = role === 'donor' ? '#16a34a' : '#3b82f6';
                         return (
-                          <div key={role} className="ad-bar-row">
-                            <span className="ad-bar-label">{role}</span>
-                            <div className="ad-bar-track">
-                              <div className="ad-bar-fill" style={{ width: `${max > 0 ? Math.round((count / max) * 100) : 0}%`, background: color }} />
+                          <div key={role} className="adm-bar-row">
+                            <span className="adm-bar-label">{role}</span>
+                            <div className="adm-bar-track">
+                              <div className="adm-bar-fill" style={{ width: `${max > 0 ? Math.round((count / max) * 100) : 0}%`, background: color }} />
                             </div>
-                            <span className="ad-bar-value">{count}</span>
+                            <span className="adm-bar-value">{count}</span>
                           </div>
                         );
                       })}
                     </div>
 
-                    <div className="ad-report-card">
-                      <h3 className="ad-report-card__title">Top Requested Foods</h3>
+                    <div className="adm-report-card">
+                      <h3 className="adm-report-card__title">Top Requested Foods</h3>
                       {(stats?.top_requested_foods || []).length === 0
                         ? <p className="dd-empty-sm">No data yet.</p>
                         : (stats.top_requested_foods).map((f, i) => {
                           const max = stats.top_requested_foods[0]?.count || 1;
                           return (
-                            <div key={f.name} className="ad-bar-row">
-                              <span className="ad-bar-label">{i + 1}. {f.name}</span>
-                              <div className="ad-bar-track">
-                                <div className="ad-bar-fill" style={{ width: `${Math.round((f.count / max) * 100)}%`, background: '#f59e0b' }} />
+                            <div key={f.name} className="adm-bar-row">
+                              <span className="adm-bar-label">{i + 1}. {f.name}</span>
+                              <div className="adm-bar-track">
+                                <div className="adm-bar-fill" style={{ width: `${Math.round((f.count / max) * 100)}%`, background: '#f59e0b' }} />
                               </div>
-                              <span className="ad-bar-value">{f.count}</span>
+                              <span className="adm-bar-value">{f.count}</span>
                             </div>
                           );
                         })}
                     </div>
 
-                    <div className="ad-report-card">
-                      <h3 className="ad-report-card__title">Distributions by Month</h3>
+                    <div className="adm-report-card">
+                      <h3 className="adm-report-card__title">Distributions by Month</h3>
                       {(stats?.donations_by_month || []).length === 0
                         ? <p className="dd-empty-sm">No data yet.</p>
                         : (stats.donations_by_month).map(d => {
                           const max = Math.max(...stats.donations_by_month.map(x => x.count));
                           return (
-                            <div key={`${d.year}-${d.month}`} className="ad-bar-row">
-                              <span className="ad-bar-label">{d.year}-{String(d.month).padStart(2, '0')}</span>
-                              <div className="ad-bar-track">
-                                <div className="ad-bar-fill" style={{ width: `${max > 0 ? Math.round((d.count / max) * 100) : 0}%`, background: '#0891b2' }} />
+                            <div key={`${d.year}-${d.month}`} className="adm-bar-row">
+                              <span className="adm-bar-label">{d.year}-{String(d.month).padStart(2, '0')}</span>
+                              <div className="adm-bar-track">
+                                <div className="adm-bar-fill" style={{ width: `${max > 0 ? Math.round((d.count / max) * 100) : 0}%`, background: '#0891b2' }} />
                               </div>
-                              <span className="ad-bar-value">{d.count}</span>
+                              <span className="adm-bar-value">{d.count}</span>
                             </div>
                           );
                         })}
