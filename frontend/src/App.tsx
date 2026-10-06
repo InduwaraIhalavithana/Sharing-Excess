@@ -6,6 +6,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import { SkeletonGrid } from './components/SkeletonCard';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { usePageTitle } from './hooks/usePageTitle';
+import { useLiveUpdates } from './hooks/useLiveUpdates';
 
 // Each page is its own chunk, downloaded only when first visited.
 const Home = lazy(() => import('./Home'));
@@ -34,6 +35,7 @@ function PageFallback() {
 function AppContent() {
   const location = useLocation();
   usePageTitle(location.pathname);
+  useLiveUpdates();
   const isAdminPage = location.pathname.startsWith('/admin');
 
   // Admin gets its own full-page layout (no Navbar/Footer)

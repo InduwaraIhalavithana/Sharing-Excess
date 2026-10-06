@@ -11,8 +11,9 @@ from slowapi.middleware import SlowAPIMiddleware
 
 from app.config import settings
 from app.database import engine
+from app.utils import events
 from app.utils.limiter import limiter
-from app.routers import auth, listings, requests, officer, calendar, feedback, contact, donations, public
+from app.routers import auth, listings, requests, officer, calendar, feedback, contact, donations, public, live
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -64,6 +65,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+
+@app.middleware("http")
+async def announce_changes(request, call_next):
+    """After any successful write to listings/requests/feedback, tell live clients to refetch."""
+    response = await call_next(request)
+    if request.method in ("POST", "PUT", "PATCH", "DELETE") and response.status_code < 400:
+        for prefix, topic in events.TOPICS:
+            if request.url.path.startswith(prefix):
+                events.publish(topic)
+                break
+    return response
+
+
 # Serve uploaded images at /uploads/filename
 UPLOADS_DIR = Path(__file__).resolve().parents[1] / "uploads"
 UPLOADS_DIR.mkdir(exist_ok=True)
@@ -79,6 +94,7 @@ app.include_router(feedback.router)
 app.include_router(contact.router)
 app.include_router(donations.router)
 app.include_router(public.router)
+app.include_router(live.router)
 
 
 @app.get("/")
