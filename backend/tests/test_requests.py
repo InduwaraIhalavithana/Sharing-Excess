@@ -1,286 +1,307 @@
-"""Integration tests for /api/requests, calendar privacy and public stats."""
-import uuid
+"""Requests: partial quantities, stock held and returned, accept / decline, handover statuses, contact privacy,
+concurrency, and the notifications each step produces."""
+import threading
+
+import pytest
+
+from tests.conftest import listing_row
 
 
-def bearer(token: str) -> dict:
-    return {"Authorization": f"Bearer {token}"}
+def avail(db, listing_id) -> float:
+    return float(listing_row(db, listing_id).quantity_available)
 
 
-def _request(db, recipient_id, name="Vegetables", status="pending", listing_id=None):
-    from app.models import FoodRequest
-
-    req = FoodRequest(recipient_id=recipient_id, food_name=name, quantity="3 kg",
-                      status=status, location="Colombo", listing_id=listing_id)
-    db.add(req)
-    db.commit()
-    db.refresh(req)
-    return req
+@pytest.fixture()
+def setup(make_user, post_listing):
+    """A donor with a 10-portion listing, plus two recipients."""
+    d = make_user("donor", phone_number="0770000001", district="Colombo")
+    item = post_listing(d, quantity_total="10")
+    return d, item, make_user("recipient"), make_user("recipient")
 
 
-def _other_donor(db):
-    from app.models import User
-    from app.utils.security import hash_password
+class TestMakingARequest:
+    def test_holds_stock_and_supports_partial_amounts(self, client, setup, request_food, db):
+        d, item, r1, r2 = setup
+        res = request_food(r1, item["id"], 3, "For the children")
+        assert res.status_code == 200, res.text
+        assert res.json()["request"]["quantity_requested"] == 3 and res.json()["request"]["status"] == "pending"
+        assert avail(db, item["id"]) == 7
+        assert request_food(r2, item["id"], 7).status_code == 200
+        assert avail(db, item["id"]) == 0
+        assert listing_row(db, item["id"]).status == "sold_out"
 
-    u = User(name="Other Donor", email=f"pytest_od_{uuid.uuid4().hex[:6]}@example.com",
-             password=hash_password("testpass123"), role="donor", status="active")
-    db.add(u)
-    db.commit()
-    db.refresh(u)
-    return u
+    def test_cannot_take_more_than_remains(self, client, setup, request_food, db):
+        d, item, r1, r2 = setup
+        request_food(r1, item["id"], 8)
+        res = request_food(r2, item["id"], 3)
+        assert res.status_code == 400 and "2" in res.json()["detail"]
+        assert avail(db, item["id"]) == 2
 
+    def test_quantity_must_be_positive_and_numeric(self, client, setup, request_food):
+        d, item, r1, _ = setup
+        for bad in (0, -1, "abc"):
+            assert request_food(r1, item["id"], bad).status_code == 422
 
-class TestGetRequests:
-    def test_requires_login(self, client):
-        assert client.get("/api/requests?donor_view=true").status_code == 401
+    def test_who_may_request(self, client, setup, request_food, make_user):
+        d, item, r1, _ = setup
+        assert request_food(d, item["id"], 1).status_code == 403                               # donors
+        assert request_food(make_user("admin"), item["id"], 1).status_code == 403
+        pending_ngo = make_user("ngo", ngo_status="pending")
+        res = request_food(pending_ngo, item["id"], 1)
+        assert res.status_code == 403 and "approval" in res.json()["detail"]
+        assert request_food(make_user("ngo"), item["id"], 1).status_code == 200                # approved NGO
+        assert client.post("/api/requests", json={"listing_id": item["id"], "quantity_requested": 1}).status_code == 401
 
-    def test_donor_can_browse_open_requests(self, client, donor_token):
-        res = client.get("/api/requests?donor_view=true", headers=bearer(donor_token))
-        assert res.status_code == 200
-        assert isinstance(res.json()["requests"], list)
+    def test_one_open_request_per_listing_per_person(self, client, setup, request_food, db):
+        d, item, r1, _ = setup
+        assert request_food(r1, item["id"], 2).status_code == 200
+        assert request_food(r1, item["id"], 2).status_code == 409
+        assert avail(db, item["id"]) == 8
 
-    def test_recipient_cannot_browse_open_board(self, client, recipient_token):
-        res = client.get("/api/requests?donor_view=true", headers=bearer(recipient_token))
-        assert res.status_code == 403
-
-    def test_recipient_sees_own_requests(self, client, recipient, recipient_token):
-        res = client.get(f"/api/requests?recipient_id={recipient.id}", headers=bearer(recipient_token))
-        assert res.status_code == 200
-        for req in res.json()["requests"]:
-            assert req["recipient_id"] == recipient.id
-
-    def test_cannot_read_someone_elses_requests(self, client, recipient, donor_token):
-        res = client.get(f"/api/requests?recipient_id={recipient.id}", headers=bearer(donor_token))
-        assert res.status_code == 403
-
-
-class TestCreateRequest:
-    def test_create_request_success(self, client, recipient, recipient_token, db):
-        from app.models import FoodRequest
-
-        res = client.post("/api/requests", headers=bearer(recipient_token), data={
-            "food_name": "Lentils", "quantity": "2 kg", "needed_by": "2026-12-31", "location": "Galle",
-        })
-        assert res.status_code == 200
-        req = db.query(FoodRequest).filter(FoodRequest.id == res.json()["request"]["id"]).first()
-        assert req.food_name == "Lentils"
-        assert req.recipient_id == recipient.id
-        assert req.status == "pending"
-
-    def test_recipient_id_in_body_is_ignored(self, client, recipient, recipient_token, donor):
-        res = client.post("/api/requests", headers=bearer(recipient_token), data={
-            "recipient_id": str(donor.id), "food_name": "Spoof", "quantity": "1",
-        })
-        assert res.status_code == 200
-        assert res.json()["request"]["recipient_id"] == recipient.id
-
-    def test_requires_login(self, client):
-        assert client.post("/api/requests", data={"food_name": "x", "quantity": "1"}).status_code == 401
-
-    def test_donor_cannot_create_request(self, client, donor_token):
-        res = client.post("/api/requests", headers=bearer(donor_token), data={"food_name": "x", "quantity": "1"})
-        assert res.status_code == 403
-
-    def test_missing_food_name(self, client, recipient_token):
-        res = client.post("/api/requests", headers=bearer(recipient_token), data={"quantity": "1 kg"})
-        assert res.status_code == 422
+    def test_unavailable_listings_cannot_be_requested(self, client, setup, request_food, make_user):
+        d, item, r1, _ = setup
+        assert request_food(r1, 99999999, 1).status_code == 404
+        client.post(f"/api/listings/{item['id']}/close", headers=d.h)
+        res = request_food(make_user("recipient"), item["id"], 1)
+        assert res.status_code == 400 and "no longer available" in res.json()["detail"]
 
 
-class TestDeleteRequest:
-    def test_delete_own_request(self, client, recipient, recipient_token, db):
-        from app.models import FoodRequest
-
-        req = _request(db, recipient.id, "To Delete")
-        res = client.delete(f"/api/requests/{req.id}", headers=bearer(recipient_token))
-        assert res.status_code == 200
-        assert db.query(FoodRequest).filter(FoodRequest.id == req.id).first() is None
-
-    def test_delete_requires_login(self, client, recipient, db):
-        req = _request(db, recipient.id)
-        assert client.delete(f"/api/requests/{req.id}").status_code == 401
-
-    def test_cannot_delete_someone_elses_request(self, client, recipient, donor_token, db):
-        req = _request(db, recipient.id)
-        assert client.delete(f"/api/requests/{req.id}", headers=bearer(donor_token)).status_code == 403
-
-    def test_delete_nonexistent_request(self, client, recipient_token):
-        assert client.delete("/api/requests/999999999", headers=bearer(recipient_token)).status_code == 404
-
-
-class TestRespondToRequest:
-    def test_accept_request(self, client, donor, donor_token, recipient, db):
-        req = _request(db, recipient.id)
-        res = client.put(f"/api/requests/{req.id}/respond", headers=bearer(donor_token),
-                         json={"request_id": req.id, "status": "accepted"})
-        assert res.status_code == 200
-        db.refresh(req)
-        assert req.status == "accepted"
-        assert req.accepted_by == donor.name
-
-    def test_spoofed_user_name_is_ignored(self, client, donor, donor_token, recipient, db):
-        req = _request(db, recipient.id)
-        client.put(f"/api/requests/{req.id}/respond", headers=bearer(donor_token),
-                   json={"request_id": req.id, "status": "accepted", "user_id": 1, "user_name": "Somebody Else"})
-        db.refresh(req)
-        assert req.accepted_by == donor.name
-
-    def test_decline_request(self, client, donor_token, recipient, db):
-        req = _request(db, recipient.id, "Fruits")
-        res = client.put(f"/api/requests/{req.id}/respond", headers=bearer(donor_token),
-                         json={"request_id": req.id, "status": "declined"})
-        assert res.status_code == 200
-        db.refresh(req)
-        assert req.status == "declined"
-
-    def test_respond_requires_login(self, client, recipient, db):
-        req = _request(db, recipient.id)
-        res = client.put(f"/api/requests/{req.id}/respond", json={"request_id": req.id, "status": "accepted"})
-        assert res.status_code == 401
-
-    def test_recipient_cannot_respond(self, client, recipient, recipient_token, db):
-        req = _request(db, recipient.id)
-        res = client.put(f"/api/requests/{req.id}/respond", headers=bearer(recipient_token),
-                         json={"request_id": req.id, "status": "accepted"})
-        assert res.status_code == 403
-
-    def test_other_donor_cannot_answer_a_listing_request(self, client, donor, recipient, db):
-        from app.models import FoodListing
-
-        listing = FoodListing(donor_id=donor.id, food_name="Owned", quantity="1", status="available",
-                              verification_status="approved")
-        db.add(listing)
-        db.commit()
-        db.refresh(listing)
-        req = _request(db, recipient.id, "For Owned", listing_id=listing.id)
-        other = _other_donor(db)
-        login = client.post("/api/auth/login", json={"email": other.email, "password": "testpass123"})
-        res = client.put(f"/api/requests/{req.id}/respond", headers=bearer(login.json()["token"]),
-                         json={"request_id": req.id, "status": "accepted"})
-        assert res.status_code == 403
-
-    def test_cannot_respond_twice(self, client, donor_token, recipient, db):
-        req = _request(db, recipient.id, status="accepted")
-        res = client.put(f"/api/requests/{req.id}/respond", headers=bearer(donor_token),
-                         json={"request_id": req.id, "status": "declined"})
-        assert res.status_code == 400
-
-
-class TestDeliveryStatus:
-    def test_invalid_status_rejected(self, client, donor_token, recipient, db):
-        req = _request(db, recipient.id, status="accepted")
-        res = client.put(f"/api/requests/{req.id}/status", headers=bearer(donor_token),
-                         json={"request_id": req.id, "status": "banana"})
-        assert res.status_code == 400
-
-    def test_requires_login(self, client, recipient, db):
-        req = _request(db, recipient.id, status="accepted")
-        res = client.put(f"/api/requests/{req.id}/status", json={"request_id": req.id, "status": "delivered"})
-        assert res.status_code == 401
-
-    def test_recipient_can_mark_picked_up_but_not_delivered(self, client, recipient_token, recipient, db):
-        req = _request(db, recipient.id, status="accepted")
-        bad = client.put(f"/api/requests/{req.id}/status", headers=bearer(recipient_token),
-                         json={"request_id": req.id, "status": "delivered"})
-        assert bad.status_code == 403
-        ok = client.put(f"/api/requests/{req.id}/status", headers=bearer(recipient_token),
-                        json={"request_id": req.id, "status": "picked_up"})
+class TestStockComesBack:
+    def test_decline_needs_a_reason_and_returns_stock(self, client, setup, request_food, db):
+        d, item, r1, _ = setup
+        rid = request_food(r1, item["id"], 4).json()["request"]["id"]
+        no_reason = client.put(f"/api/requests/{rid}/respond", headers=d.h, json={"status": "declined"})
+        assert no_reason.status_code == 400 and "reason" in no_reason.json()["detail"]
+        assert avail(db, item["id"]) == 6
+        ok = client.put(f"/api/requests/{rid}/respond", headers=d.h, json={"status": "declined", "reason": "Already promised"})
         assert ok.status_code == 200
+        assert avail(db, item["id"]) == 10 and listing_row(db, item["id"]).status == "active"
+        got = client.get(f"/api/requests/{rid}", headers=r1.h).json()["request"]
+        assert got["status"] == "declined" and got["decline_reason"] == "Already promised"
 
-    def test_stranger_cannot_change_status(self, client, recipient, db):
-        req = _request(db, recipient.id, status="accepted")
-        other = _other_donor(db)
-        token = client.post("/api/auth/login", json={"email": other.email, "password": "testpass123"}).json()["token"]
-        res = client.put(f"/api/requests/{req.id}/status", headers=bearer(token),
-                         json={"request_id": req.id, "status": "delivered"})
-        assert res.status_code == 403
+    def test_declining_a_sold_out_listing_reopens_it(self, client, setup, request_food, db):
+        d, item, r1, _ = setup
+        rid = request_food(r1, item["id"], 10).json()["request"]["id"]
+        assert listing_row(db, item["id"]).status == "sold_out"
+        client.put(f"/api/requests/{rid}/respond", headers=d.h, json={"status": "declined", "reason": "Sorry"})
+        assert listing_row(db, item["id"]).status == "active"
+        assert any(x["id"] == item["id"] for x in client.get("/api/listings").json()["listings"])
 
+    def test_recipient_cancel_returns_stock_pending_or_accepted(self, client, setup, request_food, db):
+        d, item, r1, r2 = setup
+        a = request_food(r1, item["id"], 3).json()["request"]["id"]
+        b = request_food(r2, item["id"], 2).json()["request"]["id"]
+        client.put(f"/api/requests/{b}/respond", headers=d.h, json={"status": "accepted"})
+        assert avail(db, item["id"]) == 5
+        for rid, who in ((a, r1), (b, r2)):
+            res = client.put(f"/api/requests/{rid}/status", headers=who.h, json={"status": "cancelled"})
+            assert res.status_code == 200, res.text
+        assert avail(db, item["id"]) == 10
 
-class TestPrivacy:
-    def test_calendar_requires_login(self, client):
-        assert client.get("/api/calendar/events").status_code == 401
+    def test_accepting_keeps_the_hold_and_does_not_double_count(self, client, setup, request_food, db):
+        d, item, r1, _ = setup
+        rid = request_food(r1, item["id"], 4).json()["request"]["id"]
+        client.put(f"/api/requests/{rid}/respond", headers=d.h, json={"status": "accepted"})
+        assert avail(db, item["id"]) == 6
 
-    def test_calendar_hides_unrelated_contact_details(self, client, recipient, donor_token, recipient_token, db):
-        req = _request(db, recipient.id, "Calendar Item")
-        # A donor with no link to this request must not see the recipient's email/phone
-        events = client.get("/api/calendar/events", headers=bearer(donor_token)).json()["events"]
-        mine = [e for e in events if e["id"] == f"req_{req.id}"][0]
-        assert mine["recipient"]["email"] is None
-        # ...but the recipient sees their own details
-        events = client.get("/api/calendar/events", headers=bearer(recipient_token)).json()["events"]
-        mine = [e for e in events if e["id"] == f"req_{req.id}"][0]
-        assert mine["recipient"]["email"] == recipient.email
+    def test_no_show_returns_stock_but_collected_and_completed_do_not(self, client, setup, request_food, db):
+        d, item, r1, r2 = setup
+        a = request_food(r1, item["id"], 3).json()["request"]["id"]
+        b = request_food(r2, item["id"], 2).json()["request"]["id"]
+        for rid in (a, b):
+            client.put(f"/api/requests/{rid}/respond", headers=d.h, json={"status": "accepted"})
+        assert client.put(f"/api/requests/{a}/status", headers=d.h, json={"status": "no_show"}).status_code == 200
+        assert avail(db, item["id"]) == 8
+        client.put(f"/api/requests/{b}/status", headers=d.h, json={"status": "collected"})
+        client.put(f"/api/requests/{b}/status", headers=d.h, json={"status": "completed"})
+        assert avail(db, item["id"]) == 8      # the 2 handed over are gone for good
 
-    def test_public_stats_are_counts_only(self, client):
-        res = client.get("/api/public/stats")
-        assert res.status_code == 200
-        data = res.json()
-        assert set(data) == {"success", "listings_available", "requests_open",
-                             "meals_delivered", "donors", "recipients", "listings_shared"}
-        assert all(isinstance(v, (int, bool)) for v in data.values())
-
-
-class TestPayhereInitiate:
-    def test_payhere_initiate_returns_hash(self, client):
-        res = client.post("/api/donations/payhere/initiate", json={
-            "name": "Test Donor", "email": "pytest_payhere@example.com", "amount": 4000.0,
-        })
-        assert res.status_code == 200
-        params = res.json()["params"]
-        assert len(params["hash"]) == 32  # MD5 hex length
-        assert params["currency"] == "LKR"
-        assert params["amount"] == "4000.00"
-        assert params["order_id"].startswith("SE-")
-
-
-class TestDonorBoardScope:
-    def test_donor_board_excludes_other_donors_listing_requests(self, client, donor, recipient, db):
-        from app.models import FoodListing
-
-        other = _other_donor(db)
-        listing = FoodListing(donor_id=other.id, food_name="Theirs", quantity="1", status="available",
-                              verification_status="approved")
-        db.add(listing)
-        db.commit()
-        db.refresh(listing)
-        hidden = _request(db, recipient.id, "Hidden From Me", listing_id=listing.id)
-        open_req = _request(db, recipient.id, "Open To All")
-
-        token = client.post("/api/auth/login", json={"email": donor.email, "password": "testpass123"}).json()["token"]
-        ids = {r["id"] for r in client.get("/api/requests?donor_view=true", headers=bearer(token)).json()["requests"]}
-        assert open_req.id in ids
-        assert hidden.id not in ids
+    def test_stock_arithmetic_always_adds_up(self, client, setup, request_food, make_user, db):
+        """available + sum(held requests) == total, after a mixed bag of operations."""
+        from app.models import FoodRequest
+        d, item, r1, r2 = setup
+        r3 = make_user("recipient")
+        ids = [request_food(r, item["id"], q).json()["request"]["id"] for r, q in ((r1, 2), (r2, 3), (r3, 1.5))]
+        client.put(f"/api/requests/{ids[0]}/respond", headers=d.h, json={"status": "declined", "reason": "x"})
+        client.put(f"/api/requests/{ids[1]}/respond", headers=d.h, json={"status": "accepted"})
+        client.put(f"/api/requests/{ids[2]}/status", headers=r3.h, json={"status": "cancelled"})
+        db.expire_all()
+        held = sum(float(r.quantity_requested) for r in db.query(FoodRequest).filter(
+            FoodRequest.listing_id == item["id"], FoodRequest.status.in_(("pending", "accepted", "collected", "completed"))))
+        assert avail(db, item["id"]) + held == 10 == held + 7
 
 
-class TestFeedbackFlag:
-    def test_request_reports_whether_feedback_was_given(self, client, recipient, recipient_token, db):
-        from app.models import Feedback
+class TestRespondPermissions:
+    def test_only_the_listing_donor_can_answer(self, client, setup, request_food, make_user):
+        d, item, r1, r2 = setup
+        rid = request_food(r1, item["id"], 1).json()["request"]["id"]
+        other_donor = make_user("donor")
+        assert client.put(f"/api/requests/{rid}/respond", headers=other_donor.h, json={"status": "accepted"}).status_code == 404
+        assert client.put(f"/api/requests/{rid}/respond", headers=r1.h, json={"status": "accepted"}).status_code == 403
+        assert client.put(f"/api/requests/{rid}/respond", headers=make_user("admin").h, json={"status": "accepted"}).status_code == 403
+        assert client.put(f"/api/requests/{rid}/respond", json={"status": "accepted"}).status_code == 401
+        assert client.put(f"/api/requests/{rid}/respond", headers=d.h, json={"status": "pending"}).status_code == 400
 
-        req = _request(db, recipient.id, "Delivered Thing", status="delivered")
-        before = client.get(f"/api/requests?recipient_id={recipient.id}", headers=bearer(recipient_token)).json()["requests"]
-        assert [r for r in before if r["id"] == req.id][0]["feedback_given"] is False
+    def test_an_answered_request_cannot_be_answered_again(self, client, setup, request_food):
+        d, item, r1, _ = setup
+        rid = request_food(r1, item["id"], 1).json()["request"]["id"]
+        client.put(f"/api/requests/{rid}/respond", headers=d.h, json={"status": "accepted"})
+        res = client.put(f"/api/requests/{rid}/respond", headers=d.h, json={"status": "declined", "reason": "changed my mind"})
+        assert res.status_code == 400 and "already accepted" in res.json()["detail"]
 
-        db.add(Feedback(recipient_id=recipient.id, request_id=req.id, comment="Lovely, thank you", rating=5))
-        db.commit()
-        after = client.get(f"/api/requests?recipient_id={recipient.id}", headers=bearer(recipient_token)).json()["requests"]
-        assert [r for r in after if r["id"] == req.id][0]["feedback_given"] is True
+    def test_requests_are_private_to_their_two_parties(self, client, setup, request_food, make_user, admin):
+        d, item, r1, r2 = setup
+        rid = request_food(r1, item["id"], 1).json()["request"]["id"]
+        assert client.get(f"/api/requests/{rid}", headers=r2.h).status_code == 404
+        assert client.get(f"/api/requests/{rid}", headers=make_user("donor").h).status_code == 404
+        assert client.get(f"/api/requests/{rid}", headers=d.h).status_code == 200
+        assert client.get(f"/api/requests/{rid}", headers=admin.h).status_code == 200
+        assert rid not in [x["id"] for x in client.get("/api/requests", headers=r2.h).json()["requests"]]
 
 
-class TestDonorPhoneIsSharedOnlyAfterAcceptance:
-    def test_phone_appears_once_the_request_is_accepted(self, client, donor, donor_token, recipient, recipient_token, db):
-        from app.models import FoodListing
+class TestContactIsSharedOnlyAfterAcceptance:
+    def _contact_fields(self, req):
+        return {k: v for k, v in {**{f"donor.{a}": b for a, b in req["donor"].items()},
+                                  **{f"recipient.{a}": b for a, b in req["recipient"].items()}}.items()
+                if k.split(".")[1] in ("phone", "email", "address")}
 
-        donor.phone_number = "0771234567"
-        listing = FoodListing(donor_id=donor.id, food_name="Phone Rule", quantity="1", status="available",
-                              verification_status="approved")
-        db.add(listing)
-        db.commit()
-        db.refresh(listing)
-        req = _request(db, recipient.id, "Phone Rule", listing_id=listing.id)
+    def test_nothing_is_shared_while_pending(self, client, setup, request_food):
+        d, item, r1, _ = setup
+        rid = request_food(r1, item["id"], 2).json()["request"]["id"]
+        for who in (d, r1):
+            req = client.get(f"/api/requests/{rid}", headers=who.h).json()["request"]
+            assert self._contact_fields(req) == {}, who
 
-        def seen():
-            rows = client.get(f"/api/requests?recipient_id={recipient.id}", headers=bearer(recipient_token)).json()["requests"]
-            return [r for r in rows if r["id"] == req.id][0]["donor_phone"]
+    def test_after_accept_each_side_gets_the_others_details_and_only_them(self, client, setup, request_food, make_user, admin):
+        d, item, r1, r2 = setup
+        rid = request_food(r1, item["id"], 2).json()["request"]["id"]
+        request_food(r2, item["id"], 1)    # a second, unrelated recipient on the same listing
+        client.put(f"/api/requests/{rid}/respond", headers=d.h, json={"status": "accepted"})
+        seen_by_recipient = client.get(f"/api/requests/{rid}", headers=r1.h).json()["request"]
+        assert seen_by_recipient["donor"]["phone"] == "0770000001"
+        assert seen_by_recipient["donor"]["email"] == d.email
+        assert seen_by_recipient["donor"]["address"] == "12 Secret Lane, Pettah"
+        seen_by_donor = client.get(f"/api/requests/{rid}", headers=d.h).json()["request"]
+        assert seen_by_donor["recipient"]["email"] == r1.email
+        # the listing detail shows the contact block to the accepted recipient...
+        mine = client.get(f"/api/listings/{item['id']}", headers=r1.h).json()["listing"]
+        assert mine["contact"]["phone"] == "0770000001" and mine["contact"]["address"] == "12 Secret Lane, Pettah"
+        # ...and still to nobody else (the other recipient's request is still pending)
+        for who in (r2, make_user("recipient")):
+            theirs = client.get(f"/api/listings/{item['id']}", headers=who.h).json()["listing"]
+            assert "contact" not in theirs and "pickup_address" not in theirs
+        assert "Secret Lane" not in client.get(f"/api/listings/{item['id']}").text
+        # the donor's list of requests does not leak the accepted recipient to the pending one either
+        other = client.get("/api/requests", headers=r2.h).json()["requests"]
+        assert all(r["id"] != rid for r in other)
 
-        assert seen() is None
-        client.put(f"/api/requests/{req.id}/respond", headers=bearer(donor_token),
-                   json={"request_id": req.id, "status": "accepted"})
-        assert seen() == "0771234567"
+    def test_a_declined_recipient_never_gets_contact_details(self, client, setup, request_food):
+        d, item, r1, _ = setup
+        rid = request_food(r1, item["id"], 2).json()["request"]["id"]
+        client.put(f"/api/requests/{rid}/respond", headers=d.h, json={"status": "declined", "reason": "No"})
+        req = client.get(f"/api/requests/{rid}", headers=r1.h).json()["request"]
+        assert self._contact_fields(req) == {}
+        assert "contact" not in client.get(f"/api/listings/{item['id']}", headers=r1.h).json()["listing"]
+
+    def test_admin_listing_of_requests_carries_no_contact_details(self, client, setup, request_food, admin):
+        d, item, r1, _ = setup
+        rid = request_food(r1, item["id"], 2).json()["request"]["id"]
+        client.put(f"/api/requests/{rid}/respond", headers=d.h, json={"status": "accepted"})
+        row = next(x for x in client.get("/api/requests", headers=admin.h).json()["requests"] if x["id"] == rid)
+        assert self._contact_fields(row) == {}
+
+
+class TestHandoverStatuses:
+    def test_happy_path_and_who_can_do_what(self, client, setup, request_food):
+        d, item, r1, r2 = setup
+        rid = request_food(r1, item["id"], 2).json()["request"]["id"]
+        put = lambda who, st: client.put(f"/api/requests/{rid}/status", headers=who.h, json={"status": st})  # noqa: E731
+        assert put(d, "collected").status_code == 400            # still pending: must be accepted first
+        client.put(f"/api/requests/{rid}/respond", headers=d.h, json={"status": "accepted"})
+        assert put(r2, "collected").status_code == 404            # a stranger
+        assert put(r1, "no_show").status_code == 403              # only the donor reports a no-show
+        assert put(r1, "completed").status_code == 400            # recipient can complete only after collected
+        assert put(r1, "collected").status_code == 200
+        assert put(r1, "completed").status_code == 200
+        assert put(d, "cancelled").status_code == 400             # terminal
+        got = client.get(f"/api/requests/{rid}", headers=d.h).json()["request"]
+        assert got["status"] == "completed" and got["completed_at"] and got["collected_at"]
+
+    def test_donor_can_complete_straight_from_accepted(self, client, setup, request_food):
+        d, item, r1, _ = setup
+        rid = request_food(r1, item["id"], 2).json()["request"]["id"]
+        client.put(f"/api/requests/{rid}/respond", headers=d.h, json={"status": "accepted"})
+        assert client.put(f"/api/requests/{rid}/status", headers=d.h, json={"status": "completed"}).status_code == 200
+
+    def test_unknown_status_is_rejected(self, client, setup, request_food):
+        d, item, r1, _ = setup
+        rid = request_food(r1, item["id"], 2).json()["request"]["id"]
+        assert client.put(f"/api/requests/{rid}/status", headers=d.h, json={"status": "delivered"}).status_code == 400
+
+
+class TestNotifications:
+    def test_each_step_notifies_the_other_side_in_app_and_by_email(self, client, setup, request_food, outbox):
+        d, item, r1, _ = setup
+        rid = request_food(r1, item["id"], 2, "please").json()["request"]["id"]
+        donor_bell = client.get("/api/notifications", headers=d.h).json()
+        assert any(n["kind"] == "request_received" for n in donor_bell["notifications"])
+        assert any(m["to"] == d.email and "requested your food" in m["subject"] for m in outbox)
+
+        client.put(f"/api/requests/{rid}/respond", headers=d.h, json={"status": "accepted"})
+        rec_bell = client.get("/api/notifications", headers=r1.h).json()
+        assert any(n["kind"] == "request_accepted" for n in rec_bell["notifications"])
+        mail = next(m for m in outbox if m["to"] == r1.email and "accepted" in m["subject"].lower())
+        assert "0770000001" in mail["html"] and "12 Secret Lane" in mail["html"]   # contact goes in the email too
+
+    def test_declined_email_carries_the_reason(self, client, setup, request_food, outbox):
+        d, item, r1, _ = setup
+        rid = request_food(r1, item["id"], 2).json()["request"]["id"]
+        client.put(f"/api/requests/{rid}/respond", headers=d.h, json={"status": "declined", "reason": "Gave it to a shelter"})
+        assert any(m["to"] == r1.email and "Gave it to a shelter" in m["html"] for m in outbox)
+
+    def test_email_off_still_gets_the_bell(self, client, setup, request_food, make_user, outbox, post_listing):
+        d = make_user("donor", notify_email=False)
+        item = post_listing(d)
+        request_food(setup[2], item["id"], 1)
+        assert not any(m["to"] == d.email for m in outbox)
+        assert client.get("/api/notifications", headers=d.h).json()["unread"] >= 1
+
+
+class TestConcurrency:
+    def test_parallel_requests_never_oversell(self, client, make_user, post_listing, request_food, db):
+        d = make_user("donor")
+        item = post_listing(d, quantity_total="10")
+        people = [make_user("recipient") for _ in range(8)]
+        results = []
+
+        def go(p):
+            results.append(request_food(p, item["id"], 3).status_code)
+
+        threads = [threading.Thread(target=go, args=(p,)) for p in people]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+        assert sorted(results).count(200) == 3, results       # 3 x 3 = 9 of 10, a fourth would need 12
+        assert avail(db, item["id"]) == 1
+        assert set(results) <= {200, 400}
+
+    def test_parallel_accept_and_cancel_keep_the_books_balanced(self, client, setup, request_food, db):
+        d, item, r1, _ = setup
+        rid = request_food(r1, item["id"], 5).json()["request"]["id"]
+        out = []
+
+        def accept():
+            out.append(client.put(f"/api/requests/{rid}/respond", headers=d.h, json={"status": "accepted"}).status_code)
+
+        def cancel():
+            out.append(client.put(f"/api/requests/{rid}/status", headers=r1.h, json={"status": "cancelled"}).status_code)
+
+        ts = [threading.Thread(target=accept), threading.Thread(target=cancel)]
+        for t in ts:
+            t.start()
+        for t in ts:
+            t.join()
+        final = client.get(f"/api/requests/{rid}", headers=r1.h).json()["request"]["status"]
+        assert final in ("accepted", "cancelled")
+        assert avail(db, item["id"]) == (5 if final == "accepted" else 10)

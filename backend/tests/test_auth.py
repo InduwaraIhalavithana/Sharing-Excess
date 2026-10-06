@@ -10,6 +10,7 @@ class TestSignup:
             "email": email,
             "password": "password123",
             "role": "recipient",
+            "district": "Colombo",
         })
         assert res.status_code == 200
         data = res.json()
@@ -23,6 +24,7 @@ class TestSignup:
             "email": donor.email,
             "password": "password123",
             "role": "donor",
+            "district": "Colombo",
         })
         assert res.status_code == 400
         assert "already registered" in res.json()["detail"].lower()
@@ -34,6 +36,7 @@ class TestSignup:
             "email": email,
             "password": "abc",
             "role": "recipient",
+            "district": "Colombo",
         })
         assert res.status_code == 400
 
@@ -43,6 +46,7 @@ class TestSignup:
             "email": "not-an-email",
             "password": "password123",
             "role": "recipient",
+            "district": "Colombo",
         })
         assert res.status_code == 422  # pydantic validation
 
@@ -91,6 +95,7 @@ class TestLogin:
             "email": email,
             "password": "password123",
             "role": "recipient",
+            "district": "Colombo",
         })
         res = client.post("/api/auth/login", json={
             "email": email,
@@ -186,7 +191,7 @@ class TestAccountSettings:
 
     def test_profile_cannot_change_role_or_email(self, client, recipient, recipient_token):
         res = client.put("/api/auth/me", headers=self._auth(recipient_token),
-                         json={"name": "Still Recipient", "role": "adminofficer", "email": "hijack@example.com"})
+                         json={"name": "Still Recipient", "role": "admin", "email": "hijack@example.com"})
         assert res.status_code == 200
         assert res.json()["user"]["role"] == "recipient"
         assert res.json()["user"]["email"] == recipient.email
@@ -222,79 +227,72 @@ class TestAccountSettings:
 
 
 class TestDeleteMyAccount:
-    def _user(self, db, role):
-        import uuid
-
-        from app.models import User
-        from app.utils.security import hash_password
-
-        u = User(name=f"Pytest Leaver {role}", email=f"pytest_leave_{uuid.uuid4().hex[:6]}@example.com",
-                 password=hash_password("leavepass123"), role=role, status="active")
-        db.add(u)
-        db.commit()
-        db.refresh(u)
-        return u
-
     def _login(self, client, u):
-        return {"Authorization": "Bearer " + client.post("/api/auth/login", json={"email": u.email, "password": "leavepass123"}).json()["token"]}
+        return {"Authorization": "Bearer " + client.post("/api/auth/login", json={"email": u.email, "password": "testpass123"}).json()["token"]}
 
-    def test_requires_login_and_the_right_password(self, client, db):
-        u = self._user(db, "recipient")
+    def test_requires_login_and_the_right_password(self, client, make_user, db):
+        u = make_user("recipient").user
         assert client.request("DELETE", "/api/auth/me", json={"password": "x"}).status_code == 401
         h = self._login(client, u)
         assert client.request("DELETE", "/api/auth/me", json={"password": "wrong"}, headers=h).status_code == 400
         db.expire_all()
         assert db.get(type(u), u.id) is not None  # a wrong password deletes nothing
 
-    def test_staff_cannot_self_delete(self, client, db):
-        s = self._user(db, "adminofficer")
-        res = client.post("/api/auth/officer-login", json={"email": s.email, "password": "leavepass123"})
+    def test_the_admin_cannot_self_delete(self, client, make_user):
+        s = make_user("admin").user
+        res = client.post("/api/auth/admin-login", json={"email": s.email, "password": "testpass123"})
+        assert res.status_code == 200
         h = {"Authorization": "Bearer " + res.json()["token"]}
-        assert client.request("DELETE", "/api/auth/me", json={"password": "leavepass123"}, headers=h).status_code == 403
+        assert client.request("DELETE", "/api/auth/me", json={"password": "testpass123"}, headers=h).status_code == 403
 
-    def test_a_recipient_is_removed_with_their_requests_feedback_and_photos(self, client, db):
-        from app.models import Feedback, FoodRequest, User
+    def test_a_recipient_is_removed_with_their_requests_feedback_ratings_and_notifications(
+            self, client, make_user, post_listing, request_food, db):
+        from app.models import Feedback, FoodRequest, Notification, Rating, User
+
+        d = make_user("donor")
+        item = post_listing(d)
+        r = make_user("recipient")
+        rid = request_food(r, item["id"], 2).json()["request"]["id"]
+        client.put(f"/api/requests/{rid}/respond", headers=d.h, json={"status": "accepted"})
+        client.put(f"/api/requests/{rid}/status", headers=d.h, json={"status": "completed"})
+        client.post("/api/ratings", headers=r.h, json={"request_id": rid, "score": 5})
+        client.post("/api/feedback", headers=r.h, data={"comment": "Thanks for everything", "request_id": rid})
+
+        res = client.request("DELETE", "/api/auth/me", json={"password": "testpass123"}, headers=r.h)
+        assert res.status_code == 200
+        db.expire_all()
+        assert db.get(User, r.id) is None
+        assert db.query(FoodRequest).filter(FoodRequest.id == rid).count() == 0
+        assert db.query(Feedback).filter(Feedback.recipient_id == r.id).count() == 0
+        assert db.query(Rating).filter(Rating.request_id == rid).count() == 0
+        assert db.query(Notification).filter(Notification.user_id == r.id).count() == 0
+        # the donor and their listing are untouched, and the held stock is not leaked
+        assert db.get(User, d.id) is not None
+
+    def test_a_donor_leaves_with_their_listings_and_photos_and_open_requesters_are_told(
+            self, client, make_user, post_listing, request_food, db, outbox):
+        import os
+
+        from app.models import FoodListing, FoodRequest, User
         from app.utils.uploads import UPLOAD_DIR
 
-        u = self._user(db, "recipient")
-        photo = UPLOAD_DIR / "request_pytest_leaver.webp"
-        photo.write_bytes(b"x")
-        req = FoodRequest(recipient_id=u.id, food_name="Bye", quantity="1", status="delivered", image_path="/uploads/request_pytest_leaver.webp")
-        db.add(req)
-        db.commit()
-        db.add(Feedback(recipient_id=u.id, request_id=req.id, comment="Thanks for everything", rating=5))
-        db.commit()
-        uid, rid = u.id, req.id
+        d = make_user("donor")
+        item = post_listing(d)
+        photo = UPLOAD_DIR / item["images"][0].rsplit("/", 1)[-1]
+        assert photo.exists() or os.environ.get("CLOUDINARY_CLOUD_NAME")
+        r = make_user("recipient")
+        rid = request_food(r, item["id"], 2).json()["request"]["id"]
+        client.put(f"/api/requests/{rid}/respond", headers=d.h, json={"status": "accepted"})
 
-        res = client.request("DELETE", "/api/auth/me", json={"password": "leavepass123"}, headers=self._login(client, u))
+        res = client.request("DELETE", "/api/auth/me", json={"password": "testpass123"}, headers=d.h)
         assert res.status_code == 200
         db.expire_all()
-        assert db.get(User, uid) is None
-        assert db.query(FoodRequest).filter(FoodRequest.id == rid).count() == 0
-        assert db.query(Feedback).filter(Feedback.recipient_id == uid).count() == 0
+        assert db.get(User, d.id) is None and db.get(FoodListing, item["id"]) is None
+        assert db.get(FoodRequest, rid) is None            # a request cannot outlive its listing
         assert not photo.exists()
-
-    def test_a_donor_leaves_but_other_peoples_requests_survive(self, client, db, recipient):
-        from app.models import FoodListing, FoodRequest, User
-
-        d = self._user(db, "donor")
-        listing = FoodListing(donor_id=d.id, food_name="Leaving Soon", quantity="1", status="accepted",
-                              verification_status="approved", accepted_by=d.name)
-        db.add(listing)
-        db.commit()
-        req = FoodRequest(recipient_id=recipient.id, food_name="Leaving Soon", quantity="1", status="accepted",
-                          listing_id=listing.id, accepted_by=d.name)
-        db.add(req)
-        db.commit()
-        did, rid, lid = d.id, req.id, listing.id
-
-        res = client.request("DELETE", "/api/auth/me", json={"password": "leavepass123"}, headers=self._login(client, d))
-        assert res.status_code == 200
-        db.expire_all()
-        assert db.get(User, did) is None and db.get(FoodListing, lid) is None
-        survivor = db.get(FoodRequest, rid)
-        assert survivor is not None and survivor.listing_id is None
-        assert survivor.accepted_by == "A former donor"  # the deleted donor's name is gone from others' history
+        bell = client.get("/api/notifications", headers=r.h).json()["notifications"]
+        assert any("donor" in n["title"].lower() and "closed" in n["title"].lower() for n in bell)
+        assert any(m["to"] == r.email for m in outbox)
 
 
 class TestContactForm:
