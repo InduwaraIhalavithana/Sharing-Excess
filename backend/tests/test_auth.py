@@ -304,12 +304,20 @@ class TestDeleteMyAccount:
 class TestContactForm:
     body = {"name": "Visitor", "email": "pytest_visitor@example.com", "subject": "Hi", "message": "A message long enough to send."}
 
-    def test_success_when_the_email_is_delivered(self, client):
+    def test_success_when_the_email_is_delivered(self, client, monkeypatch, outbox):
+        # the inbox address comes from settings; set it here so the test does not depend on a developer's .env
+        monkeypatch.setattr("app.routers.contact.settings.mail_username", "inbox@example.com")
         assert client.post("/api/contact", json=self.body).status_code == 200
+        assert [m["to"] for m in outbox] == ["inbox@example.com"]
 
-    def test_a_failed_send_is_reported_not_hidden(self, client):
+    def test_without_a_configured_inbox_the_visitor_is_told_it_failed(self, client, monkeypatch):
+        monkeypatch.setattr("app.routers.contact.settings.mail_username", "")
+        assert client.post("/api/contact", json=self.body).status_code == 503
+
+    def test_a_failed_send_is_reported_not_hidden(self, client, monkeypatch):
         from unittest.mock import patch
 
+        monkeypatch.setattr("app.routers.contact.settings.mail_username", "inbox@example.com")
         with patch("app.routers.contact.send_email", return_value=False):
             res = client.post("/api/contact", json=self.body)
         assert res.status_code == 503 and "couldn't deliver" in res.json()["detail"]
