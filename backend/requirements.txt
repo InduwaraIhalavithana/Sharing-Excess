@@ -7,6 +7,8 @@ uvicorn[standard]==0.50.0
 pydantic[email]==2.13.3
 email-validator==2.3.0
 python-dotenv==1.2.2
+pydantic-settings==2.15.0         # typed settings loaded from env / .env
+alembic==1.20.0                   # database migrations
 python-multipart==0.0.32
 SQLAlchemy==2.0.49
 psycopg2-binary==2.9.12
