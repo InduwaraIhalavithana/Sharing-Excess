@@ -24,3 +24,12 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     </ErrorBoundary>
   </React.StrictMode>,
 );
+
+// Installable app + offline shell. Production only, so the dev server is never cached.
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {
+      /* unsupported or blocked (private mode): the site works the same without it */
+    });
+  });
+}
