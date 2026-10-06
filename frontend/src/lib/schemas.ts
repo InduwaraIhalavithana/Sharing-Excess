@@ -29,3 +29,11 @@ export const passwordSchema = z
     message: 'Choose a password different from the current one',
   });
 export type PasswordForm = z.infer<typeof passwordSchema>;
+
+export const contactSchema = z.object({
+  name: z.string().trim().min(2, 'Please enter your name'),
+  email: z.string().trim().email('Enter a valid email address'),
+  subject: z.string().trim().max(150, 'Keep the subject under 150 characters'),
+  message: z.string().trim().min(10, 'Please write at least a few words (10 characters)').max(3000, 'That message is too long'),
+});
+export type ContactFormValues = z.infer<typeof contactSchema>;
