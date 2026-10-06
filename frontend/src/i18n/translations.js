@@ -1,3 +1,5 @@
+import redesign from './redesign';
+
 const translations = {
   en: {
     nav: {
@@ -975,4 +977,17 @@ const translations = {
   },
 };
 
-export default translations;
+/** Deep-merge: the redesign sections add to, and where they overlap replace, the older ones. */
+function merge(base, extra) {
+  const out = { ...base };
+  for (const [k, v] of Object.entries(extra)) {
+    out[k] = v && typeof v === 'object' ? merge(base[k] ?? {}, v) : v;
+  }
+  return out;
+}
+
+const merged = Object.fromEntries(
+  Object.keys(translations).map((lang) => [lang, merge(translations[lang], redesign[lang] ?? {})]),
+);
+
+export default merged;

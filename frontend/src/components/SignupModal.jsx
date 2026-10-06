@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { API_BASE } from '../config';
+import { DistrictSelect } from './ui';
 
 export default function SignupModal({ onClose, onSignupSuccess, onSwitchToLogin }) {
   const { t } = useLanguage();
   const [form, setForm] = useState({
     name: '', email: '', password: '', confirmPassword: '',
-    role: '', phone_number: '', location: ''
+    role: '', phone_number: '', location: '', district: '', org_name: '', org_description: ''
   });
   const [showPw, setShowPw] = useState(false);
   const [errors, setErrors] = useState({});
@@ -33,7 +34,8 @@ export default function SignupModal({ onClose, onSignupSuccess, onSwitchToLogin 
     if (form.password !== form.confirmPassword) e.confirmPassword = 'Passwords do not match';
     if (!form.role) e.role = 'Please select a role';
     if (!form.phone_number.trim()) e.phone_number = 'Phone is required';
-    if (!form.location.trim()) e.location = 'Location is required';
+    if (!form.district) e.district = t('post', 'e_district');
+    if (form.role === 'ngo' && form.org_name.trim().length < 2) e.org_name = t('auth', 'org_name_required');
     return e;
   };
 
@@ -49,7 +51,8 @@ export default function SignupModal({ onClose, onSignupSuccess, onSwitchToLogin 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: form.name, email: form.email, password: form.password,
-          role: form.role, phone_number: form.phone_number, location: form.location
+          role: form.role, phone_number: form.phone_number, location: form.location,
+          district: form.district, org_name: form.org_name, org_description: form.org_description
         })
       });
       const data = await res.json();
@@ -146,7 +149,8 @@ export default function SignupModal({ onClose, onSignupSuccess, onSwitchToLogin 
               <div className="role-cards">
                 {[
                   { value: 'donor', icon: '🍽️', label: t('auth', 'role_donor') },
-                  { value: 'recipient', icon: '🤝', label: t('auth', 'role_recipient') }
+                  { value: 'recipient', icon: '🤝', label: t('auth', 'role_recipient') },
+                  { value: 'ngo', icon: '🏢', label: t('auth', 'role_ngo') }
                 ].map(r => (
                   <label
                     key={r.value}
@@ -169,7 +173,7 @@ export default function SignupModal({ onClose, onSignupSuccess, onSwitchToLogin 
 
             <div className="form-row-2">
               <div className="form-group">
-                <label className="form-label">Phone Number</label>
+                <label className="form-label">{t('post', 'phone')}</label>
                 <input
                   className={`form-control${errors.phone_number ? ' error' : ''}`}
                   type="tel"
@@ -180,17 +184,27 @@ export default function SignupModal({ onClose, onSignupSuccess, onSwitchToLogin 
                 {errors.phone_number && <span className="form-error">{errors.phone_number}</span>}
               </div>
               <div className="form-group">
-                <label className="form-label">Location</label>
-                <input
-                  className={`form-control${errors.location ? ' error' : ''}`}
-                  type="text"
-                  placeholder="City / District"
-                  value={form.location}
-                  onChange={setField('location')}
-                />
-                {errors.location && <span className="form-error">{errors.location}</span>}
+                <label className="form-label">{t('post', 'district')}</label>
+                <DistrictSelect value={form.district} invalid={!!errors.district}
+                  onChange={(v) => { setForm(p => ({ ...p, district: v })); if (errors.district) setErrors(p => ({ ...p, district: '' })); }} />
+                {errors.district && <span className="form-error">{errors.district}</span>}
               </div>
             </div>
+
+            {form.role === 'ngo' && (
+              <>
+                <div className="form-group">
+                  <label className="form-label">{t('ngo', 'org_name')}</label>
+                  <input className={`form-control${errors.org_name ? ' error' : ''}`} value={form.org_name} onChange={setField('org_name')} maxLength={200} />
+                  {errors.org_name && <span className="form-error">{errors.org_name}</span>}
+                </div>
+                <div className="form-group">
+                  <label className="form-label">{t('ngo', 'org_desc')}</label>
+                  <textarea className="form-control" rows={2} value={form.org_description} onChange={setField('org_description')} maxLength={2000} />
+                  <small className="pf-hint">ℹ️ {t('auth', 'ngo_approval_note')}</small>
+                </div>
+              </>
+            )}
 
             {errors.submit && <p className="form-error">{errors.submit}</p>}
 

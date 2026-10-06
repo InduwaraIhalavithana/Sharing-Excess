@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 
 // Public, content-style pages only. Dashboards, forms and the home page (which has its own <Reveal>) are left alone.
-const PAGES = ['/about', '/ngos', '/donate', '/events', '/contact', '/feedback', '/food-donations', '/privacy', '/terms'];
+const PAGES = ['/about', '/ngos', '/post-food', '/events', '/contact', '/feedback', '/food', '/privacy', '/terms'];
 
 const SELECTOR = [
   '.app-content .card',

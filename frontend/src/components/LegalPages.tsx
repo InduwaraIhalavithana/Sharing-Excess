@@ -57,9 +57,10 @@ export function Privacy() {
 
       <Section title="Who can see it">
         <ul>
-          <li><strong>The public</strong> sees approved listings (food, quantity, place, photo, the donor's name) and feedback you choose to post, with your name. Donor phone numbers and emails are <em>not</em> shown publicly.</li>
-          <li><strong>Donors</strong> see the name, phone, email and location of recipients who have open requests, so they can arrange a handover. Recipients see a donor's phone number once their request is accepted.</li>
-          <li><strong>Our staff</strong> (admin officers) can see all accounts, listings, requests, feedback and donations in order to verify listings and keep the service safe.</li>
+          <li><strong>The public</strong> sees live listings (food, quantity, district and town, photos, the donor's name and rating) and NGO profiles and events. Exact addresses, phone numbers and emails are <em>not</em> shown publicly.</li>
+          <li><strong>A donor</strong> sees the name of anyone who requests their food. Once the donor <em>accepts</em> a request, that one recipient receives the donor's phone, email and pickup address, and the donor receives the recipient's phone and email, so they can arrange the handover. Nobody else receives them.</li>
+          <li><strong>Our admin</strong> can see accounts, listings, reports and feedback in order to approve NGOs, handle reports and keep the service safe. The admin does not check food quality or supervise handovers.</li>
+          <li><strong>Ratings</strong> you give or receive after a completed handover are public on the profile, with your first name only.</li>
           <li>We do not sell your data and we do not show advertising.</li>
         </ul>
       </Section>
@@ -75,7 +76,6 @@ export function Privacy() {
       <Section title="Other companies involved">
         <ul>
           <li><strong>Gmail (Google)</strong> sends our emails (verification codes, request updates, event announcements).</li>
-          <li><strong>PayHere</strong> processes online donations on its own secure checkout page; it receives the details you type there.</li>
           <li><strong>OpenStreetMap</strong> supplies the map images, and <strong>Google Fonts</strong> supplies our typefaces. Your browser contacts them directly, so they can see your IP address.</li>
           <li><strong>Cloudinary</strong> stores photos only if the site is configured to use it; otherwise photos stay on our own server.</li>
         </ul>
@@ -119,7 +119,7 @@ export function Terms() {
       <Section title="Food safety - please read">
         <ul>
           <li><strong>Donors</strong> must only offer food that is safe to eat, accurately described, and within its best-before date, and must store and package it hygienically. Do not list food that has spoiled, been left unrefrigerated too long, or that you would not eat yourself.</li>
-          <li>Our staff review listings and may reject any of them, but this is a check of the information given, <strong>not a guarantee</strong> that food is safe.</li>
+          <li>Listings go live as soon as they are posted: <strong>nobody checks the food before you collect it</strong>, and the donor's safety tick is not a guarantee. Anyone can report a listing and the admin may remove it.</li>
           <li><strong>Recipients</strong> should look at the food, check dates and smell, and decline anything that seems unsafe. Be especially careful with cooked food, meat, fish and dairy.</li>
         </ul>
       </Section>
@@ -142,11 +142,7 @@ export function Terms() {
       </Section>
 
       <Section title="Content you add">
-        <p>You keep ownership of the text and photos you post, and you allow us to show them on the site for as long as they are live. Only upload photos you took or have the right to use, and avoid including people's faces without their consent. Staff may edit visibility of, reject or remove content that breaks these terms.</p>
-      </Section>
-
-      <Section title="Donations of money">
-        <p>Money donations are voluntary and are processed by PayHere. Contact us promptly if a payment was made by mistake and we will look into it.</p>
+        <p>You keep ownership of the text and photos you post, and you allow us to show them on the site for as long as they are live. Only upload photos you took or have the right to use, and avoid including people's faces without their consent. The admin may remove content that breaks these terms.</p>
       </Section>
 
       <Section title="Availability and liability">

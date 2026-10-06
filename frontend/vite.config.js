@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  server: { port: 5175 },
+  server: { port: 5175, proxy: { '/uploads': 'http://localhost:8003' } }, // photos live on the API in dev; nginx does this in production
   build: {
     rollupOptions: {
       output: {

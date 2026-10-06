@@ -6,7 +6,7 @@ import { useCountUp } from '../hooks/useCountUp';
 
 // Live numbers from the database (GET /api/public/stats) - nothing here is hardcoded
 const STATS = [
-  { field: 'meals_delivered', labelKey: 'impact_meals',      icon: '🍽️' },
+  { field: 'handovers_completed', labelKey: 'impact_meals',      icon: '🍽️' },
   { field: 'donors',          labelKey: 'impact_donors',     icon: '🤝' },
   { field: 'recipients',      labelKey: 'impact_recipients', icon: '🏢' },
   { field: 'listings_shared', labelKey: 'impact_listings',   icon: '📍' },

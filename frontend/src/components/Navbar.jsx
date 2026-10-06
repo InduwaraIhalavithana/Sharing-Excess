@@ -8,11 +8,13 @@ import SignupModal from './SignupModal.jsx';
 import ForgotPasswordModal from './ForgotPasswordModal.jsx';
 import VerificationModal from './VerificationModal.jsx';
 import { usePublicStats } from '../hooks/queries';
+import { dashboardPath } from '../utils/format';
+import NotificationBell from './NotificationBell';
 import './Navbar.css';
 
 const LANG_LABELS = { en: 'EN', si: 'SI', ta: 'TA' };
 const LANGS = ['en', 'si', 'ta'];
-const NAV_ICONS = { '/': '🏠', '/about': '🌍', '/ngos': '🤝', '/donate': '🍽️', '/events': '📅', '/contact': '✉️', '/feedback': '💬' };
+const NAV_ICONS = { '/': '🏠', '/about': '🌍', '/ngos': '🤝', '/food': '🍽️', '/events': '📅', '/contact': '✉️', '/feedback': '💬' };
 
 export default function Navbar() {
   const { theme, toggleTheme } = useTheme();
@@ -92,10 +94,7 @@ export default function Navbar() {
 
   const handleLoginSuccess = (userData) => {
     setShowLogin(false);
-    const role = String(userData.role || '').toLowerCase();
-    if (role === 'adminofficer') navigate('/admin');
-    else if (role === 'recipient') navigate('/recipient-dashboard');
-    else navigate('/donor-dashboard');
+    navigate(dashboardPath(userData.role));
   };
 
   const handleSignupSuccess = (data) => {
@@ -106,19 +105,10 @@ export default function Navbar() {
 
   const handleVerificationSuccess = (userData) => {
     setShowVerification(false);
-    const role = String(userData.role || '').toLowerCase();
-    if (role === 'adminofficer') navigate('/admin');
-    else if (role === 'recipient') navigate('/recipient-dashboard');
-    else navigate('/donor-dashboard');
+    navigate(dashboardPath(userData.role));
   };
 
-  const getDashboardPath = () => {
-    if (!user) return '/';
-    const role = String(user.role || '').toLowerCase();
-    if (role === 'adminofficer') return '/admin';
-    if (role === 'recipient') return '/recipient-dashboard';
-    return '/donor-dashboard';
-  };
+  const getDashboardPath = () => (user ? dashboardPath(user.role) : '/');
 
   const isActive = (path) => location.pathname === path;
 
@@ -126,7 +116,7 @@ export default function Navbar() {
     { to: '/',         label: t('nav', 'home') },
     { to: '/about',    label: t('nav', 'about') },
     { to: '/ngos',     label: t('nav', 'ngos') },
-    { to: '/donate',   label: t('nav', 'donate') },
+    { to: '/food',     label: t('nav', 'food') },
     { to: '/events',   label: t('nav', 'events') },
     { to: '/contact',  label: t('nav', 'contact') },
     { to: '/feedback', label: t('nav', 'feedback') },
@@ -195,7 +185,7 @@ export default function Navbar() {
           {/* Live impact ticker */}
           {liveCount !== null && liveCount > 0 && (
             <Link
-              to="/food-donations"
+              to="/food"
               className="se-navbar__ticker"
               title={`${liveCount} food listing${liveCount !== 1 ? 's' : ''} available right now`}
             >
@@ -229,6 +219,8 @@ export default function Navbar() {
               {theme === 'light' ? '🌙' : '☀️'}
             </button>
 
+            {user && user.role !== 'admin' && <NotificationBell />}
+
             {/* Auth */}
             {user ? (
               <div className="se-user-menu" ref={userMenuRef} data-tour="user-menu">
@@ -248,7 +240,7 @@ export default function Navbar() {
                   <div className="se-user-dropdown" role="menu">
                     <div className="se-user-dropdown__info">
                       <p className="dropdown-name">{user.name || user.email}</p>
-                      <p className="dropdown-role">{user.role === 'adminofficer' ? 'Admin Officer' : user.role}</p>
+                      <p className="dropdown-role">{t('role', user.role)}</p>
                     </div>
                     <Link
                       to={getDashboardPath()}
@@ -264,7 +256,7 @@ export default function Navbar() {
                       role="menuitem"
                       onClick={() => setUserMenuOpen(false)}
                     >
-                      ⚙️ Account settings
+                      ⚙️ {t('nav', 'account_settings')}
                     </Link>
                     <button
                       className="se-user-dropdown__item danger"
@@ -333,7 +325,7 @@ export default function Navbar() {
             {user ? (
               <div className="se-mobile-user">
                 <p className="mobile-user-name">{user.name || user.email}</p>
-                <p className="mobile-user-role">{user.role}</p>
+                <p className="mobile-user-role">{t('role', user.role)}</p>
                 <Link
                   to={getDashboardPath()}
                   className="se-btn-signup"
