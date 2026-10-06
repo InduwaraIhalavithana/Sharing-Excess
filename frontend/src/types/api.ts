@@ -1,6 +1,6 @@
 // Shapes returned by the FastAPI backend (see backend/app/schemas.py).
 
-export type Role = 'donor' | 'recipient' | 'officer' | 'admin';
+export type Role = 'donor' | 'recipient' | 'adminofficer';
 export type UserStatus = 'pending' | 'active' | 'suspended';
 
 export interface User {

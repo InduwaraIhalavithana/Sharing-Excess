@@ -37,7 +37,7 @@ function StatusBadge({ status }) {
     rejected:  'badge badge-red',
     actioned:  'badge badge-green',
     dismissed: 'badge badge-gray',
-    officer:   'badge badge-blue',
+    adminofficer: 'badge badge-blue',
   };
   return (
     <span className={map[status?.toLowerCase()] || 'badge badge-gray'}>
@@ -75,7 +75,7 @@ const NAV_ITEMS = [
   { key: 'requests',    icon: '📬', label: 'Requests' },
   { key: 'listings',    icon: '🍽️', label: 'Listings' },
   { key: 'users',       icon: '👥', label: 'Users',           adminOnly: true },
-  { key: 'money',       icon: '💰', label: 'Money Donations', adminOnly: true },
+  { key: 'money',       icon: '💰', label: 'Money Donations' },
   { key: 'feedback',    icon: '💬', label: 'Feedback' },
   { key: 'escalations', icon: '🚩', label: 'Escalations' },
   { key: 'reports',     icon: '📈', label: 'Reports',         adminOnly: true },
@@ -85,8 +85,6 @@ export default function OfficerDashboard() {
   const { t } = useLanguage();
   const { user: adminUser, logout } = useAuth();
   const navigate = useNavigate();
-
-  const isAdmin = String(adminUser?.role || '').toLowerCase() === 'admin';
 
   const [tab, setTab]               = useState('overview');
   const [requests, setRequests]     = useState([]);
@@ -119,33 +117,29 @@ export default function OfficerDashboard() {
         apiFetch(`${API_BASE}/api/officer/stats`).then(r => r.json()),
         apiFetch(`${API_BASE}/api/officer/listings/pending`).then(r => r.json()),
         apiFetch(`${API_BASE}/api/officer/escalations`).then(r => r.json()),
+        apiFetch(`${API_BASE}/api/officer/users`).then(r => r.json()),
+        apiFetch(`${API_BASE}/api/officer/donations/money`).then(r => r.json()),
       ];
-      const [rr, lr, fr, sr, pr, er] = await Promise.all(staffCalls);
+      const [rr, lr, fr, sr, pr, er, ur, mr] = await Promise.all(staffCalls);
       if (rr.success) setRequests(rr.requests || []);
       if (lr.success) setListings(lr.listings || []);
       if (fr.success) setFeedback(fr.feedback || []);
       if (sr.success) setStats(sr);
       if (pr.success) setPending(pr.listings || []);
       if (er.success) setEscalations(er.escalations || []);
-      if (isAdmin) {
-        const [ur, mr] = await Promise.all([
-          apiFetch(`${API_BASE}/api/officer/users`).then(r => r.json()),
-          apiFetch(`${API_BASE}/api/officer/donations/money`).then(r => r.json()),
-        ]);
-        if (ur.success) setUsers(ur.users || []);
-        if (mr.success) setMoneyDon(mr.donations || []);
-      }
+      if (ur.success) setUsers(ur.users || []);
+      if (mr.success) setMoneyDon(mr.donations || []);
     } catch {
       showToast('Failed to load data.', 'error');
     }
     setLoading(false);
-  }, [showToast, isAdmin]);
+  }, [showToast]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
   // Guard: only staff accounts may view this dashboard
   useEffect(() => {
-    if (!adminUser || !['officer', 'admin'].includes(String(adminUser.role || '').toLowerCase())) {
+    if (!adminUser || String(adminUser.role || '').toLowerCase() !== 'adminofficer') {
       navigate('/');
     }
   }, [adminUser, navigate]);
@@ -505,12 +499,12 @@ export default function OfficerDashboard() {
           <div className="ad-sidebar__brand-icon">🌿</div>
           <div>
             <div className="ad-sidebar__brand-name">Sharing Excess</div>
-            <div className="ad-sidebar__brand-sub">{isAdmin ? 'Admin Panel' : 'Officer Panel'}</div>
+            <div className="ad-sidebar__brand-sub">Admin Panel</div>
           </div>
         </div>
 
         <nav className="ad-sidebar__nav">
-          {NAV_ITEMS.filter(n => isAdmin || !n.adminOnly).map(({ key, icon, label }) => (
+          {NAV_ITEMS.map(({ key, icon, label }) => (
             <button
               key={key}
               className={`ad-sidebar__link${tab === key ? ' active' : ''}`}
@@ -535,7 +529,7 @@ export default function OfficerDashboard() {
           <div className="ad-sidebar__user-avatar">{initials}</div>
           <div className="ad-sidebar__user-info">
             <div className="ad-sidebar__user-name">{adminUser?.name || 'Staff'}</div>
-            <div className="ad-sidebar__user-role">{isAdmin ? 'Administrator' : 'Field Officer'}</div>
+            <div className="ad-sidebar__user-role">Admin Officer</div>
           </div>
         </div>
       </aside>
@@ -568,11 +562,9 @@ export default function OfficerDashboard() {
                       { icon: '📦', value: requests.filter(r => r.status === 'delivered').length,    label: 'Delivered',        color: '#059669' },
                       { icon: '⏳', value: requests.filter(r => r.status === 'pending').length,      label: 'Pending',          color: '#f59e0b' },
                       { icon: '💬', value: openFeedbackCount,                                        label: 'Open Feedback',    color: '#dc2626' },
-                      ...(isAdmin ? [
-                        { icon: '👥', value: users.length,    label: 'Registered Users', color: '#7c3aed' },
-                        { icon: '💰', value: moneyDon.length, label: 'Money Donations',  color: '#d97706' },
-                        { icon: '💵', value: 'LKR ' + moneyDon.reduce((s, m) => s + Number(m.amount || 0), 0).toLocaleString(), label: 'Total Raised', color: '#0891b2' },
-                      ] : []),
+                      { icon: '👥', value: users.length,    label: 'Registered Users', color: '#7c3aed' },
+                      { icon: '💰', value: moneyDon.length, label: 'Money Donations',  color: '#d97706' },
+                      { icon: '💵', value: 'LKR ' + moneyDon.reduce((s, m) => s + Number(m.amount || 0), 0).toLocaleString(), label: 'Total Raised', color: '#0891b2' },
                     ].map(s => (
                       <div key={s.label} className="dashboard-card stat-card">
                         <span className="stat-card__icon">{s.icon}</span>
@@ -681,9 +673,7 @@ export default function OfficerDashboard() {
               {tab === 'escalations' && (
                 <div>
                   <p style={{ color: 'var(--text-secondary)', marginBottom: 16 }}>
-                    {isAdmin
-                      ? 'Issues flagged by officers. Take action or dismiss.'
-                      : 'Issues you have flagged to the admin.'}
+                    Items flagged for follow-up by the team. Take action or dismiss.
                   </p>
                   {escalations.length === 0 ? (
                     <div className="dashboard-card" style={{ textAlign: 'center', padding: 40 }}>
@@ -716,7 +706,7 @@ export default function OfficerDashboard() {
                               <p>{e.admin_note}</p>
                             </div>
                           )}
-                          {isAdmin && e.status === 'open' && (
+                          {e.status === 'open' && (
                             <div className="ad-fb-card__actions">
                               <button className="btn btn-sm ad-btn-success" onClick={() => updateEscalation(e.id, 'actioned')}>
                                 ✓ Mark Actioned
@@ -751,9 +741,7 @@ export default function OfficerDashboard() {
                           <td><EditableCell value={r.status} options={['pending','accepted','delivering','delivered','declined']} onSave={v => updateRequest(r.id, { status: v })} /></td>
                           <td>
                             <div style={{ display: 'flex', gap: 6 }}>
-                              {isAdmin && (
-                                <button className="btn btn-sm ad-btn-danger" onClick={() => setConfirmDel({ type: 'request', id: r.id })}>Delete</button>
-                              )}
+                              <button className="btn btn-sm ad-btn-danger" onClick={() => setConfirmDel({ type: 'request', id: r.id })}>Delete</button>
                               <button className="btn btn-sm ad-btn-warn" onClick={() => openFlag('request', r.id, r.food_name || r.food_item)}>🚩 Flag</button>
                             </div>
                           </td>
@@ -778,19 +766,13 @@ export default function OfficerDashboard() {
                           <td>{l.id}</td>
                           <td>{l.food_name}</td>
                           <td>{l.donor_name}</td>
-                          <td>{isAdmin
-                            ? <EditableCell value={l.quantity} onSave={v => updateListing(l.id, { quantity: v })} />
-                            : l.quantity}</td>
+                          <td><EditableCell value={l.quantity} onSave={v => updateListing(l.id, { quantity: v })} /></td>
                           <td>{l.expiry_date}</td>
-                          <td>{isAdmin
-                            ? <EditableCell value={l.status} options={['available','claimed','expired']} onSave={v => updateListing(l.id, { status: v })} />
-                            : <StatusBadge status={l.status} />}</td>
+                          <td><EditableCell value={l.status} options={['available','claimed','expired']} onSave={v => updateListing(l.id, { status: v })} /></td>
                           <td><StatusBadge status={l.verification_status} /></td>
                           <td>
                             <div style={{ display: 'flex', gap: 6 }}>
-                              {isAdmin && (
-                                <button className="btn btn-sm ad-btn-danger" onClick={() => setConfirmDel({ type: 'listing', id: l.id })}>Delete</button>
-                              )}
+                              <button className="btn btn-sm ad-btn-danger" onClick={() => setConfirmDel({ type: 'listing', id: l.id })}>Delete</button>
                               <button className="btn btn-sm ad-btn-warn" onClick={() => openFlag('listing', l.id, l.food_name)}>🚩 Flag</button>
                             </div>
                           </td>
@@ -955,16 +937,12 @@ export default function OfficerDashboard() {
                                 ↺ Reopen
                               </button>
                             )}
-                            {isAdmin && (
-                              <button className="btn btn-sm ad-btn-danger" onClick={() => deleteFeedback(f.id)}>
-                                🗑 Delete
-                              </button>
-                            )}
-                            {!isAdmin && (
-                              <button className="btn btn-sm ad-btn-warn" onClick={() => openFlag('feedback', f.id, `feedback from ${f.recipient_name}`)}>
-                                🚩 Flag
-                              </button>
-                            )}
+                            <button className="btn btn-sm ad-btn-danger" onClick={() => deleteFeedback(f.id)}>
+                              🗑 Delete
+                            </button>
+                            <button className="btn btn-sm ad-btn-warn" onClick={() => openFlag('feedback', f.id, `feedback from ${f.recipient_name}`)}>
+                              🚩 Flag
+                            </button>
                           </div>
                         </div>
                       ))}

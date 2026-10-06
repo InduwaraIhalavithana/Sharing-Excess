@@ -24,32 +24,29 @@ def get_current_user(
     return user
 
 
+STAFF_ROLE = "adminofficer"
+
+
+def is_staff(user: User) -> bool:
+    """One staff role carries both the old admin and officer privileges."""
+    return user.role == STAFF_ROLE
+
+
 def require_staff(current_user: User = Depends(get_current_user)) -> User:
-    """Officer OR admin — coordination-level access."""
-    if current_user.role not in ("officer", "admin"):
-        raise HTTPException(status_code=403, detail="Officer access required")
+    if not is_staff(current_user):
+        raise HTTPException(status_code=403, detail="Admin-officer access required")
     return current_user
 
 
-def require_admin(current_user: User = Depends(get_current_user)) -> User:
-    """Admin only — platform management access."""
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Admin access required")
-    return current_user
-
-
-# Backwards-compatible alias (old routes imported require_officer)
+# Kept so existing route signatures read naturally; all three mean the same thing now.
+require_admin = require_staff
 require_officer = require_staff
 
 
 def require_roles(*roles: str):
-    """Dependency factory: allow only the given roles (admin/officer are NOT implied)."""
+    """Dependency factory: allow only the given roles (staff are NOT implied)."""
     def _dep(current_user: User = Depends(get_current_user)) -> User:
         if current_user.role not in roles:
             raise HTTPException(status_code=403, detail="You do not have permission to do this")
         return current_user
     return _dep
-
-
-def is_staff(user: User) -> bool:
-    return user.role in ("officer", "admin")

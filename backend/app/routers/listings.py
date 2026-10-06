@@ -115,7 +115,7 @@ def delete_listing(listing_id: int, db: Session = Depends(get_db), me: User = De
     listing = db.query(FoodListing).filter(FoodListing.id == listing_id).first()
     if not listing:
         raise HTTPException(404, "Listing not found")
-    if listing.donor_id != me.id and me.role != "admin":
+    if listing.donor_id != me.id and not is_staff(me):
         raise HTTPException(403, "You can only delete your own listings")
     db.delete(listing)
     db.commit()

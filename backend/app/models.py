@@ -14,7 +14,9 @@ class User(Base):
     name              = Column(String(255), nullable=False)
     email             = Column(String(255), unique=True, nullable=False, index=True)
     password          = Column(String(255), nullable=False)
-    role              = Column(SAEnum("donor", "recipient", "officer", "admin", name="user_role"), nullable=False, default="recipient")
+    # "officer" and "admin" are legacy values (Postgres enums cannot drop values): migration 0002
+    # merged both into "adminofficer", which is the only staff role now.
+    role              = Column(SAEnum("donor", "recipient", "officer", "admin", "adminofficer", name="user_role"), nullable=False, default="recipient")
     phone_number      = Column(String(20), nullable=True)
     location          = Column(String(255), nullable=True)
     status            = Column(SAEnum("pending", "active", "suspended", name="user_status"), nullable=False, default="pending")

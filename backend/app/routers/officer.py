@@ -37,7 +37,7 @@ router = APIRouter(prefix="/api/officer", tags=["officer"])
 
 @router.get("/users")
 def list_users(current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
-    users = db.query(User).filter(User.role.notin_(["admin"])).order_by(User.created_at.desc()).all()
+    users = db.query(User).filter(User.role != "adminofficer").order_by(User.created_at.desc()).all()
     return {"success": True, "users": [
         {"id": u.id, "name": u.name, "email": u.email,
          "role": u.role, "status": u.status,
@@ -54,7 +54,12 @@ def update_user(user_id: int, body: UserUpdate,
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(404, "User not found")
-    for field, val in body.model_dump(exclude_none=True).items():
+    if user.role == "adminofficer":
+        raise HTTPException(403, "Admin-officer accounts cannot be edited here")
+    changes = body.model_dump(exclude_none=True)
+    if changes.get("role") not in (None, "donor", "recipient"):
+        raise HTTPException(400, "role must be 'donor' or 'recipient'")
+    for field, val in changes.items():
         setattr(user, field, val)
     db.commit()
     return {"success": True, "message": "User updated"}
@@ -66,8 +71,8 @@ def delete_user(user_id: int,
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(404, "User not found")
-    if user.role == "admin":
-        raise HTTPException(403, "Admin accounts cannot be deleted")
+    if user.role == "adminofficer":
+        raise HTTPException(403, "Admin-officer accounts cannot be deleted")
     db.delete(user)
     db.commit()
     return {"success": True, "message": "User deleted"}
@@ -79,8 +84,8 @@ def toggle_suspend(user_id: int,
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(404, "User not found")
-    if user.role == "admin":
-        raise HTTPException(403, "Admin accounts cannot be suspended")
+    if user.role == "adminofficer":
+        raise HTTPException(403, "Admin-officer accounts cannot be suspended")
     user.status = "suspended" if user.status == "active" else "active"
     db.commit()
     return {"success": True, "status": user.status}
@@ -301,11 +306,7 @@ def create_escalation(body: EscalationCreate,
 
 @router.get("/escalations")
 def list_escalations(current_user: User = Depends(require_staff), db: Session = Depends(get_db)):
-    q = db.query(Escalation)
-    # Officers see only their own flags; admin sees the full inbox
-    if current_user.role != "admin":
-        q = q.filter(Escalation.raised_by == current_user.id)
-    rows = q.order_by(Escalation.created_at.desc()).all()
+    rows = db.query(Escalation).order_by(Escalation.created_at.desc()).all()
     return {"success": True, "escalations": [
         {
             "id": e.id,
@@ -387,7 +388,5 @@ def get_stats(current_user: User = Depends(require_staff), db: Session = Depends
         "donations_by_month":    [{"year": int(d[0]), "month": int(d[1]), "count": d[2]}
                                    for d in donations_by_month],
     }
-    # Financial data is admin-only
-    if current_user.role == "admin":
-        out["total_money_donations"] = db.query(MoneyDonation).count()
+    out["total_money_donations"] = db.query(MoneyDonation).count()
     return out

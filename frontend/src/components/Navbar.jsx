@@ -80,7 +80,7 @@ export default function Navbar() {
   const handleLoginSuccess = (userData) => {
     setShowLogin(false);
     const role = String(userData.role || '').toLowerCase();
-    if (role === 'admin' || role === 'officer') navigate('/admin');
+    if (role === 'adminofficer') navigate('/admin');
     else if (role === 'recipient') navigate('/recipient-dashboard');
     else navigate('/donor-dashboard');
   };
@@ -94,7 +94,7 @@ export default function Navbar() {
   const handleVerificationSuccess = (userData) => {
     setShowVerification(false);
     const role = String(userData.role || '').toLowerCase();
-    if (role === 'admin' || role === 'officer') navigate('/admin');
+    if (role === 'adminofficer') navigate('/admin');
     else if (role === 'recipient') navigate('/recipient-dashboard');
     else navigate('/donor-dashboard');
   };
@@ -102,7 +102,7 @@ export default function Navbar() {
   const getDashboardPath = () => {
     if (!user) return '/';
     const role = String(user.role || '').toLowerCase();
-    if (role === 'admin' || role === 'officer') return '/admin';
+    if (role === 'adminofficer') return '/admin';
     if (role === 'recipient') return '/recipient-dashboard';
     return '/donor-dashboard';
   };
