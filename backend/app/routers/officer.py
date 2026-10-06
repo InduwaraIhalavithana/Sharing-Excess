@@ -1,13 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import func, extract
-from sqlalchemy.orm import Session
 from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+from sqlalchemy import extract, func
+from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import User, FoodListing, FoodRequest, MoneyDonation, Feedback, Escalation
-from app.schemas import UserUpdate, ListingUpdate, RequestUpdate
-from app.dependencies import require_staff, require_admin
+from app.dependencies import require_admin, require_staff
+from app.models import Escalation, Feedback, FoodListing, FoodRequest, MoneyDonation, User
+from app.schemas import ListingUpdate, RequestUpdate, UserUpdate
 
 
 class FeedbackReply(BaseModel):
@@ -98,15 +99,15 @@ def list_listings(current_user: User = Depends(require_staff), db: Session = Dep
     listings = db.query(FoodListing).order_by(FoodListing.created_at.desc()).all()
     return {"success": True, "listings": [
         {
-            "id": l.id, "food_name": l.food_name, "description": l.description,
-            "quantity": l.quantity, "status": l.status,
-            "verification_status": l.verification_status,
-            "rejection_reason": l.rejection_reason,
-            "expiry_date": l.expiry_date, "location": l.location,
-            "created_at": l.created_at, "donor_id": l.donor_id,
-            "donor_name": l.donor.name if l.donor else None,
+            "id": item.id, "food_name": item.food_name, "description": item.description,
+            "quantity": item.quantity, "status": item.status,
+            "verification_status": item.verification_status,
+            "rejection_reason": item.rejection_reason,
+            "expiry_date": item.expiry_date, "location": item.location,
+            "created_at": item.created_at, "donor_id": item.donor_id,
+            "donor_name": item.donor.name if item.donor else None,
         }
-        for l in listings
+        for item in listings
     ]}
 
 
@@ -117,15 +118,15 @@ def pending_listings(current_user: User = Depends(require_staff), db: Session = 
                   .order_by(FoodListing.created_at.asc()).all())
     return {"success": True, "listings": [
         {
-            "id": l.id, "food_name": l.food_name, "description": l.description,
-            "quantity": l.quantity, "expiry_date": l.expiry_date,
-            "location": l.location, "image_path": l.image_path,
-            "created_at": l.created_at,
-            "donor_name": l.donor.name if l.donor else None,
-            "donor_email": l.donor.email if l.donor else None,
-            "contact_phone": l.contact_phone,
+            "id": item.id, "food_name": item.food_name, "description": item.description,
+            "quantity": item.quantity, "expiry_date": item.expiry_date,
+            "location": item.location, "image_path": item.image_path,
+            "created_at": item.created_at,
+            "donor_name": item.donor.name if item.donor else None,
+            "donor_email": item.donor.email if item.donor else None,
+            "contact_phone": item.contact_phone,
         }
-        for l in listings
+        for item in listings
     ]}
 
 

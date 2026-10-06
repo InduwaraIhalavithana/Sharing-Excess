@@ -1,13 +1,14 @@
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
+
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.dependencies import get_current_user, is_staff
-from app.models import FoodRequest, FoodListing, User
+from app.models import FoodListing, FoodRequest, User
 from app.schemas import RespondRequest, UpdateDeliveryStatus
+from app.utils.email import request_accepted_email, request_declined_email, request_delivered_email, send_email
 from app.utils.uploads import save_upload
-from app.utils.email import send_email, request_accepted_email, request_declined_email, request_delivered_email
 
 router = APIRouter(prefix="/api/requests", tags=["requests"])
 

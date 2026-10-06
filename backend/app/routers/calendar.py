@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.dependencies import get_current_user, is_staff
-from app.models import FoodRequest, FoodListing, User
+from app.models import FoodListing, FoodRequest, User
 
 router = APIRouter(prefix="/api/calendar", tags=["calendar"])
 
@@ -48,22 +48,22 @@ def get_calendar_events(db: Session = Depends(get_db), me: User = Depends(get_cu
           .order_by(FoodListing.expiry_date.asc())
           .all()
     )
-    for l in listings:
+    for item in listings:
         recipient = None
-        if l.requests:
-            req = l.requests[0]
+        if item.requests:
+            req = item.requests[0]
             if req.recipient:
-                recipient = person(req.recipient, l.donor_id)
+                recipient = person(req.recipient, item.donor_id)
         events.append({
-            "id":       f"list_{l.id}",
-            "title":    l.food_name,
-            "date":     l.expiry_date,
-            "quantity": l.quantity,
+            "id":       f"list_{item.id}",
+            "title":    item.food_name,
+            "date":     item.expiry_date,
+            "quantity": item.quantity,
             "type":     "listing",
-            "status":   l.status,
-            "notes":    l.description,
-            "location": l.location,
-            "donor": person(l.donor, l.requests[0].recipient_id if l.requests else None),
+            "status":   item.status,
+            "notes":    item.description,
+            "location": item.location,
+            "donor": person(item.donor, item.requests[0].recipient_id if item.requests else None),
             "recipient": recipient,
         })
 

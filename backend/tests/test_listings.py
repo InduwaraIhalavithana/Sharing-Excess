@@ -159,7 +159,9 @@ class TestImageProcessing:
 
     def test_upload_is_resized_and_metadata_stripped(self, client, donor_token):
         from pathlib import Path
+
         from PIL import Image
+
         from app.utils.uploads import UPLOAD_DIR
 
         res = client.post("/api/listings", headers=bearer(donor_token),

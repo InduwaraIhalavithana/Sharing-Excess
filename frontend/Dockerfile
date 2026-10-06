@@ -1,10 +1,11 @@
 # Stage 1 – build the React/Vite app
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 
-COPY package.json ./
-RUN npm install
+# Locked, reproducible install (same versions as development and CI)
+COPY package.json package-lock.json ./
+RUN npm ci
 
 COPY . .
 
@@ -14,7 +15,8 @@ ARG VITE_APP_ROOT_URL=""
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 ENV VITE_APP_ROOT_URL=$VITE_APP_ROOT_URL
 
-RUN npx vite build
+# Type-checks first, then builds
+RUN npm run build
 
 # Stage 2 – serve with nginx
 FROM nginx:alpine AS runner

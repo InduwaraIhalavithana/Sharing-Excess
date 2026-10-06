@@ -99,7 +99,7 @@ def remove(db) -> int:
     if not ids:
         return 0
     req_ids = [r.id for r in db.query(FoodRequest).filter(FoodRequest.recipient_id.in_(ids)).all()]
-    listing_ids = [l.id for l in db.query(FoodListing).filter(FoodListing.donor_id.in_(ids)).all()]
+    listing_ids = [item.id for item in db.query(FoodListing).filter(FoodListing.donor_id.in_(ids)).all()]
     db.query(Escalation).filter(Escalation.raised_by.in_(ids)).delete(synchronize_session=False)
     db.query(Feedback).filter((Feedback.recipient_id.in_(ids)) | (Feedback.request_id.in_(req_ids))).delete(synchronize_session=False)
     # requests that real users made on a demo listing keep working: just unlink them

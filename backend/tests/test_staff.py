@@ -31,12 +31,12 @@ def staff_token(client, staff):
 def _pending_listing(db, donor_id):
     from app.models import FoodListing
 
-    l = FoodListing(donor_id=donor_id, food_name="Needs Review", quantity="1", status="available",
+    item = FoodListing(donor_id=donor_id, food_name="Needs Review", quantity="1", status="available",
                     verification_status="pending_review")
-    db.add(l)
+    db.add(item)
     db.commit()
-    db.refresh(l)
-    return l
+    db.refresh(item)
+    return item
 
 
 class TestStaffLogin:
