@@ -1,8 +1,8 @@
 // Shapes returned by the FastAPI backend (see backend/app/routers/*.py).
 
-export type Role = 'donor' | 'recipient' | 'ngo' | 'admin';
-export type UserStatus = 'pending' | 'active' | 'suspended';
-export type NgoStatus = 'pending' | 'approved' | 'rejected';
+type Role = 'donor' | 'recipient' | 'ngo' | 'admin';
+type UserStatus = 'pending' | 'active' | 'suspended';
+type NgoStatus = 'pending' | 'approved' | 'rejected';
 
 export interface User {
   id: number;
@@ -23,13 +23,13 @@ export interface User {
   created_at?: string | null;
 }
 
-export type ListingStatus = 'active' | 'sold_out' | 'expired' | 'closed';
-export type Fulfilment = 'pickup' | 'delivery' | 'both';
-export type Proximity = 'same_district' | 'neighbouring' | 'other';
+type ListingStatus = 'active' | 'sold_out' | 'expired' | 'closed';
+type Fulfilment = 'pickup' | 'delivery' | 'both';
+type Proximity = 'same_district' | 'neighbouring' | 'other';
 
-export interface Rating { average: number; count: number }
+interface Rating { average: number; count: number }
 
-export interface DonorContact {
+interface DonorContact {
   name: string | null;
   phone: string | null;
   email: string | null;
@@ -73,7 +73,7 @@ export interface ListingsPage {
   listings: Listing[];
 }
 
-export type RequestStatus =
+type RequestStatus =
   | 'pending' | 'accepted' | 'declined' | 'cancelled' | 'collected' | 'completed' | 'no_show' | 'expired';
 
 export interface FoodRequest {

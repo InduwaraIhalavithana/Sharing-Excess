@@ -42,8 +42,7 @@
 .app-root .ngos-page, .app-root .fd-page { background: transparent; }
 
 /* ── Heroes: one animated gradient per page, with soft light blobs and drifting food ── */
-.app-root .about-hero, .app-root .contact-hero, .app-root .events-hero, .app-root .feedback-hero,
-.app-root .ngos-hero, .app-root .donate-hero, .app-root .fd-hero {
+.app-root .about-hero, .app-root .contact-hero, .app-root .events-hero, .app-root .feedback-hero, .app-root .ngos-hero, .app-root .fd-hero {
   position: relative;
   background:
     radial-gradient(circle at 12% 22%, rgba(255, 255, 255, 0.2) 0 120px, transparent 122px),
@@ -52,16 +51,13 @@
   background-size: auto, auto, 240% 240%;
   animation: pg-flow 16s ease-in-out infinite;
 }
-.app-root .about-hero > :not([class*="wave"]), .app-root .contact-hero > :not([class*="wave"]), .app-root .events-hero > :not([class*="wave"]),
-.app-root .feedback-hero > :not([class*="wave"]), .app-root .ngos-hero > :not([class*="wave"]), .app-root .donate-hero > :not([class*="wave"]),
-.app-root .fd-hero > :not([class*="wave"]) {
+.app-root .about-hero > :not([class*="wave"]), .app-root .contact-hero > :not([class*="wave"]), .app-root .events-hero > :not([class*="wave"]), .app-root .feedback-hero > :not([class*="wave"]), .app-root .ngos-hero > :not([class*="wave"]), .app-root .fd-hero > :not([class*="wave"]) {
   position: relative;
   z-index: 1;
 }
 /* the wave divider stays absolutely positioned at the hero's bottom edge, above the drifting pattern */
 .app-root [class*="-hero__wave"] { z-index: 1; }
-.app-root .about-hero::before, .app-root .contact-hero::before, .app-root .events-hero::before,
-.app-root .feedback-hero::before, .app-root .ngos-hero::before, .app-root .donate-hero::before, .app-root .fd-hero::before {
+.app-root .about-hero::before, .app-root .contact-hero::before, .app-root .events-hero::before, .app-root .feedback-hero::before, .app-root .ngos-hero::before, .app-root .fd-hero::before {
   content: '🌾  🍎  🥖  🥕  🍅  🌽  🍞  🍋  🥬  🌾  🍎  🥖  🥕  🍅  🌽  🍞';
   position: absolute;
   inset: 0;

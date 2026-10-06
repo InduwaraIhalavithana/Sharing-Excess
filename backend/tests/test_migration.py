@@ -86,7 +86,7 @@ def test_upgrade_converts_the_data_and_downgrade_restores_it(scratch):
     _alembic(url, "upgrade", "0005")
     _seed_old(engine)
 
-    _alembic(url, "upgrade", "head")
+    _alembic(url, "upgrade", "0006")
 
     # users: the officer is the single admin; districts inferred from free text where possible
     users = {r["id"]: r for r in _rows(engine, "SELECT id, role::text AS role, district, notify_email, ngo_status FROM users")}
@@ -144,5 +144,16 @@ def test_upgrade_converts_the_data_and_downgrade_restores_it(scratch):
         engine, "SELECT table_name AS t FROM information_schema.tables WHERE table_schema = 'public'")})
 
     # and forward again works on the rolled-back data
-    _alembic(url, "upgrade", "head")
+    _alembic(url, "upgrade", "0006")
     assert _rows(engine, "SELECT count(*) AS n FROM food_listings")[0]["n"] == 6
+
+
+def test_0007_drops_the_legacy_copies_and_cannot_be_rolled_back(scratch):
+    url, engine = scratch      # the previous test left this scratch database at 0006
+    tables = lambda: {r["t"] for r in _rows(engine, "SELECT table_name AS t FROM information_schema.tables WHERE table_schema = 'public'")}  # noqa: E731
+    assert "legacy_v1_users" in tables()
+    _alembic(url, "upgrade", "head")
+    assert not {t for t in tables() if t.startswith("legacy_v1_")}
+    env = {**os.environ, "DATABASE_URL": url}
+    out = subprocess.run([sys.executable, "-m", "alembic", "downgrade", "0006"], cwd=BACKEND, env=env, capture_output=True, text=True)
+    assert out.returncode != 0 and "restore a pg_dump" in (out.stdout + out.stderr).lower()

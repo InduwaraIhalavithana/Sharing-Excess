@@ -8,7 +8,7 @@ export interface TourStep {
   body: string;
 }
 
-export interface TourLabels {
+interface TourLabels {
   skip: string;
   back: string;
   next: string;

@@ -88,7 +88,11 @@ def _cleanup_test_rows(db):
 
     def _purge():
         db.rollback()
-        db.query(CommunityEvent).filter(CommunityEvent.title.like("pytest_%")).delete(synchronize_session=False)
+        from app.utils.uploads import delete_upload
+        for event in db.query(CommunityEvent).filter(CommunityEvent.title.like("pytest_%")).all():
+            for url in event.images or []:
+                delete_upload(url)     # event photos would otherwise be left behind in uploads/
+            db.delete(event)
         db.query(EventSubscriber).filter(EventSubscriber.email.like(f"{_EMAIL_PREFIX}%")).delete(synchronize_session=False)
         db.query(Report).filter(Report.reason.like("pytest_%")).delete(synchronize_session=False)
         # announcements of test listings / events also reach real users' bells: remove those rows

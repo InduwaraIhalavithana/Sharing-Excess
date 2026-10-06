@@ -56,7 +56,7 @@ Visitors without an account can browse listings, events and the NGO directory. T
 | Backend | FastAPI, SQLAlchemy 2, **Pydantic Settings**, **Alembic** migrations, Pillow, slowapi |
 | Database | PostgreSQL |
 | Auth | JWT (HS256) + PBKDF2-SHA256 password hashing |
-| Tests | pytest (144 tests, including a migration up/down test on a scratch database) · Vitest + Testing Library (39 tests, including a check that every UI string exists in all three languages) |
+| Tests | pytest (145 tests, including migration tests on a scratch database) · Vitest + Testing Library (42 tests, including a check that every UI string exists in all three languages) |
 | Delivery | Docker Compose (Postgres + API + nginx), GitHub Actions CI |
 
 ## Quick start (Windows)
@@ -136,7 +136,7 @@ backend/
     routers/             auth, listings, requests, ratings, reports, notifications, ngos, community_events, admin, feedback, calendar, meta, public, live
     services/            stock (held / returned quantities, expiry sweeper), notifications (bell + email), accounts (account purge)
     utils/               jwt, uploads (image processing), email, rate limiter, live-update broadcaster
-  alembic/               database migrations (0006 is the redesign: keeps legacy_v1_* copies of the old tables and can be rolled back)
+  alembic/               database migrations (0006 is the 2026-10 redesign; 0007 dropped the old-schema safety copies)
   scripts/seed_demo.py   demo data
   tests/                 pytest suite
 frontend/
@@ -166,7 +166,7 @@ Written down so a reviewer doesn't have to hunt for it:
 - **Tokens last 7 days** and are not revoked on password change (a token-version column would fix this).
 - **No food-quality checks.** Listings go live immediately; safety rests on the donor's confirmation, photos, expiry times, reports and the admin removing bad posts. This is a deliberate design decision.
 - **The map places listings by district** (centre of the district); the exact address is never sent to guests.
-- **Money donations (PayHere) were removed** in the redesign. Old rows are kept in `legacy_v1_money_donations` and can be dropped once you are sure.
+- **Money donations (PayHere) were removed** in the redesign, along with the officer role and the open needs board. Migration 0007 deleted the old-schema copies, so rolling back past 0006 means restoring a `pg_dump`.
 - **The expiry sweeper** runs in-process every 5 minutes (and on every browse or request), so it also assumes a single API worker.
 - The NGO directory shows no email or phone; people reach an NGO through the contact details on its events.
 - Some older pages (Home, About, Contact, legal text) still contain English-only paragraphs.

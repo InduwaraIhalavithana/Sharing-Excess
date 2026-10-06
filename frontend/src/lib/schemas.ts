@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 /** Shared form rules. Messages are written for people, not developers. */
 
-export const phoneField = z
+const phoneField = z
   .string()
   .trim()
   .refine((v) => v === '' || /^[+\d][\d\s\-()]{6,19}$/.test(v), 'Enter a valid phone number');
