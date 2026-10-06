@@ -38,10 +38,11 @@ def subscriber_count() -> int:
 # Which write endpoints change which topic
 TOPICS = (
     ("/api/listings", "listings"),
-    ("/api/officer/listings", "listings"),
+    ("/api/admin/listings", "listings"),
     ("/api/requests", "requests"),
-    ("/api/officer/requests", "requests"),
     ("/api/community-events", "events"),
+    ("/api/notifications", "notifications"),
+    ("/api/ratings", "requests"),
     ("/api/feedback", "feedback"),
-    ("/api/officer/feedback", "feedback"),
+    ("/api/admin/feedback", "feedback"),
 )

@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -12,16 +13,20 @@ from slowapi.middleware import SlowAPIMiddleware
 from app.config import settings
 from app.database import engine
 from app.routers import (
+    admin,
     auth,
     calendar,
     community_events,
     contact,
-    donations,
     feedback,
     listings,
     live,
-    officer,
+    meta,
+    ngos,
+    notifications,
     public,
+    ratings,
+    reports,
     requests,
 )
 from app.utils import events
@@ -51,11 +56,40 @@ def run_migrations() -> None:
     command.upgrade(cfg, "head")
 
 
+EXPIRY_SWEEP_SECONDS = 300
+
+
+def _sweep_expired() -> None:
+    from app.database import SessionLocal
+    from app.services.stock import run_expiry
+
+    db = SessionLocal()
+    try:
+        run_expiry(db)
+    except Exception:
+        logger.exception("Expiry sweep failed")
+        db.rollback()
+    finally:
+        db.close()
+
+
+async def _expiry_loop() -> None:
+    """Every few minutes: expire overdue listings and hand back the stock their unanswered requests held.
+    (Browsing and requesting also sweep, so the data is right even between runs.)"""
+    while True:
+        await asyncio.sleep(EXPIRY_SWEEP_SECONDS)
+        await asyncio.to_thread(_sweep_expired)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     run_migrations()
     logger.info("Database schema is up to date.")
-    yield
+    sweeper = asyncio.create_task(_expiry_loop())
+    try:
+        yield
+    finally:
+        sweeper.cancel()
 
 
 cors_origins = settings.cors_origins
@@ -82,7 +116,7 @@ app.add_middleware(
 
 @app.middleware("http")
 async def announce_changes(request, call_next):
-    """After any successful write to listings/requests/feedback, tell live clients to refetch."""
+    """After any successful write to listings/requests/events/notifications/feedback, tell live clients to refetch."""
     response = await call_next(request)
     if request.method in ("POST", "PUT", "PATCH", "DELETE") and response.status_code < 400:
         for prefix, topic in events.TOPICS:
@@ -101,11 +135,15 @@ app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
 app.include_router(auth.router)
 app.include_router(listings.router)
 app.include_router(requests.router)
-app.include_router(officer.router)
+app.include_router(admin.router)
 app.include_router(calendar.router)
 app.include_router(feedback.router)
 app.include_router(contact.router)
-app.include_router(donations.router)
+app.include_router(notifications.router)
+app.include_router(ratings.router)
+app.include_router(reports.router)
+app.include_router(ngos.router)
+app.include_router(meta.router)
 app.include_router(public.router)
 app.include_router(live.router)
 app.include_router(community_events.router)

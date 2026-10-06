@@ -42,13 +42,21 @@ class TestBroadcaster:
 
 
 class TestWritesAnnounceChanges:
-    def test_creating_a_request_publishes_requests(self, client, recipient_token):
+    def test_creating_a_request_publishes_requests(self, client, make_user, post_listing, request_food):
+        item = post_listing(make_user("donor"))
         q = events.subscribe()
         try:
-            res = client.post("/api/requests", headers=bearer(recipient_token),
-                              data={"food_name": "Live Test", "quantity": "1"})
-            assert res.status_code == 200
+            assert request_food(make_user("recipient"), item["id"], 1).status_code == 200
             assert '{"topic": "requests"}' in drain(q)
+        finally:
+            events.unsubscribe(q)
+
+    def test_posting_food_publishes_listings(self, client, make_user, post_listing):
+        d = make_user("donor")
+        q = events.subscribe()
+        try:
+            post_listing(d)
+            assert '{"topic": "listings"}' in drain(q)
         finally:
             events.unsubscribe(q)
 
@@ -56,8 +64,8 @@ class TestWritesAnnounceChanges:
         q = events.subscribe()
         try:
             client.get("/api/listings")
-            client.post("/api/requests", data={"food_name": "x", "quantity": "1"})  # 401
-            client.post("/api/requests", headers=bearer(recipient_token), data={"quantity": "1"})  # 422
+            client.post("/api/requests", json={"listing_id": 1, "quantity_requested": 1})  # 401
+            client.post("/api/requests", headers=bearer(recipient_token), json={"quantity_requested": 1})  # 422
             assert drain(q) == []
         finally:
             events.unsubscribe(q)

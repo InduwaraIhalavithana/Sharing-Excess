@@ -22,7 +22,6 @@ class Settings(BaseSettings):
     database_url: str
     secret_key: str = Field(min_length=32)
     cors_origin: str = "http://localhost:5175"      # comma-separated list allowed
-    api_public_url: str = "http://localhost:8003"   # where PayHere can reach this API
     rate_limit_enabled: bool = True
 
     # Email (Gmail app password)
@@ -31,11 +30,6 @@ class Settings(BaseSettings):
     mail_username: str = ""
     mail_password: str = ""
     mail_from_name: str = "Sharing Excess"
-
-    # PayHere (defaults are the published sandbox values)
-    payhere_sandbox: bool = True
-    payhere_merchant_id: str = "1211149"
-    payhere_merchant_secret: str = "Pay&HeRe"
 
     # Cloudinary (optional - falls back to local uploads/)
     cloudinary_cloud_name: str = ""
@@ -55,7 +49,7 @@ class Settings(BaseSettings):
 
     @property
     def frontend_url(self) -> str:
-        """First allowed origin - used for PayHere return/cancel links."""
+        """First allowed origin - used for links in emails."""
         return self.cors_origins[0] if self.cors_origins else "http://localhost:5175"
 
 

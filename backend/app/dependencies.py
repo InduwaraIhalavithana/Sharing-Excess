@@ -25,27 +25,18 @@ def get_current_user(
     return user
 
 
-STAFF_ROLE = "adminofficer"
+def is_admin(user: User) -> bool:
+    return user.role == "admin"
 
 
-def is_staff(user: User) -> bool:
-    """One staff role carries both the old admin and officer privileges."""
-    return user.role == STAFF_ROLE
-
-
-def require_staff(current_user: User = Depends(get_current_user)) -> User:
-    if not is_staff(current_user):
-        raise HTTPException(status_code=403, detail="Admin-officer access required")
+def require_admin(current_user: User = Depends(get_current_user)) -> User:
+    if not is_admin(current_user):
+        raise HTTPException(status_code=403, detail="Admin access required")
     return current_user
 
 
-# Kept so existing route signatures read naturally; all three mean the same thing now.
-require_admin = require_staff
-require_officer = require_staff
-
-
 def require_roles(*roles: str):
-    """Dependency factory: allow only the given roles (staff are NOT implied)."""
+    """Dependency factory: allow only the given roles (the admin is NOT implied)."""
     def _dep(current_user: User = Depends(get_current_user)) -> User:
         if current_user.role not in roles:
             raise HTTPException(status_code=403, detail="You do not have permission to do this")
@@ -53,11 +44,28 @@ def require_roles(*roles: str):
     return _dep
 
 
-def optional_user(
-    authorization: Optional[str] = Header(default=None),
-    db: Session = Depends(get_db),
-) -> Optional[User]:
-    """The signed-in user if a valid token was sent, otherwise None (never raises)."""
+def can_receive_food(user: User) -> bool:
+    """Recipients, and NGOs once the admin has approved them."""
+    return user.role == "recipient" or (user.role == "ngo" and user.ngo_status == "approved")
+
+
+def require_requester(current_user: User = Depends(get_current_user)) -> User:
+    if current_user.role == "ngo" and current_user.ngo_status != "approved":
+        raise HTTPException(status_code=403, detail="Your organisation is waiting for admin approval")
+    if not can_receive_food(current_user):
+        raise HTTPException(status_code=403, detail="Only recipients and approved NGOs can request food")
+    return current_user
+
+
+def require_approved_ngo(current_user: User = Depends(get_current_user)) -> User:
+    if current_user.role != "ngo":
+        raise HTTPException(status_code=403, detail="Only NGO accounts can do this")
+    if current_user.ngo_status != "approved":
+        raise HTTPException(status_code=403, detail="Your organisation is waiting for admin approval")
+    return current_user
+
+
+def _token_user(authorization: Optional[str], db: Session) -> Optional[User]:
     if not authorization or not authorization.startswith("Bearer "):
         return None
     payload = decode_access_token(authorization[7:])
@@ -65,3 +73,11 @@ def optional_user(
         return None
     user = db.query(User).filter(User.id == int(payload["sub"])).first()
     return user if user and user.status != "suspended" else None
+
+
+def optional_user(
+    authorization: Optional[str] = Header(default=None),
+    db: Session = Depends(get_db),
+) -> Optional[User]:
+    """The signed-in user if a valid token was sent, otherwise None (never raises)."""
+    return _token_user(authorization, db)

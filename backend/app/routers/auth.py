@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.dependencies import get_current_user
-from app.models import EventSubscriber, Feedback, FoodListing, FoodRequest, User
+from app.models import User
 from app.schemas import (
     ChangePasswordRequest,
     DeleteAccountRequest,
@@ -15,11 +15,12 @@ from app.schemas import (
     SignupRequest,
     VerifyEmailRequest,
 )
+from app.services.accounts import purge_user
+from app.services.notifications import schedule_emails
 from app.utils.email import forgot_password_email, send_email, verification_email
 from app.utils.jwt import create_access_token
 from app.utils.limiter import limiter
 from app.utils.security import generate_otp, hash_password, verify_password
-from app.utils.uploads import delete_upload
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -34,14 +35,21 @@ def signup(request: Request, body: SignupRequest, db: Session = Depends(get_db))
     if db.query(User).filter(User.email == body.email).first():
         raise HTTPException(400, "Email already registered")
 
+    if body.role not in ("donor", "recipient", "ngo"):
+        raise HTTPException(400, "Choose an account type: donor, recipient or NGO")
+    role = body.role
     code = generate_otp()
     user = User(
         name=body.name,
         email=body.email,
         password=hash_password(body.password),
-        role=body.role if body.role in ("donor", "recipient") else "recipient",
+        role=role,
         phone_number=body.phone_number or None,
-        location=body.location or None,
+        location=body.location.strip() or None,
+        district=body.district,
+        org_name=body.org_name.strip() or None if role == "ngo" else None,
+        org_description=body.org_description.strip() or None if role == "ngo" else None,
+        ngo_status="pending" if role == "ngo" else None,
         status="pending",
         verification_code=code,
     )
@@ -71,18 +79,14 @@ def login(request: Request, body: LoginRequest, db: Session = Depends(get_db)):
     return {
         "success": True,
         "token": token,
-        "user": {
-            "id": user.id, "name": user.name, "email": user.email,
-            "role": user.role, "phone_number": user.phone_number,
-            "location": user.location, "status": user.status,
-        }
+        "user": _me(user),
     }
 
 
-@router.post("/officer-login")
+@router.post("/admin-login")
 @limiter.limit("5/minute")
-def officer_login(request: Request, body: LoginRequest, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == body.email, User.role == "adminofficer").first()
+def admin_login(request: Request, body: LoginRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == body.email, User.role == "admin").first()
     if not user or not verify_password(body.password, user.password):
         raise HTTPException(401, "Invalid email or password")
     if user.status == "suspended":
@@ -91,7 +95,7 @@ def officer_login(request: Request, body: LoginRequest, db: Session = Depends(ge
     return {
         "success": True,
         "token": token,
-        "officer": {
+        "admin": {
             "id": user.id, "name": user.name,
             "email": user.email, "role": user.role,
         }
@@ -158,7 +162,11 @@ def reset_password(request: Request, body: ResetPasswordRequest, db: Session = D
 
 def _me(u: User) -> dict:
     return {"id": u.id, "name": u.name, "email": u.email, "role": u.role,
-            "phone_number": u.phone_number, "location": u.location, "status": u.status}
+            "phone_number": u.phone_number, "location": u.location, "district": u.district,
+            "status": u.status, "notify_districts": list(u.notify_districts or []),
+            "notify_food_types": list(u.notify_food_types or []), "notify_email": u.notify_email,
+            "org_name": u.org_name, "org_description": u.org_description, "org_logo": u.org_logo,
+            "ngo_status": u.ngo_status}
 
 
 @router.get("/me")
@@ -168,10 +176,18 @@ def get_me(me: User = Depends(get_current_user)):
 
 @router.put("/me")
 def update_me(body: ProfileUpdate, db: Session = Depends(get_db), me: User = Depends(get_current_user)):
-    """Name, phone and location only - email and role can never be changed here."""
+    """Name, phone, location, district and notification choices - email and role can never be changed here."""
     me.name = body.name
     me.phone_number = body.phone_number or None
     me.location = body.location.strip() or None
+    if body.district:
+        me.district = body.district
+    if body.notify_districts is not None:
+        me.notify_districts = body.notify_districts
+    if body.notify_food_types is not None:
+        me.notify_food_types = body.notify_food_types
+    if body.notify_email is not None:
+        me.notify_email = body.notify_email
     db.commit()
     db.refresh(me)
     return {"success": True, "message": "Profile updated", "user": _me(me)}
@@ -194,40 +210,16 @@ def change_password(request: Request, body: ChangePasswordRequest,
 
 @router.delete("/me")
 @limiter.limit("3/minute")
-def delete_my_account(request: Request, body: DeleteAccountRequest,
+def delete_my_account(request: Request, body: DeleteAccountRequest, background: BackgroundTasks,
                       db: Session = Depends(get_db), me: User = Depends(get_current_user)):
     """Self-service account deletion: asks for the password, then removes the account and its data.
 
-    Staff accounts are protected - they are managed by other staff, never self-deleted.
+    The admin account is protected - it is never self-deleted.
     """
-    if me.role == "adminofficer":
-        raise HTTPException(403, "Staff accounts cannot be deleted here")
+    if me.role == "admin":
+        raise HTTPException(403, "The admin account cannot be deleted here")
     if not verify_password(body.password, me.password):
         raise HTTPException(400, "That password is not correct")
-
-    photos: list[str | None] = []
-    listing_ids = [x.id for x in db.query(FoodListing).filter(FoodListing.donor_id == me.id)]
-    photos += [x.image_path for x in db.query(FoodListing).filter(FoodListing.donor_id == me.id)]
-    my_requests = db.query(FoodRequest).filter(FoodRequest.recipient_id == me.id).all()
-    photos += [r.image_path for r in my_requests]
-    request_ids = [r.id for r in my_requests]
-
-    # Other people's requests that pointed at this donor's listings keep existing, just unlinked
-    if listing_ids:
-        on_my_listings = FoodRequest.listing_id.in_(listing_ids)
-        db.query(FoodRequest).filter(on_my_listings, FoodRequest.accepted_by == me.name).update(
-            {FoodRequest.accepted_by: "A former donor"}, synchronize_session=False)
-        db.query(FoodRequest).filter(on_my_listings).update({FoodRequest.listing_id: None}, synchronize_session=False)
-
-    feedback = db.query(Feedback).filter((Feedback.recipient_id == me.id) | (Feedback.request_id.in_(request_ids or [0])))
-    photos += [f.image_path for f in feedback]
-    feedback.delete(synchronize_session=False)
-    db.query(FoodRequest).filter(FoodRequest.recipient_id == me.id).delete(synchronize_session=False)
-    db.query(FoodListing).filter(FoodListing.donor_id == me.id).delete(synchronize_session=False)
-    db.query(EventSubscriber).filter(EventSubscriber.email == me.email.lower()).delete(synchronize_session=False)
-    db.delete(me)  # event sign-ups go with it (ON DELETE CASCADE)
-    db.commit()
-
-    for url in photos:
-        delete_upload(url)
+    purge_user(db, me)
+    schedule_emails(background, db)
     return {"success": True, "message": "Your account and its data have been deleted"}
