@@ -10,6 +10,7 @@ import { useAuth } from './contexts/AuthContext';
 import { apiFetch } from './utils/api';
 import { API_BASE } from './config';
 import Toast from './components/Toast';
+import { TourKit, useTour } from './components/tour/TourKit';
 
 ChartJS.register(
   CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend,
@@ -74,11 +75,11 @@ const NAV_ITEMS = [
   { key: 'verify',      icon: '✅', label: 'Verify Listings' },
   { key: 'requests',    icon: '📬', label: 'Requests' },
   { key: 'listings',    icon: '🍽️', label: 'Listings' },
-  { key: 'users',       icon: '👥', label: 'Users',           adminOnly: true },
+  { key: 'users',       icon: '👥', label: 'Users' },
   { key: 'money',       icon: '💰', label: 'Money Donations' },
   { key: 'feedback',    icon: '💬', label: 'Feedback' },
   { key: 'escalations', icon: '🚩', label: 'Escalations' },
-  { key: 'reports',     icon: '📈', label: 'Reports',         adminOnly: true },
+  { key: 'reports',     icon: '📈', label: 'Reports' },
 ];
 
 export default function OfficerDashboard() {
@@ -86,6 +87,7 @@ export default function OfficerDashboard() {
   const { user: adminUser, logout } = useAuth();
   const navigate = useNavigate();
 
+  const tour = useTour('admin');
   const [tab, setTab]               = useState('overview');
   const [requests, setRequests]     = useState([]);
   const [listings, setListings]     = useState([]);
@@ -503,10 +505,11 @@ export default function OfficerDashboard() {
           </div>
         </div>
 
-        <nav className="ad-sidebar__nav">
+        <nav className="ad-sidebar__nav" data-tour="admin-nav">
           {NAV_ITEMS.map(({ key, icon, label }) => (
             <button
               key={key}
+              data-tour={key === 'verify' ? 'admin-verify' : undefined}
               className={`ad-sidebar__link${tab === key ? ' active' : ''}`}
               onClick={() => setTab(key)}
             >
@@ -539,7 +542,7 @@ export default function OfficerDashboard() {
         <header className="ad-topbar">
           <div className="ad-topbar__title">{currentLabel}</div>
           <div className="ad-topbar__right">
-            <button className="ad-refresh-btn" onClick={fetchAll} title="Refresh data">↻ Refresh</button>
+            <button className="ad-refresh-btn" data-tour="admin-refresh" onClick={fetchAll} title="Refresh data">↻ Refresh</button>
             <button className="ad-logout-btn" onClick={handleLogout}>🚪 Logout</button>
           </div>
         </header>
@@ -553,7 +556,7 @@ export default function OfficerDashboard() {
               {/* ═══ OVERVIEW ═══════════════════════════════════════════════════ */}
               {tab === 'overview' && (
                 <div>
-                  <div className="stats-grid" style={{ marginBottom: 28 }}>
+                  <div className="stats-grid" data-tour="admin-stats" style={{ marginBottom: 28 }}>
                     {[
                       { icon: '📬', value: requests.length,                                          label: 'Total Requests',   color: '#16a34a' },
                       { icon: '🍽️', value: listings.length,                                         label: 'Food Listings',    color: '#2563eb' },
@@ -1052,6 +1055,7 @@ export default function OfficerDashboard() {
           )}
         </main>
       </div>
+      <TourKit tour={tour} />
     </div>
   );
 }
