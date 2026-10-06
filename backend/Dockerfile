@@ -14,4 +14,5 @@ COPY . .
 RUN mkdir -p uploads
 
 EXPOSE 8003
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8003"]
+# Live-update streams stay open for hours; they must not delay a redeploy by more than 5 s
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8003", "--timeout-graceful-shutdown", "5"]
