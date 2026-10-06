@@ -20,7 +20,7 @@ os.environ.setdefault("RATE_LIMIT_ENABLED", "false")
 
 from app.main import app
 from app.database import SessionLocal
-from app.models import FoodListing, FoodRequest, Feedback, User
+from app.models import Escalation, FoodListing, FoodRequest, Feedback, User
 from app.utils.security import hash_password
 
 _EMAIL_PREFIX = "pytest_"
@@ -65,6 +65,7 @@ def _cleanup_test_rows(db):
         ids = [u.id for u in users]
         if not ids:
             return
+        db.query(Escalation).filter(Escalation.raised_by.in_(ids)).delete(synchronize_session=False)
         db.query(Feedback).filter(Feedback.recipient_id.in_(ids)).delete(synchronize_session=False)
         db.query(FoodRequest).filter(FoodRequest.recipient_id.in_(ids)).delete(synchronize_session=False)
         db.query(FoodListing).filter(FoodListing.donor_id.in_(ids)).delete(synchronize_session=False)

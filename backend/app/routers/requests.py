@@ -65,7 +65,7 @@ def get_requests(
         q = q.filter(FoodRequest.recipient_id == recipient_id)
     else:
         # The open board (with recipient contact details) is for donors and staff
-        if me.role not in ("donor", "officer", "admin"):
+        if me.role != "donor" and not is_staff(me):
             raise HTTPException(403, "Only donors can browse open requests")
         if donor_view == "true":
             q = q.filter(FoodRequest.status.in_(["pending", "accepted"]))
@@ -127,7 +127,7 @@ def respond_to_request(
 ):
     if body.status not in ("accepted", "declined"):
         raise HTTPException(400, "status must be 'accepted' or 'declined'")
-    if me.role not in ("donor", "officer", "admin"):
+    if me.role != "donor" and not is_staff(me):
         raise HTTPException(403, "Only donors can respond to requests")
 
     req = db.query(FoodRequest).filter(FoodRequest.id == request_id).first()
@@ -215,7 +215,7 @@ def delete_request(request_id: int, db: Session = Depends(get_db), me: User = De
     req = db.query(FoodRequest).filter(FoodRequest.id == request_id).first()
     if not req:
         raise HTTPException(404, "Request not found")
-    if req.recipient_id != me.id and me.role != "admin":
+    if req.recipient_id != me.id and not is_staff(me):
         raise HTTPException(403, "You can only delete your own requests")
     db.delete(req)
     db.commit()

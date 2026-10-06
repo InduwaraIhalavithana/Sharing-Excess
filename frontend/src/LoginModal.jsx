@@ -28,8 +28,6 @@ export default function LoginModal({ onClose, onLoginSuccess, onSwitchToSignup, 
     }
     setLoading(true);
     try {
-      const isAdmin = email.trim() === 'admin@sharingexcess.com';
-      const role = mode === 'admin' ? 'admin' : (isAdmin ? 'admin' : '');
       const endpoint = mode === 'admin'
         ? `${API_BASE}/api/auth/officer-login`
         : `${API_BASE}/api/auth/login`;
@@ -45,7 +43,7 @@ export default function LoginModal({ onClose, onLoginSuccess, onSwitchToSignup, 
           id: rawUser.id,
           name: rawUser.name || 'User',
           email: rawUser.email,
-          role: rawUser.role || role
+          role: rawUser.role
         };
         login(user, data.token);
         onLoginSuccess(user);

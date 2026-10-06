@@ -74,11 +74,11 @@ def login(request: Request, body: LoginRequest, db: Session = Depends(get_db)):
 @router.post("/officer-login")
 @limiter.limit("5/minute")
 def officer_login(request: Request, body: LoginRequest, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == body.email, User.role.in_(["officer", "admin"])).first()
+    user = db.query(User).filter(User.email == body.email, User.role == "adminofficer").first()
     if not user or not verify_password(body.password, user.password):
         raise HTTPException(401, "Invalid email or password")
     if user.status == "suspended":
-        raise HTTPException(403, "This officer account has been suspended")
+        raise HTTPException(403, "This account has been suspended")
     token = create_access_token(user.id, user.role)
     return {
         "success": True,
