@@ -1,46 +1,9 @@
-import { useState, useCallback } from 'react';
-import { useLanguage } from '../i18n/LanguageContext.jsx';
-import { API_BASE } from '../config.js';
+import { useLanguage } from '../i18n/LanguageContext';
+import { tr } from '../i18n/phrases';
+import ContactForm from './ContactForm';
 
 export default function Contact() {
-  const { t } = useLanguage();
-  const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' });
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState('');
-
-  const handleChange = (e) => {
-    setForm(p => ({ ...p, [e.target.name]: e.target.value }));
-    setError('');
-  };
-
-  const handleSubmit = useCallback(async (e) => {
-    e.preventDefault();
-    if (!form.name || !form.email || !form.message) {
-      setError('Please fill in all required fields.'); return;
-    }
-    setLoading(true);
-    setError('');
-    try {
-      const res = await fetch(`${API_BASE}/api/contact`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
-      const data = await res.json().catch(() => ({ success: true }));
-      if (data.success !== false) {
-        setSuccess(true);
-        setForm({ name: '', email: '', subject: '', message: '' });
-      } else {
-        setError(data.message || 'Submission failed. Please try again.');
-      }
-    } catch {
-      // If backend endpoint doesn't exist yet, treat as success for demo
-      setSuccess(true);
-      setForm({ name: '', email: '', subject: '', message: '' });
-    }
-    setLoading(false);
-  }, [form]);
+  const { t, p } = useLanguage();
 
   return (
     <div className="contact-page">
@@ -62,17 +25,16 @@ export default function Contact() {
         {/* Info strips */}
         <div className="contact-info-strip">
           {[
-            { icon: '📧', label: 'Email',   value: 'info@sharingexcess.lk', href: 'mailto:info@sharingexcess.lk' },
-            { icon: '📞', label: 'Phone',   value: '+94 77 123 4567',        href: 'tel:+94771234567' },
-            { icon: '📍', label: 'Address', value: 'Uva Wellassa University, Badulla, Sri Lanka', href: null },
-            { icon: '🕑', label: 'Hours',   value: 'Mon – Fri, 9am – 5pm',  href: null },
+            { icon: '📧', label: tr('Email'),   value: 'info@sharingexcess.lk', href: 'mailto:info@sharingexcess.lk' },
+            { icon: '📍', label: tr('Address'), value: tr('Uva Wellassa University, Badulla, Sri Lanka'), href: null },
+            { icon: '🕑', label: tr('Hours'),   value: tr('Mon – Fri, 9am – 5pm'),  href: null },
           ].map(c => (
             <div key={c.label} className="contact-info-card card">
               <span className="contact-info-card__icon">{c.icon}</span>
-              <strong>{c.label}</strong>
+              <strong>{p(c.label)}</strong>
               {c.href
                 ? <a href={c.href} className="contact-info-card__value">{c.value}</a>
-                : <span className="contact-info-card__value">{c.value}</span>}
+                : <span className="contact-info-card__value">{p(c.value)}</span>}
             </div>
           ))}
         </div>
@@ -82,86 +44,7 @@ export default function Contact() {
 
           {/* Form */}
           <div className="contact-form-wrap card">
-            {success ? (
-              <div className="contact-success">
-                <span>✅</span>
-                <h3>Thank you for reaching out!</h3>
-                <p>We'll get back to you within 1–2 business days.</p>
-                <button
-                  className="btn btn-outline"
-                  onClick={() => setSuccess(false)}
-                >
-                  Send another message
-                </button>
-              </div>
-            ) : (
-              <>
-                <h2 className="contact-form-wrap__title">Send a Message</h2>
-                <form onSubmit={handleSubmit} noValidate>
-                  <div className="form-row-2">
-                    <div className="form-group">
-                      <label className="form-label" htmlFor="cn">Your Name *</label>
-                      <input
-                        id="cn"
-                        className="form-control"
-                        type="text"
-                        name="name"
-                        value={form.name}
-                        onChange={handleChange}
-                        placeholder="Full name"
-                        required
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label" htmlFor="ce">Email Address *</label>
-                      <input
-                        id="ce"
-                        className="form-control"
-                        type="email"
-                        name="email"
-                        value={form.email}
-                        onChange={handleChange}
-                        placeholder="you@email.com"
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="cs">Subject</label>
-                    <input
-                      id="cs"
-                      className="form-control"
-                      type="text"
-                      name="subject"
-                      value={form.subject}
-                      onChange={handleChange}
-                      placeholder="How can we help?"
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="cm">Message *</label>
-                    <textarea
-                      id="cm"
-                      className="form-control"
-                      name="message"
-                      value={form.message}
-                      onChange={handleChange}
-                      rows={6}
-                      placeholder="Tell us more…"
-                      required
-                    />
-                  </div>
-                  {error && <p className="form-error">{error}</p>}
-                  <button
-                    type="submit"
-                    className="btn btn-primary btn-block"
-                    disabled={loading}
-                  >
-                    {loading ? 'Sending…' : 'Send Message'}
-                  </button>
-                </form>
-              </>
-            )}
+            <ContactForm />
           </div>
 
           {/* Side panel */}
@@ -176,49 +59,33 @@ export default function Contact() {
               <div className="contact-map-caption">
                 <span>📍</span>
                 <div>
-                  <p className="contact-map-label">Uva Wellassa University</p>
-                  <p className="contact-map-sub">Badulla, Sri Lanka</p>
+                  <p className="contact-map-label">{p('Uva Wellassa University')}</p>
+                  <p className="contact-map-sub">{p('Badulla, Sri Lanka')}</p>
                 </div>
                 <a
                   href="https://www.openstreetmap.org/?mlat=6.9825&mlon=81.0765#map=14/6.9825/81.0765"
                   target="_blank" rel="noopener noreferrer"
                   className="contact-map-open"
                 >
-                  Open map ↗
+                  {p('Open map ↗')}
                 </a>
               </div>
             </div>
 
             <div className="contact-side__faq card">
-              <h3 className="contact-side__faq-title">Common Questions</h3>
+              <h3 className="contact-side__faq-title">{p('Common Questions')}</h3>
               {[
-                { q: 'How quickly do you respond?', a: 'We aim to reply within 1–2 business days.' },
-                { q: 'Can I volunteer with you?', a: 'Yes! Mention it in your message and we\'ll send details.' },
-                { q: 'How do I become an NGO partner?', a: 'Email us at info@sharingexcess.lk with your organisation details.' },
+                { q: tr('How quickly do you respond?'), a: tr('We aim to reply within 1–2 business days.') },
+                { q: tr('Can I volunteer with you?'), a: tr('Yes! Mention it in your message and we\'ll send details.') },
+                { q: tr('How do I become an NGO partner?'), a: tr('Sign up with an NGO account. Once the admin approves your organisation you can post events, appear in the NGO directory and request food.') },
               ].map((faq, i) => (
                 <div key={i} className="contact-faq-item">
-                  <p className="contact-faq-item__q">❓ {faq.q}</p>
-                  <p className="contact-faq-item__a">{faq.a}</p>
+                  <p className="contact-faq-item__q">❓ {p(faq.q)}</p>
+                  <p className="contact-faq-item__a">{p(faq.a)}</p>
                 </div>
               ))}
             </div>
 
-            <div className="contact-side__social card">
-              <h3 className="contact-side__social-title">Follow Us</h3>
-              <div className="contact-social-links">
-                {[
-                  { icon: '📘', label: 'Facebook' },
-                  { icon: '🐦', label: 'Twitter' },
-                  { icon: '📷', label: 'Instagram' },
-                  { icon: '💼', label: 'LinkedIn' },
-                ].map(s => (
-                  <div key={s.label} className="contact-social-link">
-                    <span>{s.icon}</span>
-                    <span>{s.label}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
 
         </div>

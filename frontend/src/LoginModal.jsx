@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
-import { useLanguage } from './i18n/LanguageContext.jsx';
-import { useAuth } from './contexts/AuthContext.jsx';
-import { API_BASE } from './config.js';
+import { useModalA11y } from './hooks/useModalA11y';
+import { useLanguage } from './i18n/LanguageContext';
+import { useAuth } from './contexts/AuthContext';
+import { API_BASE } from './config';
 
 export default function LoginModal({ onClose, onLoginSuccess, onSwitchToSignup, onForgotPassword }) {
+  const boxRef = useModalA11y();
   const { t } = useLanguage();
   const { login } = useAuth();
   const [mode, setMode] = useState('user'); // 'user' | 'admin'
@@ -28,10 +30,8 @@ export default function LoginModal({ onClose, onLoginSuccess, onSwitchToSignup, 
     }
     setLoading(true);
     try {
-      const isAdmin = email.trim() === 'admin@sharingexcess.com';
-      const role = mode === 'admin' ? 'admin' : (isAdmin ? 'admin' : '');
       const endpoint = mode === 'admin'
-        ? `${API_BASE}/api/auth/officer-login`
+        ? `${API_BASE}/api/auth/admin-login`
         : `${API_BASE}/api/auth/login`;
       const res = await fetch(endpoint, {
         method: 'POST',
@@ -40,13 +40,8 @@ export default function LoginModal({ onClose, onLoginSuccess, onSwitchToSignup, 
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        const rawUser = data.user || data.officer;
-        const user = {
-          id: rawUser.id,
-          name: rawUser.name || 'User',
-          email: rawUser.email,
-          role: rawUser.role || role
-        };
+        const rawUser = data.user || data.admin;
+        const user = { ...rawUser, name: rawUser.name || 'User' };
         login(user, data.token);
         onLoginSuccess(user);
       } else {
@@ -60,7 +55,7 @@ export default function LoginModal({ onClose, onLoginSuccess, onSwitchToSignup, 
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-box" onClick={e => e.stopPropagation()}>
+      <div ref={boxRef} className="modal-box" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <h2>{mode === 'admin' ? t('auth', 'admin_login') : t('auth', 'login_title')}</h2>
           <p>{t('auth', 'login_subtitle')}</p>

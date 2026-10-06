@@ -1,18 +1,20 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useTheme } from '../contexts/ThemeContext.jsx';
-import { useLanguage } from '../i18n/LanguageContext.jsx';
-import { useAuth } from '../contexts/AuthContext.jsx';
+import { useTheme } from '../contexts/ThemeContext';
+import { useLanguage } from '../i18n/LanguageContext';
+import { useAuth } from '../contexts/AuthContext';
 import LoginModal from '../LoginModal.jsx';
 import SignupModal from './SignupModal.jsx';
 import ForgotPasswordModal from './ForgotPasswordModal.jsx';
 import VerificationModal from './VerificationModal.jsx';
-import { API_BASE } from '../config.js';
+import { usePublicStats } from '../hooks/queries';
+import { dashboardPath } from '../utils/format';
+import NotificationBell from './NotificationBell';
 import './Navbar.css';
 
 const LANG_LABELS = { en: 'EN', si: 'SI', ta: 'TA' };
 const LANGS = ['en', 'si', 'ta'];
-const NAV_ICONS = { '/': '🏠', '/about': '🌍', '/ngos': '🤝', '/donate': '🍽️', '/events': '📅', '/contact': '✉️', '/feedback': '💬' };
+const NAV_ICONS = { '/': '🏠', '/about': '🌍', '/ngos': '🤝', '/food': '🍽️', '/events': '📅', '/contact': '✉️', '/feedback': '💬' };
 
 export default function Navbar() {
   const { theme, toggleTheme } = useTheme();
@@ -23,18 +25,11 @@ export default function Navbar() {
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [liveCount, setLiveCount] = useState(null);
-
-  // Live impact ticker — how many listings are open right now
-  useEffect(() => {
-    let cancelled = false;
-    fetch(`${API_BASE}/api/listings?limit=1`)
-      .then(r => r.json())
-      .then(d => { if (!cancelled && d.success) setLiveCount(d.total ?? 0); })
-      .catch(() => {});
-    return () => { cancelled = true; };
-  }, [location.pathname]);
+  // Live impact ticker - how many listings are open right now
+  const { data: stats } = usePublicStats();
+  const liveCount = stats?.listings_available ?? null;
 
   // Modal state
   const [showLogin, setShowLogin] = useState(false);
@@ -44,6 +39,7 @@ export default function Navbar() {
   const [pendingSignup, setPendingSignup] = useState(null);
 
   const userMenuRef = useRef(null);
+  const moreRef = useRef(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -54,6 +50,7 @@ export default function Navbar() {
   useEffect(() => {
     setMenuOpen(false);
     setUserMenuOpen(false);
+    setMoreOpen(false);
   }, [location.pathname]);
 
   useEffect(() => {
@@ -61,9 +58,19 @@ export default function Navbar() {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
         setUserMenuOpen(false);
       }
+      if (moreRef.current && !moreRef.current.contains(e.target)) {
+        setMoreOpen(false);
+      }
+    };
+    const onKey = (e) => {
+      if (e.key === 'Escape') { setUserMenuOpen(false); setMoreOpen(false); }
     };
     document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', handler);
+      document.removeEventListener('keydown', onKey);
+    };
   }, []);
 
   // Listen for events dispatched from other components
@@ -87,10 +94,7 @@ export default function Navbar() {
 
   const handleLoginSuccess = (userData) => {
     setShowLogin(false);
-    const role = String(userData.role || '').toLowerCase();
-    if (role === 'admin' || role === 'officer') navigate('/admin');
-    else if (role === 'recipient') navigate('/recipient-dashboard');
-    else navigate('/donor-dashboard');
+    navigate(dashboardPath(userData.role));
   };
 
   const handleSignupSuccess = (data) => {
@@ -101,19 +105,10 @@ export default function Navbar() {
 
   const handleVerificationSuccess = (userData) => {
     setShowVerification(false);
-    const role = String(userData.role || '').toLowerCase();
-    if (role === 'admin' || role === 'officer') navigate('/admin');
-    else if (role === 'recipient') navigate('/recipient-dashboard');
-    else navigate('/donor-dashboard');
+    navigate(dashboardPath(userData.role));
   };
 
-  const getDashboardPath = () => {
-    if (!user) return '/';
-    const role = String(user.role || '').toLowerCase();
-    if (role === 'admin' || role === 'officer') return '/admin';
-    if (role === 'recipient') return '/recipient-dashboard';
-    return '/donor-dashboard';
-  };
+  const getDashboardPath = () => (user ? dashboardPath(user.role) : '/');
 
   const isActive = (path) => location.pathname === path;
 
@@ -121,15 +116,19 @@ export default function Navbar() {
     { to: '/',         label: t('nav', 'home') },
     { to: '/about',    label: t('nav', 'about') },
     { to: '/ngos',     label: t('nav', 'ngos') },
-    { to: '/donate',   label: t('nav', 'donate') },
+    { to: '/food',     label: t('nav', 'food') },
     { to: '/events',   label: t('nav', 'events') },
     { to: '/contact',  label: t('nav', 'contact') },
     { to: '/feedback', label: t('nav', 'feedback') },
   ];
+  // On medium screens the last links fold into a "More" dropdown so the bar never overflows.
+  const SECONDARY = ['/events', '/contact', '/feedback'];
+  const moreLinks = navLinks.filter(({ to }) => SECONDARY.includes(to));
+  const moreActive = moreLinks.some(({ to }) => isActive(to));
 
   return (
     <>
-      <header className={`se-navbar${scrolled ? ' scrolled' : ''}`} role="banner">
+      <header className={`se-navbar${scrolled ? ' scrolled' : ''}`} role="banner" data-lang={lang}>
         <div className="se-navbar__inner">
           {/* Brand */}
           <Link to="/" className="se-navbar__brand" aria-label="Sharing Excess Home">
@@ -146,19 +145,52 @@ export default function Navbar() {
               <Link
                 key={to}
                 to={to}
-                className={`se-navbar__link${isActive(to) ? ' active' : ''}`}
+                className={`se-navbar__link${SECONDARY.includes(to) ? ' se-navbar__link--secondary' : ''}${isActive(to) ? ' active' : ''}`}
               >
                 <span className="se-navbar__link-icon" aria-hidden="true">{NAV_ICONS[to]}</span>
                 <span className="se-navbar__link-label">{label}</span>
               </Link>
             ))}
+
+            {/* "More" dropdown: visible only on medium screens, where the secondary links are hidden above */}
+            <div className="se-more" ref={moreRef}>
+              <button
+                type="button"
+                className={`se-navbar__link se-more__btn${moreActive ? ' active' : ''}${moreOpen ? ' open' : ''}`}
+                onClick={() => setMoreOpen(p => !p)}
+                aria-expanded={moreOpen}
+                aria-haspopup="true"
+              >
+                <span className="se-navbar__link-label">{t('nav', 'more')}</span>
+                <span className="se-more__chevron" aria-hidden="true">▾</span>
+              </button>
+              <div className={`se-more__menu${moreOpen ? ' open' : ''}`} role="menu" aria-hidden={!moreOpen}>
+                {moreLinks.map(({ to, label }) => (
+                  <Link
+                    key={to}
+                    to={to}
+                    role="menuitem"
+                    tabIndex={moreOpen ? 0 : -1}
+                    className={`se-more__item${isActive(to) ? ' active' : ''}`}
+                    onClick={() => setMoreOpen(false)}
+                  >
+                    <span className="se-more__item-icon" aria-hidden="true">{NAV_ICONS[to]}</span>
+                    {label}
+                  </Link>
+                ))}
+              </div>
+            </div>
           </nav>
 
           {/* Live impact ticker */}
           {liveCount !== null && liveCount > 0 && (
-            <Link to="/food-donations" className="se-navbar__ticker" title="Food available right now">
+            <Link
+              to="/food"
+              className="se-navbar__ticker"
+              title={`${liveCount} food listing${liveCount !== 1 ? 's' : ''} available right now`}
+            >
               <span className="se-navbar__ticker-dot" aria-hidden="true" />
-              🍽️ {liveCount} listing{liveCount !== 1 ? 's' : ''} live
+              <strong>{liveCount}</strong> {t('nav', 'live')}
             </Link>
           )}
 
@@ -187,9 +219,11 @@ export default function Navbar() {
               {theme === 'light' ? '🌙' : '☀️'}
             </button>
 
+            {user && user.role !== 'admin' && <NotificationBell />}
+
             {/* Auth */}
             {user ? (
-              <div className="se-user-menu" ref={userMenuRef}>
+              <div className="se-user-menu" ref={userMenuRef} data-tour="user-menu">
                 <button
                   className="se-user-btn"
                   onClick={() => setUserMenuOpen(p => !p)}
@@ -206,7 +240,7 @@ export default function Navbar() {
                   <div className="se-user-dropdown" role="menu">
                     <div className="se-user-dropdown__info">
                       <p className="dropdown-name">{user.name || user.email}</p>
-                      <p className="dropdown-role">{user.role}</p>
+                      <p className="dropdown-role">{t('role', user.role)}</p>
                     </div>
                     <Link
                       to={getDashboardPath()}
@@ -215,6 +249,14 @@ export default function Navbar() {
                       onClick={() => setUserMenuOpen(false)}
                     >
                       {t('nav', 'dashboard')}
+                    </Link>
+                    <Link
+                      to="/account"
+                      className="se-user-dropdown__item"
+                      role="menuitem"
+                      onClick={() => setUserMenuOpen(false)}
+                    >
+                      ⚙️ {t('nav', 'account_settings')}
                     </Link>
                     <button
                       className="se-user-dropdown__item danger"
@@ -283,7 +325,7 @@ export default function Navbar() {
             {user ? (
               <div className="se-mobile-user">
                 <p className="mobile-user-name">{user.name || user.email}</p>
-                <p className="mobile-user-role">{user.role}</p>
+                <p className="mobile-user-role">{t('role', user.role)}</p>
                 <Link
                   to={getDashboardPath()}
                   className="se-btn-signup"

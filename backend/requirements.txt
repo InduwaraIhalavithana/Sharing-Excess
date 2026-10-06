@@ -1,15 +1,20 @@
-fastapi>=0.115.0
-uvicorn[standard]>=0.30.0
-pydantic[email]>=2.7.0
-python-dotenv>=1.0.1
-SQLAlchemy>=2.0.0
-psycopg2-binary>=2.9.9
-passlib>=1.7.4          # use pbkdf2_sha256 — bcrypt incompatible with Python 3.14+
-python-multipart>=0.0.9 # required for File/UploadFile in FastAPI
-slowapi>=0.1.9          # rate limiting
-python-jose[cryptography]>=3.3.0  # JWT tokens
-cloudinary>=1.36.0                # cloud image storage (optional, falls back to local)
+# Exact pins — the same versions run on the dev PC, in Docker and in CI.
+# (Unpinned SQLAlchemy>=2.0 once resolved to 2.1, which defaults to the psycopg3
+# driver and broke the app — bump versions deliberately and re-run the tests.)
 
-# Testing
-pytest>=8.0.0
-httpx>=0.27.0
+fastapi==0.136.1
+uvicorn[standard]==0.50.0
+pydantic[email]==2.13.3
+email-validator==2.3.0
+python-dotenv==1.2.2
+pydantic-settings==2.15.0         # typed settings loaded from env / .env
+alembic==1.20.0                   # database migrations
+python-multipart==0.0.32
+SQLAlchemy==2.0.49
+psycopg2-binary==2.9.12
+passlib==1.7.4                    # pbkdf2_sha256 scheme — bcrypt extra incompatible with Python 3.14+
+python-jose[cryptography]==3.5.0  # JWT tokens
+slowapi==0.1.10                   # rate limiting
+tzdata==2026.5                    # Asia/Colombo time zone data (Windows has none built in)
+Pillow==12.2.0                    # validates, resizes and strips metadata from uploaded images
+cloudinary==1.46.3                # cloud image storage (optional, falls back to local uploads/)

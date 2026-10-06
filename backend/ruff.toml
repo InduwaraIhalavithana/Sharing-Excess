@@ -1,0 +1,14 @@
+# Lint rules: real bugs (pyflakes F), style errors (E/W subset), import order (I), bug-prone patterns (B)
+line-length = 120
+target-version = "py311"
+extend-exclude = ["alembic/versions"]
+
+[lint]
+select = ["E", "F", "W", "I", "B"]
+ignore = [
+  "E501",  # long lines: the formatter's job, not a bug
+  "B008",  # FastAPI's Depends() / File() / Form() in argument defaults is the framework's idiom
+]
+
+[lint.per-file-ignores]
+"tests/*" = ["B011"]

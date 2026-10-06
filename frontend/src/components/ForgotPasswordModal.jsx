@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
-import { useLanguage } from '../i18n/LanguageContext.jsx';
-import { API_BASE } from '../config.js';
+import { useModalA11y } from '../hooks/useModalA11y';
+import { useLanguage } from '../i18n/LanguageContext';
+import { API_BASE } from '../config';
 
 export default function ForgotPasswordModal({ onClose, onBackToLogin }) {
+  const boxRef = useModalA11y();
   const { t } = useLanguage();
   const [step, setStep] = useState(1); // 1: email, 2: code + new pw, 3: success
   const [email, setEmail] = useState('');
@@ -72,7 +74,7 @@ export default function ForgotPasswordModal({ onClose, onBackToLogin }) {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-box" onClick={e => e.stopPropagation()}>
+      <div ref={boxRef} className="modal-box" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <h2>{t('auth', 'forgot_title')}</h2>
           <p>

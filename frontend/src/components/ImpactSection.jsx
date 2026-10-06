@@ -1,40 +1,25 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useLanguage } from '../i18n/LanguageContext.jsx';
+import { useLanguage } from '../i18n/LanguageContext';
+import { usePublicStats } from '../hooks/queries';
+import { useCountUp } from '../hooks/useCountUp';
 
+// Live numbers from the database (GET /api/public/stats) - nothing here is hardcoded
 const STATS = [
-  { final: 1575, suffix: '+', labelKey: 'impact_meals',     icon: '🍽️' },
-  { final: 50,   suffix: '+', labelKey: 'impact_donors',    icon: '🤝' },
-  { final: 12,   suffix: '',  labelKey: 'impact_ngos',      icon: '🏢' },
-  { final: 8,    suffix: '',  labelKey: 'impact_areas',     icon: '📍' },
+  { field: 'handovers_completed', labelKey: 'impact_meals',      icon: '🍽️' },
+  { field: 'donors',          labelKey: 'impact_donors',     icon: '🤝' },
+  { field: 'recipients',      labelKey: 'impact_recipients', icon: '🏢' },
+  { field: 'listings_shared', labelKey: 'impact_listings',   icon: '📍' },
 ];
 
-function useCountUp(target, duration = 1800, active = false) {
-  const [count, setCount] = useState(0);
-  useEffect(() => {
-    if (!active) return;
-    let frame = 0;
-    const total = Math.ceil(duration / 16);
-    const step = target / total;
-    const id = setInterval(() => {
-      frame++;
-      const next = Math.min(Math.round(step * frame), target);
-      setCount(next);
-      if (next >= target) clearInterval(id);
-    }, 16);
-    return () => clearInterval(id);
-  }, [target, duration, active]);
-  return count;
-}
-
-function StatItem({ stat, active }) {
+function StatItem({ stat, active, value }) {
   const { t } = useLanguage();
-  const count = useCountUp(stat.final, 1600, active);
+  const count = useCountUp(value, 1600, active);
   return (
     <div className="impact-stat">
       <span className="impact-stat__icon">{stat.icon}</span>
       <span className="impact-stat__value">
-        {count.toLocaleString()}{stat.suffix}
+        {count.toLocaleString()}
       </span>
       <span className="impact-stat__label">{t('about', stat.labelKey)}</span>
     </div>
@@ -46,6 +31,7 @@ export default function ImpactSection() {
   const navigate = useNavigate();
   const sectionRef = useRef(null);
   const [active, setActive] = useState(false);
+  const { data: stats } = usePublicStats();
 
   useEffect(() => {
     if (!sectionRef.current) return;
@@ -68,7 +54,7 @@ export default function ImpactSection() {
         </div>
         <div className="impact-stats-grid">
           {STATS.map(stat => (
-            <StatItem key={stat.labelKey} stat={stat} active={active} />
+            <StatItem key={stat.labelKey} stat={stat} active={active} value={stats?.[stat.field] ?? 0} />
           ))}
         </div>
         <button className="impact-learn-btn" onClick={() => navigate('/about')}>

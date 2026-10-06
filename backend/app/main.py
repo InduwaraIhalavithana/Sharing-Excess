@@ -1,52 +1,98 @@
-import os
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
-from dotenv import load_dotenv
-
-load_dotenv(Path(__file__).resolve().parents[1] / ".env", override=True)
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 
-from app.database import engine, Base
-from app.routers import auth, listings, requests, officer, calendar, feedback, contact, donations
+from app.config import settings
+from app.database import engine
+from app.routers import (
+    admin,
+    auth,
+    calendar,
+    community_events,
+    contact,
+    feedback,
+    listings,
+    live,
+    meta,
+    ngos,
+    notifications,
+    public,
+    ratings,
+    reports,
+    requests,
+)
+from app.utils import events
+from app.utils.limiter import limiter
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+def run_migrations() -> None:
+    """Bring the database up to the latest schema (Alembic).
+
+    A database created before Alembic was introduced already has the tables but no
+    version stamp - mark it as the baseline first so nothing is re-created.
+    """
+    from alembic.config import Config
+    from sqlalchemy import inspect
+
+    from alembic import command
+
+    root = Path(__file__).resolve().parents[1]
+    cfg = Config(str(root / "alembic.ini"))
+    cfg.set_main_option("script_location", str(root / "alembic"))
+    tables = set(inspect(engine).get_table_names())
+    if "users" in tables and "alembic_version" not in tables:
+        command.stamp(cfg, "0001")
+    command.upgrade(cfg, "head")
+
+
+EXPIRY_SWEEP_SECONDS = 300
+
+
+def _sweep_expired() -> None:
+    from app.database import SessionLocal
+    from app.services.stock import run_expiry
+
+    db = SessionLocal()
+    try:
+        run_expiry(db)
+    except Exception:
+        logger.exception("Expiry sweep failed")
+        db.rollback()
+    finally:
+        db.close()
+
+
+async def _expiry_loop() -> None:
+    """Every few minutes: expire overdue listings and hand back the stock their unanswered requests held.
+    (Browsing and requesting also sweep, so the data is right even between runs.)"""
+    while True:
+        await asyncio.sleep(EXPIRY_SWEEP_SECONDS)
+        await asyncio.to_thread(_sweep_expired)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    Base.metadata.create_all(bind=engine)
-    # Add new columns to existing tables without dropping data
-    from sqlalchemy import text
-    with engine.connect() as conn:
-        for sql in [
-            "ALTER TABLE feedback ADD COLUMN IF NOT EXISTS admin_reply TEXT",
-            "ALTER TABLE feedback ADD COLUMN IF NOT EXISTS feedback_status VARCHAR(10) NOT NULL DEFAULT 'open'",
-            # Extend user_role enum to include officer (idempotent)
-            "ALTER TYPE user_role ADD VALUE IF NOT EXISTS 'officer'",
-            # Migrate existing officers table rows into users (one-time, safe to re-run)
-            """INSERT INTO users (name, email, password, role, status, created_at)
-               SELECT name, email, password, 'officer',
-                      CASE WHEN status = 'active' THEN 'active' ELSE 'suspended' END,
-                      created_at
-               FROM officers
-               WHERE email NOT IN (SELECT email FROM users)""",
-        ]:
-            try:
-                conn.execute(text(sql))
-                conn.commit()
-            except Exception:
-                conn.rollback()
-    logger.info("Database tables ready.")
-    yield
+    run_migrations()
+    logger.info("Database schema is up to date.")
+    sweeper = asyncio.create_task(_expiry_loop())
+    try:
+        yield
+    finally:
+        sweeper.cancel()
 
 
-CORS_ORIGIN = os.getenv("CORS_ORIGIN", "http://localhost:5175")
-cors_origins = [o.strip() for o in CORS_ORIGIN.split(",") if o.strip()]
+cors_origins = settings.cors_origins
 
 app = FastAPI(
     title="Sharing Excess API",
@@ -55,6 +101,9 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins,
@@ -62,6 +111,20 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+
+@app.middleware("http")
+async def announce_changes(request, call_next):
+    """After any successful write to listings/requests/events/notifications/feedback, tell live clients to refetch."""
+    response = await call_next(request)
+    if request.method in ("POST", "PUT", "PATCH", "DELETE") and response.status_code < 400:
+        for prefix, topic in events.TOPICS:
+            if request.url.path.startswith(prefix):
+                events.publish(topic)
+                break
+    return response
+
 
 # Serve uploaded images at /uploads/filename
 UPLOADS_DIR = Path(__file__).resolve().parents[1] / "uploads"
@@ -72,11 +135,18 @@ app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
 app.include_router(auth.router)
 app.include_router(listings.router)
 app.include_router(requests.router)
-app.include_router(officer.router)
+app.include_router(admin.router)
 app.include_router(calendar.router)
 app.include_router(feedback.router)
 app.include_router(contact.router)
-app.include_router(donations.router)
+app.include_router(notifications.router)
+app.include_router(ratings.router)
+app.include_router(reports.router)
+app.include_router(ngos.router)
+app.include_router(meta.router)
+app.include_router(public.router)
+app.include_router(live.router)
+app.include_router(community_events.router)
 
 
 @app.get("/")
@@ -85,5 +155,6 @@ def root():
 
 
 @app.get("/health")
+@app.get("/api/health")  # reachable through nginx too, for uptime checks
 def health():
     return {"status": "ok"}

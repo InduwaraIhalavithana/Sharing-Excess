@@ -1,8 +1,10 @@
-import os
 from datetime import datetime, timedelta, timezone
+
 from jose import JWTError, jwt
 
-SECRET_KEY = os.getenv("SECRET_KEY", "insecure-default-change-me-in-production")
+from app.config import settings
+
+SECRET_KEY = settings.secret_key
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_DAYS = 7
 

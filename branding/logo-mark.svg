@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7cc34a"/><stop offset="1" stop-color="#2f8f3a"/></linearGradient></defs>
+<rect width="200" height="200" rx="46" fill="url(#g)"/>
+<!-- two cupped hands / bowl shapes passing food -->
+<path d="M34 112 Q34 150 74 150 L100 150 Q112 150 112 138 L112 124 Q112 112 100 112 Z" fill="#fff" opacity=".95"/>
+<path d="M166 112 Q166 150 126 150 L100 150" fill="none"/>
+<path d="M166 96 Q166 134 126 134 L112 134 Q100 134 100 122 L100 108 Q100 96 112 96 Z" fill="#ffb02e"/>
+<!-- sprouting leaf above -->
+<path d="M100 84 C100 56 118 40 144 38 C146 66 130 84 100 84 Z" fill="#fff"/>
+<path d="M100 84 C100 62 82 52 62 52 C60 74 76 86 100 84 Z" fill="#fff" opacity=".8"/>
+<path d="M100 84 L100 100" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
+</svg>
