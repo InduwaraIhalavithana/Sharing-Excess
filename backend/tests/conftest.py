@@ -65,6 +65,14 @@ def _cleanup_test_rows(db):
         ids = [u.id for u in users]
         if not ids:
             return
+        # Delete the image files the test rows uploaded
+        from app.utils.uploads import UPLOAD_DIR
+        paths = [r[0] for r in db.query(FoodListing.image_path).filter(FoodListing.donor_id.in_(ids)).all()]
+        paths += [r[0] for r in db.query(FoodRequest.image_path).filter(FoodRequest.recipient_id.in_(ids)).all()]
+        paths += [r[0] for r in db.query(Feedback.image_path).filter(Feedback.recipient_id.in_(ids)).all()]
+        for path in filter(None, paths):
+            if path.startswith("/uploads/"):
+                (UPLOAD_DIR / path.rsplit("/", 1)[-1]).unlink(missing_ok=True)
         db.query(Escalation).filter(Escalation.raised_by.in_(ids)).delete(synchronize_session=False)
         db.query(Feedback).filter(Feedback.recipient_id.in_(ids)).delete(synchronize_session=False)
         db.query(FoodRequest).filter(FoodRequest.recipient_id.in_(ids)).delete(synchronize_session=False)
