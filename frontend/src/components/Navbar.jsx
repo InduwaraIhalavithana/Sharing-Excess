@@ -181,7 +181,7 @@ export default function Navbar() {
 
             {/* Auth */}
             {user ? (
-              <div className="se-user-menu" ref={userMenuRef}>
+              <div className="se-user-menu" ref={userMenuRef} data-tour="user-menu">
                 <button
                   className="se-user-btn"
                   onClick={() => setUserMenuOpen(p => !p)}

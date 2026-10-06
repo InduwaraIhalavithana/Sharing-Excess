@@ -39,12 +39,7 @@ export default function LoginModal({ onClose, onLoginSuccess, onSwitchToSignup, 
       const data = await res.json();
       if (res.ok && data.success) {
         const rawUser = data.user || data.officer;
-        const user = {
-          id: rawUser.id,
-          name: rawUser.name || 'User',
-          email: rawUser.email,
-          role: rawUser.role
-        };
+        const user = { ...rawUser, name: rawUser.name || 'User' };
         login(user, data.token);
         onLoginSuccess(user);
       } else {

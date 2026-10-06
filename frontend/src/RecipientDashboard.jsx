@@ -10,6 +10,7 @@ import {
 import FeedbackForm from './components/FeedbackForm';
 import { SkeletonGrid } from './components/SkeletonCard.jsx';
 import Toast from './components/Toast';
+import { TourKit, useTour, GettingStartedChecklist } from './components/tour/TourKit';
 
 function StatusBadge({ status }) {
   const map = {
@@ -63,6 +64,7 @@ export default function RecipientDashboard() {
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounced(search, 300);
 
+  const tour = useTour('recipient');
   const listingsQ = usePublicListings({ q: debouncedSearch, limit: 50 });
   const requestsQ = useMyRequests(user?.id);
   const createRequest = useCreateWithForm('/api/requests');
@@ -161,13 +163,22 @@ export default function RecipientDashboard() {
           <h1 className="dd-title">{t('recipient', 'dashboard_title')}</h1>
           <p className="dd-welcome">{t('recipient', 'welcome')} <strong>{user?.name}</strong></p>
         </div>
-        <button className="btn btn-primary" onClick={() => { setShowForm(p => !p); setTab('requests'); }}>
+        <button className="btn btn-primary" data-tour="recipient-request" onClick={() => { setShowForm(p => !p); setTab('requests'); }}>
           + {t('recipient', 'request_food')}
         </button>
       </div>
 
+      <GettingStartedChecklist
+        storageKey="se-checklist-recipient"
+        items={[
+          { id: 'profile', label: t('tour', 'check_profile'), href: '/account', done: !!(user?.phone_number && user?.location) },
+          { id: 'request', label: t('tour', 'check_first_request'), href: '/recipient-dashboard', done: myRequests.length > 0 },
+          { id: 'received', label: t('tour', 'check_first_received'), href: '/recipient-dashboard', done: myRequests.some(r => r.status === 'delivered') },
+        ]}
+      />
+
       {/* Stats */}
-      <div className="stats-grid">
+      <div className="stats-grid" data-tour="recipient-stats">
         {stats.map(s => (
           <div key={s.label} className="dashboard-card stat-card">
             <span className="stat-card__icon">{s.icon}</span>
@@ -223,7 +234,7 @@ export default function RecipientDashboard() {
       )}
 
       {/* Tabs */}
-      <div className="dd-tabs">
+      <div className="dd-tabs" data-tour="recipient-tabs">
         {TABS.map(tb => (
           <button
             key={tb.key}
@@ -243,7 +254,7 @@ export default function RecipientDashboard() {
           {/* Available Listings */}
           {tab === 'available' && (
             <>
-              <div className="dd-search-row">
+              <div className="dd-search-row" data-tour="recipient-search">
                 <input
                   className="form-control"
                   type="text"
@@ -258,7 +269,7 @@ export default function RecipientDashboard() {
                   </button>
                 )}
               </div>
-            <div className="cards-grid">
+            <div className="cards-grid" data-tour="recipient-food">
               {foodListings.length === 0 ? (
                 <div className="dd-empty">
                   <span className="dd-empty__icon">🍽️</span>
@@ -353,6 +364,7 @@ export default function RecipientDashboard() {
           )}
         </>
       )}
+      <TourKit tour={tour} />
     </div>
   );
 }

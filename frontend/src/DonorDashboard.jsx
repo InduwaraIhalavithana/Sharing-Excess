@@ -8,6 +8,7 @@ import {
 import { API_BASE, APP_ROOT } from './config';
 import { SkeletonGrid } from './components/SkeletonCard.jsx';
 import Toast from './components/Toast';
+import { TourKit, useTour, GettingStartedChecklist } from './components/tour/TourKit';
 
 function StatusBadge({ status }) {
   const map = {
@@ -38,6 +39,7 @@ export default function DonorDashboard() {
   const [expanded, setExpanded] = useState({});
   const [reqSearch, setReqSearch] = useState('');
 
+  const tour = useTour('donor');
   const requestsQ = useDonorRequests(!!user);
   const listingsQ = useMyListings(user?.id);
   const respond = useRespondToRequest();
@@ -126,13 +128,22 @@ export default function DonorDashboard() {
             )}
           </div>
         </div>
-        <Link to="/donate" className="btn btn-primary">
+        <Link to="/donate" className="btn btn-primary" data-tour="donor-add">
           + {t('donor', 'add_listing')}
         </Link>
       </div>
 
+      <GettingStartedChecklist
+        storageKey="se-checklist-donor"
+        items={[
+          { id: 'profile', label: t('tour', 'check_profile'), href: '/account', done: !!(user?.phone_number && user?.location) },
+          { id: 'listing', label: t('tour', 'check_first_listing'), href: '/donate', done: totalListings > 0 },
+          { id: 'respond', label: t('tour', 'check_first_response'), href: '/donor-dashboard', done: foodRequests.some(r => r.status === 'accepted') },
+        ]}
+      />
+
       {/* Stats */}
-      <div className="stats-grid">
+      <div className="stats-grid" data-tour="donor-stats">
         {stats.map(s => (
           <div key={s.label} className="dashboard-card stat-card">
             <span className="stat-card__icon">{s.icon}</span>
@@ -143,7 +154,7 @@ export default function DonorDashboard() {
       </div>
 
       {/* Tabs */}
-      <div className="dd-tabs">
+      <div className="dd-tabs" data-tour="donor-tabs">
         {TABS.map(tb => (
           <button
             key={tb.key}
@@ -176,7 +187,7 @@ export default function DonorDashboard() {
                 <button className="btn btn-outline btn-sm" onClick={() => setReqSearch('')}>✕ Clear</button>
               )}
             </div>
-            <div className="cards-grid">
+            <div className="cards-grid" data-tour="donor-requests">
               {foodRequests.length === 0 ? (
                 <div className="dd-empty">
                   <span className="dd-empty__icon">📭</span>
@@ -351,6 +362,7 @@ export default function DonorDashboard() {
           )}
         </>
       )}
+      <TourKit tour={tour} />
     </div>
   );
 }
