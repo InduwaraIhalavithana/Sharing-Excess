@@ -82,13 +82,13 @@ export function Privacy() {
       </Section>
 
       <Section title="How long we keep it">
-        <p>We keep your information while your account exists. Delivered requests and feedback are kept so the community can see the service's history. To close your account and have your data removed, contact us and we will delete it, apart from payment records we may need to keep for accounting.</p>
+        <p>We keep your information while your account exists. You can delete your account yourself at any time in <Link to="/account">Account settings</Link>: your account, listings or requests, feedback, event sign-ups and uploaded photos are then removed. Two things can remain: payment records we may need to keep for accounting, and, in someone else's request history, the plain-text name of a donor who accepted it (replaced by "A former donor" when that request was made on the donor's own listing).</p>
       </Section>
 
       <Section title="Your choices">
         <ul>
           <li>Change your name, phone number and location any time in <Link to="/account">Account settings</Link>, and change your password there too.</li>
-          <li>Ask us to correct or delete your data through the Contact page.</li>
+          <li>Delete your account yourself in Account settings, or ask us to correct your data through the Contact page.</li>
           <li>Unsubscribe from event emails by asking us to remove your address.</li>
         </ul>
         <p>We aim to handle personal data in line with Sri Lanka's Personal Data Protection Act, No. 9 of 2022.</p>

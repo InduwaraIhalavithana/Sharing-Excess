@@ -86,3 +86,9 @@ async def save_upload(file: UploadFile, prefix: str = "img") -> str:
     filename = f"{prefix}_{secrets.token_hex(16)}.webp"
     (UPLOAD_DIR / filename).write_bytes(content)
     return f"/uploads/{filename}"
+
+
+def delete_upload(url: str | None) -> None:
+    """Remove a photo we stored locally (/uploads/<name>). Cloud-hosted photos are left to the cloud account."""
+    if url and url.startswith("/uploads/"):
+        (UPLOAD_DIR / url.rsplit("/", 1)[-1]).unlink(missing_ok=True)

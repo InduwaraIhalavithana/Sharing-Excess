@@ -5,7 +5,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext';
 import { api, ApiError } from '../utils/api';
-import { passwordSchema, profileSchema, type PasswordForm, type ProfileForm } from '../lib/schemas';
+import {
+  deleteAccountSchema, passwordSchema, profileSchema,
+  type DeleteAccountForm, type PasswordForm, type ProfileForm,
+} from '../lib/schemas';
 import type { User } from '../types/api';
 import Toast, { type ToastState } from './Toast';
 
@@ -32,7 +35,7 @@ function Field({ label, error, children }: { label: string; error?: string; chil
 }
 
 export default function AccountSettings() {
-  const { user, login } = useAuth();
+  const { user, login, logout } = useAuth();
   const [toast, setToast] = useState<ToastState | null>(null);
 
   const profile = useForm<ProfileForm>({
@@ -73,6 +76,27 @@ export default function AccountSettings() {
       // A wrong current password belongs next to that field, not in a toast
       if (err instanceof ApiError && /current password/i.test(err.message)) {
         password.setError('current_password', { message: err.message });
+      } else {
+        setToast({ msg: err.message, type: 'error' });
+      }
+    },
+  });
+
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const deleteForm = useForm<DeleteAccountForm>({
+    resolver: zodResolver(deleteAccountSchema),
+    defaultValues: { password: '' },
+  });
+  const deleteAccount = useMutation({
+    mutationFn: (data: DeleteAccountForm) =>
+      api('/api/auth/me', { method: 'DELETE', body: JSON.stringify({ password: data.password }) }),
+    onSuccess: () => {
+      setToast({ msg: 'Your account and its data have been deleted. Goodbye - thank you for sharing.' });
+      setTimeout(logout, 2200); // let the message be read, then sign out (which returns to the home page)
+    },
+    onError: (err: Error) => {
+      if (err instanceof ApiError && /password/i.test(err.message)) {
+        deleteForm.setError('password', { message: err.message });
       } else {
         setToast({ msg: err.message, type: 'error' });
       }
@@ -145,6 +169,35 @@ export default function AccountSettings() {
           </button>
         </form>
       </div>
+
+      {user.role !== 'adminofficer' && (
+        <div className="dashboard-card acct-danger">
+          <h2 className="acct-card__title">🗑️ Delete my account</h2>
+          <p className="acct-card__hint">
+            This permanently removes your account and everything tied to it: your {user.role === 'donor' ? 'listings' : 'requests'},
+            feedback, event sign-ups and uploaded photos. It cannot be undone. Donation records may be kept for accounting.
+          </p>
+          {!confirmingDelete ? (
+            <button className="btn adm-btn-danger" onClick={() => setConfirmingDelete(true)}>Delete my account…</button>
+          ) : (
+            <form className="acct-danger__form" onSubmit={deleteForm.handleSubmit((d) => deleteAccount.mutate(d))} noValidate>
+              <Field label="Your password" error={deleteForm.formState.errors.password?.message}>
+                <input className="form-control" type="password" autoComplete="current-password" {...deleteForm.register('password')} />
+              </Field>
+              <label className="acct-danger__check">
+                <input type="checkbox" {...deleteForm.register('understood')} /> I understand this cannot be undone
+              </label>
+              {deleteForm.formState.errors.understood && <p className="acct-error" role="alert">{deleteForm.formState.errors.understood.message}</p>}
+              <div className="acct-danger__actions">
+                <button className="btn adm-btn-danger" type="submit" disabled={deleteAccount.isPending}>
+                  {deleteAccount.isPending ? 'Deleting…' : 'Permanently delete my account'}
+                </button>
+                <button className="btn btn-outline" type="button" onClick={() => { setConfirmingDelete(false); deleteForm.reset(); }}>Keep my account</button>
+              </div>
+            </form>
+          )}
+        </div>
+      )}
     </div>
   );
 }

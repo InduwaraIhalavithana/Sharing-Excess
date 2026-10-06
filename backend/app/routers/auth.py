@@ -3,9 +3,10 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.dependencies import get_current_user
-from app.models import User
+from app.models import EventSubscriber, Feedback, FoodListing, FoodRequest, User
 from app.schemas import (
     ChangePasswordRequest,
+    DeleteAccountRequest,
     ForgotPasswordRequest,
     LoginRequest,
     ProfileUpdate,
@@ -18,6 +19,7 @@ from app.utils.email import forgot_password_email, send_email, verification_emai
 from app.utils.jwt import create_access_token
 from app.utils.limiter import limiter
 from app.utils.security import generate_otp, hash_password, verify_password
+from app.utils.uploads import delete_upload
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -188,3 +190,44 @@ def change_password(request: Request, body: ChangePasswordRequest,
     me.password = hash_password(body.new_password)
     db.commit()
     return {"success": True, "message": "Password changed"}
+
+
+@router.delete("/me")
+@limiter.limit("3/minute")
+def delete_my_account(request: Request, body: DeleteAccountRequest,
+                      db: Session = Depends(get_db), me: User = Depends(get_current_user)):
+    """Self-service account deletion: asks for the password, then removes the account and its data.
+
+    Staff accounts are protected - they are managed by other staff, never self-deleted.
+    """
+    if me.role == "adminofficer":
+        raise HTTPException(403, "Staff accounts cannot be deleted here")
+    if not verify_password(body.password, me.password):
+        raise HTTPException(400, "That password is not correct")
+
+    photos: list[str | None] = []
+    listing_ids = [x.id for x in db.query(FoodListing).filter(FoodListing.donor_id == me.id)]
+    photos += [x.image_path for x in db.query(FoodListing).filter(FoodListing.donor_id == me.id)]
+    my_requests = db.query(FoodRequest).filter(FoodRequest.recipient_id == me.id).all()
+    photos += [r.image_path for r in my_requests]
+    request_ids = [r.id for r in my_requests]
+
+    # Other people's requests that pointed at this donor's listings keep existing, just unlinked
+    if listing_ids:
+        on_my_listings = FoodRequest.listing_id.in_(listing_ids)
+        db.query(FoodRequest).filter(on_my_listings, FoodRequest.accepted_by == me.name).update(
+            {FoodRequest.accepted_by: "A former donor"}, synchronize_session=False)
+        db.query(FoodRequest).filter(on_my_listings).update({FoodRequest.listing_id: None}, synchronize_session=False)
+
+    feedback = db.query(Feedback).filter((Feedback.recipient_id == me.id) | (Feedback.request_id.in_(request_ids or [0])))
+    photos += [f.image_path for f in feedback]
+    feedback.delete(synchronize_session=False)
+    db.query(FoodRequest).filter(FoodRequest.recipient_id == me.id).delete(synchronize_session=False)
+    db.query(FoodListing).filter(FoodListing.donor_id == me.id).delete(synchronize_session=False)
+    db.query(EventSubscriber).filter(EventSubscriber.email == me.email.lower()).delete(synchronize_session=False)
+    db.delete(me)  # event sign-ups go with it (ON DELETE CASCADE)
+    db.commit()
+
+    for url in photos:
+        delete_upload(url)
+    return {"success": True, "message": "Your account and its data have been deleted"}

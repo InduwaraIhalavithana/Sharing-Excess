@@ -40,6 +40,7 @@
 - 🧭 **Guided tours and getting-started checklists** for every role
 - 📱 **Installable on a phone** (PWA with an offline shell), responsive down to 320 px
 - 📧 Email notifications on accept / decline / delivery, password reset and email verification
+- 🗑️ Self-service account deletion and Privacy / Terms pages that describe what the app really does
 - 🔒 Per-route authorisation, rate limiting, image re-encoding that strips location metadata (see [Security](#security))
 
 ## Tech stack
@@ -50,7 +51,7 @@
 | Backend | FastAPI, SQLAlchemy 2, **Pydantic Settings**, **Alembic** migrations, Pillow, slowapi |
 | Database | PostgreSQL |
 | Auth | JWT (HS256) + PBKDF2-SHA256 password hashing |
-| Tests | pytest (122 tests) · Vitest + Testing Library (26 tests) |
+| Tests | pytest (128 tests) · Vitest + Testing Library (26 tests) |
 | Delivery | Docker Compose (Postgres + API + nginx), GitHub Actions CI |
 
 ## Quick start (Windows)

@@ -63,6 +63,10 @@ class ProfileUpdate(BaseModel):
         return v
 
 
+class DeleteAccountRequest(BaseModel):
+    password: str
+
+
 class ChangePasswordRequest(BaseModel):
     current_password: str
     new_password: str
