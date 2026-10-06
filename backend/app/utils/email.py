@@ -1,19 +1,18 @@
-import os
 import smtplib
 import logging
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+
+from app.config import settings
 
 logger = logging.getLogger(__name__)
 
 
 def send_email(to: str, subject: str, html_body: str) -> bool:
     """Send an HTML email via Gmail SMTP (SSL port 465). Returns True on success."""
-    host      = os.getenv("MAIL_HOST", "smtp.gmail.com")
-    port      = int(os.getenv("MAIL_PORT", "465"))
-    username  = os.getenv("MAIL_USERNAME", "")
-    password  = os.getenv("MAIL_PASSWORD", "")
-    from_name = os.getenv("MAIL_FROM_NAME", "Sharing Excess")
+    host, port = settings.mail_host, settings.mail_port
+    username, password = settings.mail_username, settings.mail_password
+    from_name = settings.mail_from_name
 
     if not username or not password:
         logger.warning("SMTP credentials not configured — email not sent")

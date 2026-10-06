@@ -1,10 +1,6 @@
-import os
 import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
-from dotenv import load_dotenv
-
-load_dotenv(Path(__file__).resolve().parents[1] / ".env", override=True)
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,7 +9,8 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
-from app.database import engine, Base
+from app.config import settings
+from app.database import engine
 from app.utils.limiter import limiter
 from app.routers import auth, listings, requests, officer, calendar, feedback, contact, donations
 
@@ -21,36 +18,33 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+def run_migrations() -> None:
+    """Bring the database up to the latest schema (Alembic).
+
+    A database created before Alembic was introduced already has the tables but no
+    version stamp - mark it as the baseline first so nothing is re-created.
+    """
+    from alembic import command
+    from alembic.config import Config
+    from sqlalchemy import inspect
+
+    root = Path(__file__).resolve().parents[1]
+    cfg = Config(str(root / "alembic.ini"))
+    cfg.set_main_option("script_location", str(root / "alembic"))
+    tables = set(inspect(engine).get_table_names())
+    if "users" in tables and "alembic_version" not in tables:
+        command.stamp(cfg, "0001")
+    command.upgrade(cfg, "head")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    Base.metadata.create_all(bind=engine)
-    # Add new columns to existing tables without dropping data
-    from sqlalchemy import text
-    with engine.connect() as conn:
-        for sql in [
-            "ALTER TABLE feedback ADD COLUMN IF NOT EXISTS admin_reply TEXT",
-            "ALTER TABLE feedback ADD COLUMN IF NOT EXISTS feedback_status VARCHAR(10) NOT NULL DEFAULT 'open'",
-            # Extend user_role enum to include officer (idempotent)
-            "ALTER TYPE user_role ADD VALUE IF NOT EXISTS 'officer'",
-            # Migrate existing officers table rows into users (one-time, safe to re-run)
-            """INSERT INTO users (name, email, password, role, status, created_at)
-               SELECT name, email, password, 'officer',
-                      CASE WHEN status = 'active' THEN 'active' ELSE 'suspended' END,
-                      created_at
-               FROM officers
-               WHERE email NOT IN (SELECT email FROM users)""",
-        ]:
-            try:
-                conn.execute(text(sql))
-                conn.commit()
-            except Exception:
-                conn.rollback()
-    logger.info("Database tables ready.")
+    run_migrations()
+    logger.info("Database schema is up to date.")
     yield
 
 
-CORS_ORIGIN = os.getenv("CORS_ORIGIN", "http://localhost:5175")
-cors_origins = [o.strip() for o in CORS_ORIGIN.split(",") if o.strip()]
+cors_origins = settings.cors_origins
 
 app = FastAPI(
     title="Sharing Excess API",

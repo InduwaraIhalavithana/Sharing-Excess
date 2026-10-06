@@ -1,13 +1,9 @@
-import os
 from datetime import datetime, timedelta, timezone
 from jose import JWTError, jwt
 
-SECRET_KEY = os.getenv("SECRET_KEY", "")
-if len(SECRET_KEY) < 32:
-    raise RuntimeError(
-        "SECRET_KEY is missing or shorter than 32 characters — set a long random value in backend/.env "
-        "(python -c \"import secrets; print(secrets.token_urlsafe(48))\")"
-    )
+from app.config import settings
+
+SECRET_KEY = settings.secret_key
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_DAYS = 7
 

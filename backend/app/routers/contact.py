@@ -1,7 +1,7 @@
-import os
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.database import get_db
 from app.schemas import ContactRequest
 from app.utils.limiter import limiter
@@ -13,7 +13,7 @@ router = APIRouter(prefix="/api/contact", tags=["contact"])
 @router.post("")
 @limiter.limit("5/minute")
 def contact(request: Request, body: ContactRequest, db: Session = Depends(get_db)):
-    admin_email = os.getenv("MAIL_USERNAME", "")
+    admin_email = settings.mail_username
     if admin_email:
         send_email(
             admin_email,
