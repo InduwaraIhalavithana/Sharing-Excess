@@ -117,3 +117,38 @@ class TestNobodyElseGetsStaffPowers:
         db.commit()
         db.refresh(req)
         assert client.delete(f"/api/requests/{req.id}", headers=bearer(staff_token)).status_code == 200
+
+
+class TestListingDecisionEmails:
+    def test_approval_emails_the_donor(self, client, staff_token, donor, db):
+        from unittest.mock import patch
+
+        listing = _pending_listing(db, donor.id)
+        with patch("app.routers.officer.send_email", return_value=True) as sent:
+            res = client.patch(f"/api/officer/listings/{listing.id}/verify", headers=bearer(staff_token),
+                               json={"action": "approve"})
+        assert res.status_code == 200
+        to, subject, body = sent.call_args.args
+        assert to == donor.email
+        assert "live" in subject
+        assert "Needs Review" in body
+
+    def test_rejection_emails_the_reason(self, client, staff_token, donor, db):
+        from unittest.mock import patch
+
+        listing = _pending_listing(db, donor.id)
+        with patch("app.routers.officer.send_email", return_value=True) as sent:
+            client.patch(f"/api/officer/listings/{listing.id}/verify", headers=bearer(staff_token),
+                         json={"action": "reject", "reason": "Needs a clearer expiry date"})
+        to, subject, body = sent.call_args.args
+        assert to == donor.email
+        assert "Needs a clearer expiry date" in body
+
+    def test_email_templates_escape_user_supplied_text(self):
+        from app.utils.email import listing_rejected_email, request_accepted_email
+
+        html = listing_rejected_email("<b>Evil</b>", "<script>x()</script>", "a & b")
+        assert "<script>" not in html and "&lt;script&gt;" in html
+        assert "<b>Evil</b>" not in html
+        assert "a &amp; b" in html
+        assert "<i>" not in request_accepted_email("<i>r</i>", "food", "<i>d</i>", "077")

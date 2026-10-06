@@ -56,6 +56,8 @@ export interface FoodRequest {
   donor_id?: number | null;
   donor_name?: string | null;
   donor_phone?: string | null;
+  /** True once the recipient has left feedback for this delivery. */
+  feedback_given?: boolean;
 }
 
 export interface Feedback {

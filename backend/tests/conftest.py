@@ -40,7 +40,8 @@ def client():
     with patch("app.routers.auth.send_email", return_value=True), \
          patch("app.routers.requests.send_email", return_value=True), \
          patch("app.routers.donations.send_email", return_value=True), \
-         patch("app.routers.contact.send_email", return_value=True):
+         patch("app.routers.contact.send_email", return_value=True), \
+         patch("app.routers.officer.send_email", return_value=True):
         with TestClient(app) as c:
             yield c
 

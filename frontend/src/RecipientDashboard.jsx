@@ -340,7 +340,7 @@ export default function RecipientDashboard() {
                         Delete
                       </button>
                     )}
-                    {req.status === 'delivered' && !feedbackFor && (
+                    {req.status === 'delivered' && !req.feedback_given && !feedbackFor && (
                       <button
                         className="btn btn-primary btn-sm"
                         onClick={() => setFeedbackFor(req)}
