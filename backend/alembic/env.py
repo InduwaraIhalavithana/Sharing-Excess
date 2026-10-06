@@ -21,16 +21,6 @@ if config.config_file_name is not None:
 config.set_main_option("sqlalchemy.url", settings.database_url.replace("%", "%%"))
 target_metadata = Base.metadata
 
-# Legacy PHP-era table, no longer modelled. Left untouched (not dropped) on purpose.
-_IGNORED_TABLES = {"officers"}
-
-
-def include_object(obj, name, type_, reflected, compare_to):
-    if type_ == "table" and name in _IGNORED_TABLES:
-        return False
-    if type_ == "index" and getattr(obj, "table", None) is not None and obj.table.name in _IGNORED_TABLES:
-        return False
-    return True
 
 
 def run_migrations_offline() -> None:
@@ -38,7 +28,6 @@ def run_migrations_offline() -> None:
         url=config.get_main_option("sqlalchemy.url"),
         target_metadata=target_metadata,
         literal_binds=True,
-        include_object=include_object,
         dialect_opts={"paramstyle": "named"},
     )
     with context.begin_transaction():
@@ -56,8 +45,7 @@ def run_migrations_online() -> None:
             connection=connection,
             target_metadata=target_metadata,
             compare_type=True,
-            include_object=include_object,
-        )
+            )
         with context.begin_transaction():
             context.run_migrations()
 

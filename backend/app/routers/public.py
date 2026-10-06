@@ -19,6 +19,7 @@ def public_stats(db: Session = Depends(get_db)):
     delivered = db.query(func.count(FoodRequest.id)).filter(FoodRequest.status == "delivered").scalar()
     donors = db.query(func.count(User.id)).filter(User.role == "donor", User.status == "active").scalar()
     recipients = db.query(func.count(User.id)).filter(User.role == "recipient", User.status == "active").scalar()
+    shared = db.query(func.count(FoodListing.id)).filter(FoodListing.verification_status == "approved").scalar()
     return {
         "success": True,
         "listings_available": listings,
@@ -26,4 +27,5 @@ def public_stats(db: Session = Depends(get_db)):
         "meals_delivered": delivered,
         "donors": donors,
         "recipients": recipients,
+        "listings_shared": shared,
     }

@@ -4,8 +4,10 @@ import { useAuth } from './contexts/AuthContext';
 import { API_BASE, APP_ROOT } from './config';
 import Toast from './components/Toast';
 import { apiFetch } from './utils/api';
+import { usePublicStats } from './hooks/queries';
 
 export default function FeedbackPage() {
+  const { data: stats } = usePublicStats();
   const { t } = useLanguage();
   const { user } = useAuth();
 
@@ -223,20 +225,20 @@ export default function FeedbackPage() {
               <h3 className="feedback-stats__title">Community Impact</h3>
               <div className="feedback-stats__grid">
                 <div className="feedback-stat-item">
-                  <span className="feedback-stat-item__value">{list.length || '1'}+</span>
+                  <span className="feedback-stat-item__value">{list.length}</span>
                   <span className="feedback-stat-item__label">Reviews</span>
                 </div>
                 <div className="feedback-stat-item">
-                  <span className="feedback-stat-item__value">1,575+</span>
-                  <span className="feedback-stat-item__label">Meals Shared</span>
+                  <span className="feedback-stat-item__value">{(stats?.meals_delivered ?? 0).toLocaleString()}</span>
+                  <span className="feedback-stat-item__label">Meals Delivered</span>
                 </div>
                 <div className="feedback-stat-item">
-                  <span className="feedback-stat-item__value">50+</span>
+                  <span className="feedback-stat-item__value">{(stats?.donors ?? 0).toLocaleString()}</span>
                   <span className="feedback-stat-item__label">Donors</span>
                 </div>
                 <div className="feedback-stat-item">
-                  <span className="feedback-stat-item__value">12</span>
-                  <span className="feedback-stat-item__label">NGO Partners</span>
+                  <span className="feedback-stat-item__value">{(stats?.recipients ?? 0).toLocaleString()}</span>
+                  <span className="feedback-stat-item__label">Recipients</span>
                 </div>
               </div>
             </div>

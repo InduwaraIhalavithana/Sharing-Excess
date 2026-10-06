@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useLanguage } from '../i18n/LanguageContext';
+import { usePublicStats } from '../hooks/queries';
 
 const EVENTS = [
   {
@@ -39,6 +40,7 @@ function fmt(dateStr) {
 }
 
 export default function Events() {
+  const { data: stats } = usePublicStats();
   const { t } = useLanguage();
   const [notifyEmail, setNotifyEmail] = useState('');
   const [notifySent, setNotifySent] = useState(false);
@@ -54,9 +56,9 @@ export default function Events() {
           <h1 className="events-hero__title">{t('events', 'title')}</h1>
           <p className="events-hero__sub">{t('events', 'subtitle')}</p>
           <div className="events-hero__stats">
-            <div className="events-hero__stat"><span>3</span>Events This Year</div>
-            <div className="events-hero__stat"><span>500+</span>Meals Distributed</div>
-            <div className="events-hero__stat"><span>50+</span>Volunteers</div>
+            <div className="events-hero__stat"><span>{EVENTS.length}</span>Events Listed</div>
+            <div className="events-hero__stat"><span>{(stats?.meals_delivered ?? 0).toLocaleString()}</span>Meals Delivered</div>
+            <div className="events-hero__stat"><span>{(stats?.donors ?? 0).toLocaleString()}</span>Active Donors</div>
           </div>
         </div>
         <div className="events-hero__wave" aria-hidden="true">

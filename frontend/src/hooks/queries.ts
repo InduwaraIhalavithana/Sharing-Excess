@@ -17,6 +17,7 @@ export interface PublicStats {
   meals_delivered: number;
   donors: number;
   recipients: number;
+  listings_shared: number;
 }
 
 // ── Public data ──────────────────────────────────────────────────────────────

@@ -214,7 +214,7 @@ class TestPrivacy:
         assert res.status_code == 200
         data = res.json()
         assert set(data) == {"success", "listings_available", "requests_open",
-                             "meals_delivered", "donors", "recipients"}
+                             "meals_delivered", "donors", "recipients", "listings_shared"}
         assert all(isinstance(v, (int, bool)) for v in data.values())
 
 
