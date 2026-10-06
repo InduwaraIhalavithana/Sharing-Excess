@@ -1,10 +1,10 @@
 import hashlib
-import os
 import secrets
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.database import get_db
 from app.models import MoneyDonation
 from app.schemas import MoneyDonationRequest, PayhereInitiateRequest
@@ -12,9 +12,9 @@ from app.utils.email import send_email, money_donation_email
 
 router = APIRouter(prefix="/api/donations", tags=["donations"])
 
-_SANDBOX      = os.getenv("PAYHERE_SANDBOX", "true").lower() != "false"
-_MERCHANT_ID  = os.getenv("PAYHERE_MERCHANT_ID", "1211149")
-_MERCHANT_SECRET = os.getenv("PAYHERE_MERCHANT_SECRET", "Pay&HeRe")
+_SANDBOX      = settings.payhere_sandbox
+_MERCHANT_ID  = settings.payhere_merchant_id
+_MERCHANT_SECRET = settings.payhere_merchant_secret
 
 PAYHERE_CHECKOUT = (
     "https://sandbox.payhere.lk/pay/checkout"
@@ -66,9 +66,9 @@ def payhere_initiate(body: PayhereInitiateRequest):
         "sandbox": _SANDBOX,
         "params": {
             "merchant_id":   _MERCHANT_ID,
-            "return_url":    os.getenv("CORS_ORIGIN", "http://localhost:5175") + "/donate?payment=success",
-            "cancel_url":    os.getenv("CORS_ORIGIN", "http://localhost:5175") + "/donate?payment=cancelled",
-            "notify_url":    os.getenv("CORS_ORIGIN", "http://localhost:5175").replace("5175", "8003") + "/api/donations/payhere/notify",
+            "return_url":    settings.frontend_url + "/donate?payment=success",
+            "cancel_url":    settings.frontend_url + "/donate?payment=cancelled",
+            "notify_url":    settings.api_public_url + "/api/donations/payhere/notify",
             "order_id":      order_id,
             "items":         "Sharing Excess Food Donation",
             "currency":      currency,

@@ -1,8 +1,9 @@
 import io
-import os
 import secrets
 from pathlib import Path
 from fastapi import HTTPException, UploadFile
+
+from app.config import settings
 
 UPLOAD_DIR = Path(__file__).resolve().parents[2] / "uploads"
 UPLOAD_DIR.mkdir(exist_ok=True)
@@ -12,9 +13,9 @@ ALLOWED_MIMES      = {"image/jpeg", "image/png", "image/gif", "image/webp"}
 MAX_SIZE_BYTES     = 5 * 1024 * 1024  # 5 MB
 
 # Cloudinary — active only when all three env vars are set
-_cloud_name = os.getenv("CLOUDINARY_CLOUD_NAME", "")
-_api_key    = os.getenv("CLOUDINARY_API_KEY", "")
-_api_secret = os.getenv("CLOUDINARY_API_SECRET", "")
+_cloud_name = settings.cloudinary_cloud_name
+_api_key    = settings.cloudinary_api_key
+_api_secret = settings.cloudinary_api_secret
 _USE_CLOUDINARY = False
 
 if _cloud_name and _api_key and _api_secret:
