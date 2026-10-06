@@ -59,3 +59,9 @@ export const eventFormSchema = z
 export type EventFormValues = z.infer<typeof eventFormSchema>;
 
 export const emailSchema = z.string().trim().email('Enter a valid email address');
+
+export const deleteAccountSchema = z.object({
+  password: z.string().min(1, 'Enter your password to confirm'),
+  understood: z.literal(true, { message: 'Tick the box to confirm you understand' }),
+});
+export type DeleteAccountForm = z.infer<typeof deleteAccountSchema>;

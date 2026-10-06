@@ -219,3 +219,79 @@ class TestAccountSettings:
         assert ok.status_code == 200
         assert client.post("/api/auth/login", json={"email": u.email, "password": "newpass123"}).status_code == 200
         assert client.post("/api/auth/login", json={"email": u.email, "password": "oldpass123"}).status_code == 401
+
+
+class TestDeleteMyAccount:
+    def _user(self, db, role):
+        import uuid
+
+        from app.models import User
+        from app.utils.security import hash_password
+
+        u = User(name=f"Pytest Leaver {role}", email=f"pytest_leave_{uuid.uuid4().hex[:6]}@example.com",
+                 password=hash_password("leavepass123"), role=role, status="active")
+        db.add(u)
+        db.commit()
+        db.refresh(u)
+        return u
+
+    def _login(self, client, u):
+        return {"Authorization": "Bearer " + client.post("/api/auth/login", json={"email": u.email, "password": "leavepass123"}).json()["token"]}
+
+    def test_requires_login_and_the_right_password(self, client, db):
+        u = self._user(db, "recipient")
+        assert client.request("DELETE", "/api/auth/me", json={"password": "x"}).status_code == 401
+        h = self._login(client, u)
+        assert client.request("DELETE", "/api/auth/me", json={"password": "wrong"}, headers=h).status_code == 400
+        db.expire_all()
+        assert db.get(type(u), u.id) is not None  # a wrong password deletes nothing
+
+    def test_staff_cannot_self_delete(self, client, db):
+        s = self._user(db, "adminofficer")
+        res = client.post("/api/auth/officer-login", json={"email": s.email, "password": "leavepass123"})
+        h = {"Authorization": "Bearer " + res.json()["token"]}
+        assert client.request("DELETE", "/api/auth/me", json={"password": "leavepass123"}, headers=h).status_code == 403
+
+    def test_a_recipient_is_removed_with_their_requests_feedback_and_photos(self, client, db):
+        from app.models import Feedback, FoodRequest, User
+        from app.utils.uploads import UPLOAD_DIR
+
+        u = self._user(db, "recipient")
+        photo = UPLOAD_DIR / "request_pytest_leaver.webp"
+        photo.write_bytes(b"x")
+        req = FoodRequest(recipient_id=u.id, food_name="Bye", quantity="1", status="delivered", image_path="/uploads/request_pytest_leaver.webp")
+        db.add(req)
+        db.commit()
+        db.add(Feedback(recipient_id=u.id, request_id=req.id, comment="Thanks for everything", rating=5))
+        db.commit()
+        uid, rid = u.id, req.id
+
+        res = client.request("DELETE", "/api/auth/me", json={"password": "leavepass123"}, headers=self._login(client, u))
+        assert res.status_code == 200
+        db.expire_all()
+        assert db.get(User, uid) is None
+        assert db.query(FoodRequest).filter(FoodRequest.id == rid).count() == 0
+        assert db.query(Feedback).filter(Feedback.recipient_id == uid).count() == 0
+        assert not photo.exists()
+
+    def test_a_donor_leaves_but_other_peoples_requests_survive(self, client, db, recipient):
+        from app.models import FoodListing, FoodRequest, User
+
+        d = self._user(db, "donor")
+        listing = FoodListing(donor_id=d.id, food_name="Leaving Soon", quantity="1", status="accepted",
+                              verification_status="approved", accepted_by=d.name)
+        db.add(listing)
+        db.commit()
+        req = FoodRequest(recipient_id=recipient.id, food_name="Leaving Soon", quantity="1", status="accepted",
+                          listing_id=listing.id, accepted_by=d.name)
+        db.add(req)
+        db.commit()
+        did, rid, lid = d.id, req.id, listing.id
+
+        res = client.request("DELETE", "/api/auth/me", json={"password": "leavepass123"}, headers=self._login(client, d))
+        assert res.status_code == 200
+        db.expire_all()
+        assert db.get(User, did) is None and db.get(FoodListing, lid) is None
+        survivor = db.get(FoodRequest, rid)
+        assert survivor is not None and survivor.listing_id is None
+        assert survivor.accepted_by == "A former donor"  # the deleted donor's name is gone from others' history
