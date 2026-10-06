@@ -68,7 +68,7 @@ export default function Home() {
               </button>
             </div>
             <div className="home-hero__trust">
-              <span>✅ Officer-verified listings</span>
+              <span>🔒 Contact shared only after you accept</span>
               <span>📧 Email updates at every step</span>
               <span>🆓 Free forever</span>
             </div>
