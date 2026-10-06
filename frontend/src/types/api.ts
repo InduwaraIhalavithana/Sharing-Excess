@@ -84,6 +84,30 @@ export interface RequestsResponse {
   requests: FoodRequest[];
 }
 
+export interface CommunityEvent {
+  id: number;
+  title: string;
+  description: string;
+  location: string;
+  /** Sri Lanka wall-clock time without a zone, e.g. "2026-10-13T08:00:00". */
+  starts_at: string;
+  ends_at: string | null;
+  capacity: number | null;
+  going: number;
+  spots_left: number | null;
+  full: boolean;
+  is_past: boolean;
+  /** True when the signed-in user has joined. */
+  joined: boolean;
+}
+
+export interface Attendee {
+  id: number;
+  name: string;
+  email: string;
+  phone_number: string | null;
+}
+
 /** Standard FastAPI error body: a string, or a list of field errors (422). */
 export interface ApiErrorBody {
   detail?: string | { loc?: (string | number)[]; msg?: string }[];

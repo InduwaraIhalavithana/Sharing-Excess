@@ -11,6 +11,7 @@ import { API_BASE } from './config';
 import Toast from './components/Toast';
 import { TourKit, useTour } from './components/tour/TourKit';
 import { LIVE_EVENT } from './hooks/useLiveUpdates';
+import AdminEvents from './components/AdminEvents';
 
 ChartJS.register(
   CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend,
@@ -75,6 +76,7 @@ const NAV_ITEMS = [
   { key: 'verify',      icon: '✅', label: 'Verify Listings' },
   { key: 'requests',    icon: '📬', label: 'Requests' },
   { key: 'listings',    icon: '🍽️', label: 'Listings' },
+  { key: 'events',      icon: '📅', label: 'Events' },
   { key: 'users',       icon: '👥', label: 'Users' },
   { key: 'money',       icon: '💰', label: 'Money Donations' },
   { key: 'feedback',    icon: '💬', label: 'Feedback' },
@@ -767,6 +769,9 @@ export default function OfficerDashboard() {
                   {requests.length === 0 && <p className="dd-empty-sm">No requests found.</p>}
                 </div>
               )}
+
+              {/* ═══ EVENTS ═══════════════════════════════════════════════════════ */}
+              {tab === 'events' && <AdminEvents notify={showToast} />}
 
               {/* ═══ LISTINGS ════════════════════════════════════════════════════ */}
               {tab === 'listings' && (

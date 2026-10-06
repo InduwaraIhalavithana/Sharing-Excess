@@ -199,3 +199,21 @@ def listing_rejected_email(donor_name: str, food_name: str, reason: str) -> str:
     </div>
   </div>
 </body></html>"""
+
+
+def new_event_email(title: str, when: str, location: str, description: str) -> str:
+    title, when, location, description = escape(title), escape(when), escape(location), escape(description)
+    return f"""
+<html><body style="font-family:Arial,sans-serif;color:#333">
+  <div style="max-width:600px;margin:0 auto;padding:20px">
+    <div style="background:linear-gradient(135deg,#16a34a,#0d9488);color:#fff;padding:20px;text-align:center;border-radius:10px 10px 0 0">
+      <h1>Sharing Excess</h1><p>A new community event</p>
+    </div>
+    <div style="background:#f9f9f9;padding:30px;border-radius:0 0 10px 10px">
+      <h2>{title}</h2>
+      <p>&#128197; <b>{when}</b><br>&#128205; {location}</p>
+      <p>{description}</p>
+      <p>Open the Events page on Sharing Excess to join. You are receiving this because you asked to be notified about events.</p>
+    </div>
+  </div>
+</body></html>"""

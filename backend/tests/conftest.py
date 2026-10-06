@@ -41,7 +41,8 @@ def client():
          patch("app.routers.requests.send_email", return_value=True), \
          patch("app.routers.donations.send_email", return_value=True), \
          patch("app.routers.contact.send_email", return_value=True), \
-         patch("app.routers.officer.send_email", return_value=True):
+         patch("app.routers.officer.send_email", return_value=True), \
+         patch("app.routers.community_events.send_email", return_value=True):
         with TestClient(app) as c:
             yield c
 
@@ -61,7 +62,15 @@ def db():
 def _cleanup_test_rows(db):
     """Remove stale pytest_ rows at start and end of every test run."""
 
+    def _purge_events():
+        from app.models import CommunityEvent, EventSubscriber
+
+        db.query(CommunityEvent).filter(CommunityEvent.title.like("pytest_%")).delete(synchronize_session=False)
+        db.query(EventSubscriber).filter(EventSubscriber.email.like(f"{_EMAIL_PREFIX}%")).delete(synchronize_session=False)
+        db.commit()
+
     def _purge():
+        _purge_events()
         users = db.query(User).filter(User.email.like(f"{_EMAIL_PREFIX}%")).all()
         ids = [u.id for u in users]
         if not ids:

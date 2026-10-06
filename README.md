@@ -36,6 +36,7 @@
 - 🗺️ **Map view** - listings placed by town on an OpenStreetMap map (no API key, no geocoding service)
 - ⚡ **Live updates** - Server-Sent Events: a new request or listing appears on every open dashboard within a second, no refresh
 - 🌐 **English / සිංහල / தமிழ்** and light / dark mode
+- 📅 **Events** - staff publish food drives and volunteer sessions; signed-in users join (with spot limits), visitors can subscribe by email
 - 🧭 **Guided tours and getting-started checklists** for every role
 - 📱 **Installable on a phone** (PWA with an offline shell), responsive down to 320 px
 - 📧 Email notifications on accept / decline / delivery, password reset and email verification
@@ -49,7 +50,7 @@
 | Backend | FastAPI, SQLAlchemy 2, **Pydantic Settings**, **Alembic** migrations, Pillow, slowapi |
 | Database | PostgreSQL |
 | Auth | JWT (HS256) + PBKDF2-SHA256 password hashing |
-| Tests | pytest (89 tests) · Vitest + Testing Library (21 tests) |
+| Tests | pytest (108 tests) · Vitest + Testing Library (26 tests) |
 | Delivery | Docker Compose (Postgres + API + nginx), GitHub Actions CI |
 
 ## Quick start (Windows)
@@ -125,7 +126,7 @@ backend/
     main.py              app, middleware, startup migrations
     config.py            ALL settings (validated once, at start-up)
     models.py schemas.py dependencies.py   data model, API shapes, auth/role checks
-    routers/             auth, listings, requests, feedback, calendar, officer (staff), donations, public, live
+    routers/             auth, listings, requests, feedback, calendar, community_events, officer (staff), donations, public, live
     utils/               jwt, uploads (image processing), email, rate limiter, live-update broadcaster
   alembic/               database migrations
   scripts/seed_demo.py   demo data

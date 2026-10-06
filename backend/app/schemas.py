@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel, EmailStr, field_validator, model_validator
 
 # ── Auth ─────────────────────────────────────────────────────────────────────
 
@@ -266,3 +266,54 @@ class OfficerStats(BaseModel):
     users_by_role: dict
     top_requested_foods: list
     donations_by_month: list
+
+
+# ── Community events ─────────────────────────────────────────────────────────
+class EventIn(BaseModel):
+    title: str
+    description: str = ""
+    location: str
+    starts_at: datetime
+    ends_at: Optional[datetime] = None
+    capacity: Optional[int] = None
+
+    @field_validator("title")
+    @classmethod
+    def _title(cls, v: str) -> str:
+        v = v.strip()
+        if not 3 <= len(v) <= 200:
+            raise ValueError("Title must be 3-200 characters")
+        return v
+
+    @field_validator("location")
+    @classmethod
+    def _location(cls, v: str) -> str:
+        v = v.strip()
+        if not 2 <= len(v) <= 255:
+            raise ValueError("Location must be 2-255 characters")
+        return v
+
+    @field_validator("description")
+    @classmethod
+    def _description(cls, v: str) -> str:
+        v = v.strip()
+        if len(v) > 2000:
+            raise ValueError("Description must be 2000 characters or fewer")
+        return v
+
+    @field_validator("capacity")
+    @classmethod
+    def _capacity(cls, v: Optional[int]) -> Optional[int]:
+        if v is not None and not 1 <= v <= 10000:
+            raise ValueError("Capacity must be between 1 and 10000 (leave empty for unlimited)")
+        return v
+
+    @model_validator(mode="after")
+    def _order(self):
+        if self.ends_at is not None and self.ends_at <= self.starts_at:
+            raise ValueError("The event must end after it starts")
+        return self
+
+
+class SubscribeRequest(BaseModel):
+    email: EmailStr
