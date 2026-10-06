@@ -10,7 +10,7 @@ const STATS = [
 ];
 
 const WHY = [
-  { icon: '👥', title: 'Food Insecurity',    body: 'Over 800,000 Sri Lankans face food insecurity every year' },
+  { icon: '👥', title: 'Food Insecurity',    body: 'Over 6 million Sri Lankans were food insecure in 2022 (WFP)' },
   { icon: '🗑️', title: 'Food Waste',        body: '1/3 of all food produced globally is lost or wasted' },
   { icon: '🌡️', title: 'Climate Impact',    body: 'Food waste is a major contributor to greenhouse gas emissions' },
   { icon: '♻️', title: 'Circular Solution', body: 'Redistributing surplus food saves lives and protects the planet' },

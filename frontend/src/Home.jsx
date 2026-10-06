@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useLanguage } from './i18n/LanguageContext';
 import ImpactSection from './components/ImpactSection';
+import HungerSection from './components/HungerSection';
 import Reveal from './components/Reveal.jsx';
 import HeroArt from './components/HeroArt';
 import { WHO_ITS_FOR } from './data/samplePartners';
@@ -106,6 +107,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* ── Why it matters: the hunger problem, with sourced figures ── */}
+      <HungerSection />
 
       {/* ── Impact counters (single, animated) ────────── */}
       <ImpactSection />

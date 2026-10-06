@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import './App.css';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -7,6 +7,8 @@ import { SkeletonGrid } from './components/SkeletonCard';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { usePageTitle } from './hooks/usePageTitle';
 import { useLiveUpdates } from './hooks/useLiveUpdates';
+import { useScrollReveal } from './hooks/useScrollReveal';
+import './theme-polish.css';
 
 // Each page is its own chunk, downloaded only when first visited.
 const Home = lazy(() => import('./Home'));
@@ -39,6 +41,19 @@ function AppContent() {
   usePageTitle(location.pathname);
   useLiveUpdates();
   const isAdminPage = location.pathname.startsWith('/admin');
+  const page = location.pathname.split('/')[1] || 'home';
+
+  useScrollReveal(location.pathname);
+
+  // Replay the page-enter animation on every route change (class toggled on the DOM node,
+  // so no layout wrapper is needed and nothing remounts).
+  useEffect(() => {
+    const el = document.querySelector('.app-content');
+    if (!el) return;
+    el.classList.remove('page-enter');
+    void (el as HTMLElement).offsetWidth;
+    el.classList.add('page-enter');
+  }, [location.pathname]);
 
   // Admin gets its own full-page layout (no Navbar/Footer)
   if (isAdminPage) {
@@ -57,7 +72,7 @@ function AppContent() {
   return (
     <div className="app-root">
       <Navbar />
-      <div className={`main-background${isCalendarPage ? ' no-bg' : ''}`}>
+      <div className={`main-background${isCalendarPage ? ' no-bg' : ''}`} data-page={page}>
         <div className="app-content">
           <ErrorBoundary key={location.pathname}>
             <Suspense fallback={<PageFallback />}>

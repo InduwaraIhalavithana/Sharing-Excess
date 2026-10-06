@@ -1,0 +1,209 @@
+/* ============================================================
+   THEME POLISH — one shared layer of colour, depth and motion for every public page.
+
+   How it works
+   - App.tsx puts data-page="<route>" on .main-background, and each page gets its own signature
+     colours (--pg-a / --pg-b / --pg-c). Heroes, card accents, glows and focus rings all read them,
+     so every page looks distinct but belongs to the same family.
+   - Rules are prefixed with .app-root so they win over page CSS that loads later (lazy routes).
+   - Motion: page-enter, scroll reveal (useScrollReveal), card/button lift, animated hero gradient,
+     smooth light/dark crossfade. Everything stops under prefers-reduced-motion.
+   ============================================================ */
+
+/* ── Page identity ─────────────────────────────────────────── */
+.app-root .main-background                              { --pg-a: #16a34a; --pg-b: #0d9488; --pg-c: #facc15; }
+.app-root .main-background[data-page="about"]           { --pg-a: #16a34a; --pg-b: #0d9488; --pg-c: #facc15; }
+.app-root .main-background[data-page="ngos"]            { --pg-a: #2563eb; --pg-b: #7c3aed; --pg-c: #38bdf8; }
+.app-root .main-background[data-page="donate"]          { --pg-a: #ea580c; --pg-b: #db2777; --pg-c: #fbbf24; }
+.app-root .main-background[data-page="events"]          { --pg-a: #7c3aed; --pg-b: #db2777; --pg-c: #f472b6; }
+.app-root .main-background[data-page="contact"]         { --pg-a: #0891b2; --pg-b: #2563eb; --pg-c: #67e8f9; }
+.app-root .main-background[data-page="feedback"]        { --pg-a: #e11d48; --pg-b: #f59e0b; --pg-c: #fda4af; }
+.app-root .main-background[data-page="food-donations"]  { --pg-a: #15803d; --pg-b: #0d9488; --pg-c: #bbf7d0; }
+.app-root .main-background[data-page="privacy"],
+.app-root .main-background[data-page="terms"]           { --pg-a: #475569; --pg-b: #0d9488; --pg-c: #94a3b8; }
+
+/* ── Coloured, living page background (replaces the flat tint) ── */
+.app-root .main-background:not(.no-bg) {
+  background:
+    radial-gradient(1100px 520px at 6% -8%,  color-mix(in srgb, var(--pg-a) 17%, transparent), transparent 62%),
+    radial-gradient(900px 560px at 100% 38%, color-mix(in srgb, var(--pg-b) 14%, transparent), transparent 64%),
+    radial-gradient(820px 480px at 0% 100%,  color-mix(in srgb, var(--pg-c) 14%, transparent), transparent 62%),
+    var(--bg-base);
+}
+[data-theme="dark"] .app-root .main-background:not(.no-bg) {
+  background:
+    radial-gradient(1100px 520px at 6% -8%,  color-mix(in srgb, var(--pg-a) 22%, transparent), transparent 62%),
+    radial-gradient(900px 560px at 100% 38%, color-mix(in srgb, var(--pg-b) 18%, transparent), transparent 64%),
+    radial-gradient(820px 480px at 0% 100%,  color-mix(in srgb, var(--pg-c) 10%, transparent), transparent 62%),
+    var(--bg-base);
+}
+/* these page roots painted their own flat background on top of it */
+.app-root .contact-page, .app-root .events-page, .app-root .feedback-page,
+.app-root .ngos-page, .app-root .fd-page { background: transparent; }
+
+/* ── Heroes: one animated gradient per page, with soft light blobs and drifting food ── */
+.app-root .about-hero, .app-root .contact-hero, .app-root .events-hero, .app-root .feedback-hero,
+.app-root .ngos-hero, .app-root .donate-hero, .app-root .fd-hero {
+  position: relative;
+  background:
+    radial-gradient(circle at 12% 22%, rgba(255, 255, 255, 0.2) 0 120px, transparent 122px),
+    radial-gradient(circle at 91% 74%, rgba(255, 255, 255, 0.14) 0 190px, transparent 192px),
+    linear-gradient(120deg, var(--pg-a), var(--pg-b) 55%, var(--pg-a));
+  background-size: auto, auto, 240% 240%;
+  animation: pg-flow 16s ease-in-out infinite;
+}
+.app-root .about-hero > :not([class*="wave"]), .app-root .contact-hero > :not([class*="wave"]), .app-root .events-hero > :not([class*="wave"]),
+.app-root .feedback-hero > :not([class*="wave"]), .app-root .ngos-hero > :not([class*="wave"]), .app-root .donate-hero > :not([class*="wave"]),
+.app-root .fd-hero > :not([class*="wave"]) {
+  position: relative;
+  z-index: 1;
+}
+/* the wave divider stays absolutely positioned at the hero's bottom edge, above the drifting pattern */
+.app-root [class*="-hero__wave"] { z-index: 1; }
+.app-root .about-hero::before, .app-root .contact-hero::before, .app-root .events-hero::before,
+.app-root .feedback-hero::before, .app-root .ngos-hero::before, .app-root .donate-hero::before, .app-root .fd-hero::before {
+  content: '🌾  🍎  🥖  🥕  🍅  🌽  🍞  🍋  🥬  🌾  🍎  🥖  🥕  🍅  🌽  🍞';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: flex;
+  align-items: center;
+  white-space: pre;
+  font-size: 2.6rem;
+  letter-spacing: 0.4rem;
+  opacity: 0.14;
+  clip-path: inset(0);
+  pointer-events: none;
+  animation: pg-drift 60s linear infinite;
+}
+@keyframes pg-flow  { 0%, 100% { background-position: 0 0, 0 0, 0% 50%; } 50% { background-position: 0 0, 0 0, 100% 50%; } }
+@keyframes pg-drift { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+/* ── Section titles get a coloured underline that grows in ─── */
+.app-root .about-section-title, .app-root .ngos-section-title, .app-root .events-section-title {
+  position: relative;
+  padding-bottom: 12px;
+}
+.app-root .about-section-title::after, .app-root .ngos-section-title::after, .app-root .events-section-title::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 64px;
+  height: 4px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--pg-a), var(--pg-b), var(--pg-c));
+  transform-origin: left;
+  animation: pg-underline 0.9s cubic-bezier(.2,.8,.2,1) 0.2s backwards;
+}
+/* About titles are centred, so their underline is centred too */
+.app-root .about-section-title::after { left: 50%; margin-left: -32px; transform-origin: center; }
+
+@keyframes pg-underline { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+/* ── Cards: coloured top edge, lift and glow on hover ─────── */
+.app-root .card {
+  box-shadow: var(--shadow-md), inset 0 3px 0 var(--pg-a);
+  transition: box-shadow 0.28s ease, transform 0.28s cubic-bezier(.2,.8,.2,1), border-color 0.28s ease, background 0.28s ease;
+}
+.app-root .card:not(:has(form)):hover {
+  transform: translateY(-6px);
+  border-color: color-mix(in srgb, var(--pg-a) 50%, var(--border-color));
+  box-shadow: 0 24px 44px -20px color-mix(in srgb, var(--pg-a) 55%, transparent), inset 0 3px 0 var(--pg-a);
+}
+.app-root .card:has(form):hover { transform: none; }
+
+.app-root .about-section--band {
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--pg-a) 14%, var(--bg-surface)) 0%, color-mix(in srgb, var(--pg-b) 10%, var(--bg-surface)) 100%);
+  border: 1px solid color-mix(in srgb, var(--pg-a) 25%, transparent);
+}
+
+/* ── Buttons: lift, press and a shine sweep on the primary one ── */
+.app-root .btn, .app-root .home-cta-primary, .app-root .home-cta-secondary {
+  transition: transform 0.2s cubic-bezier(.2,.8,.2,1), box-shadow 0.25s ease, background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+.app-root .btn:hover:not(:disabled), .app-root .home-cta-primary:hover, .app-root .home-cta-secondary:hover {
+  transform: translateY(-3px);
+}
+.app-root .btn:active:not(:disabled), .app-root .home-cta-primary:active, .app-root .home-cta-secondary:active {
+  transform: translateY(0) scale(0.97);
+}
+.app-root .btn-primary, .app-root .home-cta-primary { position: relative; overflow: hidden; }
+.app-root .btn-primary::after, .app-root .home-cta-primary::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -130%;
+  width: 55%;
+  height: 100%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transform: skewX(-20deg);
+  transition: left 0.65s ease;
+  pointer-events: none;
+}
+.app-root .btn-primary:hover::after, .app-root .home-cta-primary:hover::after { left: 150%; }
+
+/* ── Keyboard focus is always visible and coloured ───────── */
+.app-root :focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--pg-a) 70%, #fff);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* ── Page enter + scroll reveal ──────────────────────────── */
+.app-content.page-enter { animation: pg-enter 0.55s cubic-bezier(.2,.8,.2,1) backwards; }
+@keyframes pg-enter { from { opacity: 0; transform: translateY(14px); } }
+
+[data-rv] {
+  transition:
+    opacity 0.65s ease,
+    transform 0.65s cubic-bezier(.2,.8,.2,1),
+    box-shadow 0.28s ease,
+    border-color 0.28s ease;
+  transition-delay: var(--rv-d, 0ms);
+}
+[data-rv="1"] { opacity: 0; transform: translateY(28px) scale(0.985); }
+[data-rv="in"] { opacity: 1; transform: none; }
+
+/* ── Footer: coloured top edge and friendlier links ─────── */
+.app-root .se-footer { position: relative; }
+.app-root .se-footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #16a34a, #0d9488, #facc15, #f97316, #db2777, #7c3aed);
+  background-size: 200% 100%;
+  animation: pg-footer-flow 12s linear infinite;
+}
+@keyframes pg-footer-flow { to { background-position: 200% 0; } }
+.app-root .se-footer a { transition: color 0.2s ease, transform 0.2s ease; }
+.app-root .se-footer a:hover { color: #86efac; transform: translateX(3px); }
+
+/* ── Smooth light/dark crossfade (class is added for ~0.5s by ThemeContext) ── */
+html.theme-fade,
+html.theme-fade *,
+html.theme-fade *::before,
+html.theme-fade *::after {
+  transition:
+    background-color 0.4s ease,
+    color 0.4s ease,
+    border-color 0.4s ease,
+    fill 0.4s ease,
+    stroke 0.4s ease,
+    box-shadow 0.4s ease !important;
+}
+
+/* ── Respect reduced motion everywhere ───────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  [data-rv="1"] { opacity: 1; transform: none; }
+}

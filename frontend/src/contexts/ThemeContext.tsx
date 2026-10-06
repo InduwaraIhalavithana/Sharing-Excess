@@ -22,7 +22,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     setTheme(prev => {
       const next: Theme = prev === 'light' ? 'dark' : 'light';
       localStorage.setItem('se-theme', next);
-      document.documentElement.setAttribute('data-theme', next);
+      // Briefly enable a colour crossfade so the whole page eases between light and dark.
+      const root = document.documentElement;
+      root.classList.add('theme-fade');
+      window.setTimeout(() => root.classList.remove('theme-fade'), 500);
+      root.setAttribute('data-theme', next);
       return next;
     });
   }, []);
