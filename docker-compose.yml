@@ -22,7 +22,7 @@ services:
       dockerfile: Dockerfile
     environment:
       DATABASE_URL:             postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/sharing_excess
-      SECRET_KEY:               ${SECRET_KEY:-change-me-in-production-32-chars!!}
+      SECRET_KEY:               ${SECRET_KEY:?set SECRET_KEY in .env (32+ random chars)}
       CORS_ORIGIN:              http://localhost
       CLOUDINARY_CLOUD_NAME:    ${CLOUDINARY_CLOUD_NAME:-}
       CLOUDINARY_API_KEY:       ${CLOUDINARY_API_KEY:-}

@@ -9,11 +9,14 @@ Prerequisites:
 Run from backend/:
   pytest
 """
+import os
 import uuid
 from unittest.mock import patch
 
 import pytest
 from fastapi.testclient import TestClient
+
+os.environ.setdefault("RATE_LIMIT_ENABLED", "false")
 
 from app.main import app
 from app.database import SessionLocal

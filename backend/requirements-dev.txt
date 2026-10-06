@@ -1,0 +1,5 @@
+# Dev / test only — not installed in the production image
+-r requirements.txt
+pytest==9.0.3
+pytest-cov==7.1.0
+httpx==0.28.1
