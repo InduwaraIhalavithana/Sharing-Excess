@@ -134,6 +134,12 @@ a {
 }
 a:hover { color: var(--clr-primary-dark); }
 
+/* Base rules carried over from the former Bootstrap CDN reboot - the page spacing was tuned with them */
+p, ul, ol { margin-bottom: 1rem; }
+h1, h2, h3, h4, h5, h6 { margin-bottom: 0.5rem; }
+img, svg { vertical-align: middle; }
+button, input, select, textarea, .btn { line-height: 1.5; }
+
 button {
   font-family: inherit;
   cursor: pointer;
@@ -886,7 +892,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 20px;
 }
 
@@ -2207,7 +2213,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .events-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 20px;
 }
 
@@ -2260,7 +2266,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .feedback-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 20px;
 }
 
@@ -2300,7 +2306,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .ngos-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 20px;
 }
 
@@ -3228,3 +3234,7 @@ h1, h2, h3, h4, h5, h6 {
 .se-error-boundary h1 { margin: 0; font-size: 2rem; }
 .se-error-boundary p { color: var(--text-secondary); max-width: 420px; margin: 0; }
 .se-error-boundary__actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 8px; }
+
+/* A lone card in an auto-fit grid shouldn't stretch across the whole row */
+.cards-grid > :only-child,
+.home-live__grid > :only-child { max-width: 560px; }
