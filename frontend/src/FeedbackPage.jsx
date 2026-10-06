@@ -1,15 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useLanguage } from './i18n/LanguageContext.jsx';
-import { useAuth } from './contexts/AuthContext.jsx';
-import { API_BASE, APP_ROOT } from './config.js';
-
-function Toast({ msg, type = 'success', onDone }) {
-  useEffect(() => {
-    const id = setTimeout(onDone, 3200);
-    return () => clearTimeout(id);
-  }, [onDone]);
-  return <div className={`dd-toast dd-toast--${type}`}>{msg}</div>;
-}
+import { useLanguage } from './i18n/LanguageContext';
+import { useAuth } from './contexts/AuthContext';
+import { API_BASE, APP_ROOT } from './config';
+import Toast from './components/Toast';
 
 export default function FeedbackPage() {
   const { t } = useLanguage();

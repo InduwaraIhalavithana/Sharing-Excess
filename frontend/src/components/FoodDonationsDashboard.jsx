@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext.jsx';
-import { API_BASE, APP_ROOT } from '../config.js';
+import { useAuth } from '../contexts/AuthContext';
+import { API_BASE, APP_ROOT } from '../config';
 import { SkeletonGrid } from './SkeletonCard.jsx';
 
 export default function FoodDonationsDashboard() {

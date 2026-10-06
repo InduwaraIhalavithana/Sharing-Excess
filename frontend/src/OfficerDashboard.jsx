@@ -5,23 +5,16 @@ import {
   Chart as ChartJS, CategoryScale, LinearScale, BarElement,
   Title, Tooltip, Legend, ArcElement, PointElement, LineElement
 } from 'chart.js';
-import { useLanguage } from './i18n/LanguageContext.jsx';
-import { useAuth } from './contexts/AuthContext.jsx';
-import { apiFetch } from './utils/api.js';
-import { API_BASE } from './config.js';
+import { useLanguage } from './i18n/LanguageContext';
+import { useAuth } from './contexts/AuthContext';
+import { apiFetch } from './utils/api';
+import { API_BASE } from './config';
+import Toast from './components/Toast';
 
 ChartJS.register(
   CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend,
   ArcElement, PointElement, LineElement
 );
-
-function Toast({ msg, type = 'success', onDone }) {
-  useEffect(() => {
-    const t = setTimeout(onDone, 3000);
-    return () => clearTimeout(t);
-  }, [onDone]);
-  return <div className={`dd-toast dd-toast--${type}`}>{msg}</div>;
-}
 
 function StatusBadge({ status }) {
   const map = {

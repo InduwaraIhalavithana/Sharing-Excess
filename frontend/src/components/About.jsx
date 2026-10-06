@@ -1,4 +1,4 @@
-import { useLanguage } from '../i18n/LanguageContext.jsx';
+import { useLanguage } from '../i18n/LanguageContext';
 import Reveal from './Reveal.jsx';
 
 const STATS = [

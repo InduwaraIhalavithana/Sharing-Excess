@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { useLanguage } from '../i18n/LanguageContext.jsx';
-import { useAuth } from '../contexts/AuthContext.jsx';
-import { API_BASE } from '../config.js';
+import { useLanguage } from '../i18n/LanguageContext';
+import { useAuth } from '../contexts/AuthContext';
+import { API_BASE } from '../config';
 
 export default function VerificationModal({ email, userId, password, role, onClose, onVerified }) {
   const { t } = useLanguage();

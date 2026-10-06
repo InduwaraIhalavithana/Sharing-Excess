@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useLanguage } from '../i18n/LanguageContext.jsx';
+import { useLanguage } from '../i18n/LanguageContext';
 
 const EVENTS = [
   {

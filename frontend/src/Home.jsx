@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useLanguage } from './i18n/LanguageContext.jsx';
+import { useLanguage } from './i18n/LanguageContext';
 import ImpactSection from './components/ImpactSection';
 import Reveal from './components/Reveal.jsx';
-import { API_BASE } from './config.js';
+import { API_BASE } from './config';
 import './HomeCustom.css';
 
 const HOW_STEPS = [

@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useTheme } from '../contexts/ThemeContext.jsx';
-import { useLanguage } from '../i18n/LanguageContext.jsx';
-import { useAuth } from '../contexts/AuthContext.jsx';
+import { useTheme } from '../contexts/ThemeContext';
+import { useLanguage } from '../i18n/LanguageContext';
+import { useAuth } from '../contexts/AuthContext';
 import LoginModal from '../LoginModal.jsx';
 import SignupModal from './SignupModal.jsx';
 import ForgotPasswordModal from './ForgotPasswordModal.jsx';
 import VerificationModal from './VerificationModal.jsx';
-import { API_BASE } from '../config.js';
+import { API_BASE } from '../config';
 import './Navbar.css';
 
 const LANG_LABELS = { en: 'EN', si: 'SI', ta: 'TA' };

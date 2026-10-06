@@ -1,19 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useLanguage } from '../i18n/LanguageContext.jsx';
-import { useAuth } from '../contexts/AuthContext.jsx';
-import { API_BASE } from '../config.js';
+import { useLanguage } from '../i18n/LanguageContext';
+import { useAuth } from '../contexts/AuthContext';
+import { API_BASE } from '../config';
 import './Donate.css';
+import Toast from './Toast';
 
 const PRESET_AMOUNTS = [6000, 4000, 3500, 3000, 2500, 2000];
-
-function Toast({ msg, type = 'success', onDone }) {
-  useEffect(() => {
-    const id = setTimeout(onDone, 3200);
-    return () => clearTimeout(id);
-  }, [onDone]);
-  return <div className={`dd-toast dd-toast--${type}`}>{msg}</div>;
-}
 
 export default function Donate() {
   const { t } = useLanguage();

@@ -1,20 +1,27 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import type { User } from '../types/api';
 
-const AuthContext = createContext(null);
+interface AuthValue {
+  user: User | null;
+  login: (userData: User, token?: string) => void;
+  logout: () => void;
+}
 
-function loadFromStorage() {
+const AuthContext = createContext<AuthValue | null>(null);
+
+function loadFromStorage(): User | null {
   try {
     const stored = localStorage.getItem('user');
-    return stored ? JSON.parse(stored) : null;
+    return stored ? (JSON.parse(stored) as User) : null;
   } catch {
     return null;
   }
 }
 
-export function AuthProvider({ children }) {
-  const [user, setUser] = useState(loadFromStorage);
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(loadFromStorage);
 
-  const login = useCallback((userData, token) => {
+  const login = useCallback((userData: User, token?: string) => {
     localStorage.setItem('user', JSON.stringify(userData));
     if (token) localStorage.setItem('se_token', token);
     setUser(userData);
@@ -38,14 +45,10 @@ export function AuthProvider({ children }) {
     };
   }, [logout]);
 
-  return (
-    <AuthContext.Provider value={{ user, login, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={{ user, login, logout }}>{children}</AuthContext.Provider>;
 }
 
-export function useAuth() {
+export function useAuth(): AuthValue {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth must be used inside AuthProvider');
   return ctx;
