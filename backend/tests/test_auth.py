@@ -295,3 +295,17 @@ class TestDeleteMyAccount:
         survivor = db.get(FoodRequest, rid)
         assert survivor is not None and survivor.listing_id is None
         assert survivor.accepted_by == "A former donor"  # the deleted donor's name is gone from others' history
+
+
+class TestContactForm:
+    body = {"name": "Visitor", "email": "pytest_visitor@example.com", "subject": "Hi", "message": "A message long enough to send."}
+
+    def test_success_when_the_email_is_delivered(self, client):
+        assert client.post("/api/contact", json=self.body).status_code == 200
+
+    def test_a_failed_send_is_reported_not_hidden(self, client):
+        from unittest.mock import patch
+
+        with patch("app.routers.contact.send_email", return_value=False):
+            res = client.post("/api/contact", json=self.body)
+        assert res.status_code == 503 and "couldn't deliver" in res.json()["detail"]
