@@ -1,8 +1,9 @@
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, Depends, Header, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.dependencies import get_current_user, require_roles, is_staff
 from app.models import FoodListing, User
 from app.schemas import ListingOut, ListingUpdate
 from app.utils.uploads import save_upload
@@ -39,9 +40,14 @@ def get_listings(
     page: int = 1,
     limit: int = 20,
     db: Session = Depends(get_db),
+    authorization: Optional[str] = Header(default=None),
 ):
     query = db.query(FoodListing)
     if donor_id:
+        # Unreviewed / rejected listings are visible only to their owner and staff
+        me = get_current_user(authorization, db)
+        if me.id != donor_id and not is_staff(me):
+            raise HTTPException(403, "You can only view your own listings")
         # Donors see all their own listings, whatever the verification state
         query = query.filter(FoodListing.donor_id == donor_id)
     else:
@@ -66,7 +72,6 @@ def get_listings(
 
 @router.post("")
 async def add_listing(
-    donor_id:      int            = Form(...),
     food_name:     str            = Form(...),
     quantity:      str            = Form(...),
     expiry_date:   str            = Form(""),
@@ -76,9 +81,9 @@ async def add_listing(
     contact_email: str            = Form(""),
     food_image:    Optional[UploadFile] = File(None),
     db: Session = Depends(get_db),
+    me: User = Depends(require_roles("donor")),
 ):
-    if not db.query(User).filter(User.id == donor_id).first():
-        raise HTTPException(404, "Donor not found")
+    donor_id = me.id
 
     image_path = None
     if food_image and food_image.filename:
@@ -106,11 +111,11 @@ async def add_listing(
 
 
 @router.delete("/{listing_id}")
-def delete_listing(listing_id: int, donor_id: Optional[int] = None, db: Session = Depends(get_db)):
+def delete_listing(listing_id: int, db: Session = Depends(get_db), me: User = Depends(get_current_user)):
     listing = db.query(FoodListing).filter(FoodListing.id == listing_id).first()
     if not listing:
         raise HTTPException(404, "Listing not found")
-    if donor_id is None or listing.donor_id != donor_id:
+    if listing.donor_id != me.id and me.role != "admin":
         raise HTTPException(403, "You can only delete your own listings")
     db.delete(listing)
     db.commit()

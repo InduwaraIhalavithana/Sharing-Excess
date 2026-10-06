@@ -40,3 +40,16 @@ def require_admin(current_user: User = Depends(get_current_user)) -> User:
 
 # Backwards-compatible alias (old routes imported require_officer)
 require_officer = require_staff
+
+
+def require_roles(*roles: str):
+    """Dependency factory: allow only the given roles (admin/officer are NOT implied)."""
+    def _dep(current_user: User = Depends(get_current_user)) -> User:
+        if current_user.role not in roles:
+            raise HTTPException(status_code=403, detail="You do not have permission to do this")
+        return current_user
+    return _dep
+
+
+def is_staff(user: User) -> bool:
+    return user.role in ("officer", "admin")

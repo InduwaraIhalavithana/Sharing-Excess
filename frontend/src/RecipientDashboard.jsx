@@ -94,7 +94,6 @@ export default function RecipientDashboard() {
     }
     try {
       const fd = new FormData();
-      fd.append('recipient_id', user.id);
       fd.append('food_name', listing.food_name);
       fd.append('quantity', listing.quantity);
       fd.append('needed_by', new Date().toISOString().split('T')[0]);
@@ -123,7 +122,6 @@ export default function RecipientDashboard() {
     setFormLoading(true);
     try {
       const fd = new FormData();
-      fd.append('recipient_id', user.id);
       fd.append('food_name', customReq.food_name);
       fd.append('quantity', customReq.quantity);
       fd.append('needed_by', customReq.needed_by);
