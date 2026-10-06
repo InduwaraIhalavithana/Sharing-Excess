@@ -1,15 +1,19 @@
 {
   "short_name": "Sharing Excess",
-  "name": "Sharing Excess — Food Redistribution Platform",
+  "name": "Sharing Excess - Food Redistribution Platform",
+  "description": "Share surplus food with people who need it across Sri Lanka.",
   "icons": [
-    {
-      "src": "logo.png",
-      "type": "image/png",
-      "sizes": "192x192"
-    }
+    { "src": "/icon-192.png", "type": "image/png", "sizes": "192x192", "purpose": "any" },
+    { "src": "/icon-512.png", "type": "image/png", "sizes": "512x512", "purpose": "any" },
+    { "src": "/icon-maskable-512.png", "type": "image/png", "sizes": "512x512", "purpose": "maskable" }
   ],
-  "start_url": ".",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "theme_color": "#16a34a",
-  "background_color": "#f0f6f1"
+  "background_color": "#f0f6f1",
+  "shortcuts": [
+    { "name": "Available food", "url": "/food" },
+    { "name": "My dashboard", "url": "/recipient-dashboard" }
+  ]
 }

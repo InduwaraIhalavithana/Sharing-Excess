@@ -10,14 +10,14 @@ echo    Sharing Excess ^| Starting All Services
 echo  ============================================================
 echo.
 
-REM ── Check if ports are already occupied ─────────────────────────────────────
+REM -- Check if ports are already occupied
 for %%P in (8003 5175) do (
     netstat -ano 2>nul | findstr /L ":%%P " | findstr /L "LISTENING" >nul
     if not errorlevel 1 (
         echo  [!] Port %%P is already in use.
         echo      Run stop-services.bat first, then try again.
         echo.
-        pause
+        if /i not "%~1"=="/q" pause
         exit /b 1
     )
 )
@@ -43,4 +43,4 @@ echo.
 echo    Run stop-services.bat to shut everything down.
 echo  ============================================================
 echo.
-pause
+if /i not "%~1"=="/q" pause

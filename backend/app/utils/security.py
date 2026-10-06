@@ -1,4 +1,5 @@
 import secrets
+
 from passlib.context import CryptContext
 
 # pbkdf2_sha256 is compatible with Python 3.14+; bcrypt is not

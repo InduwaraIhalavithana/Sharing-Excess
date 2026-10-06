@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import { useLanguage } from '../i18n/LanguageContext.jsx';
-import { useAuth } from '../contexts/AuthContext.jsx';
-import { API_BASE } from '../config.js';
+import { useModalA11y } from '../hooks/useModalA11y';
+import { useLanguage } from '../i18n/LanguageContext';
+import { useAuth } from '../contexts/AuthContext';
+import { API_BASE } from '../config';
 
 export default function VerificationModal({ email, userId, password, role, onClose, onVerified }) {
+  const boxRef = useModalA11y();
   const { t } = useLanguage();
   const { login } = useAuth();
   const [digits, setDigits] = useState(['', '', '', '', '', '']);
@@ -110,7 +112,7 @@ export default function VerificationModal({ email, userId, password, role, onClo
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-box" onClick={e => e.stopPropagation()}>
+      <div ref={boxRef} className="modal-box" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <h2>{t('auth', 'verify_title')}</h2>
           <p>{t('auth', 'verify_subtitle')} <strong>{email}</strong></p>

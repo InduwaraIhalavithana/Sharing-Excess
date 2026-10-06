@@ -1,9 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useLanguage } from './i18n/LanguageContext.jsx';
+import { useLanguage } from './i18n/LanguageContext';
+import { tr } from './i18n/phrases';
 import ImpactSection from './components/ImpactSection';
+import HungerSection from './components/HungerSection';
 import Reveal from './components/Reveal.jsx';
-import { API_BASE } from './config.js';
+import HeroArt from './components/HeroArt';
+import { WHO_ITS_FOR } from './data/audience';
+import { useAuth } from './contexts/AuthContext';
+import { usePublicListings, usePublicStats } from './hooks/queries';
+import { qty, timeLeft } from './utils/format';
 import './HomeCustom.css';
 
 const HOW_STEPS = [
@@ -12,76 +18,33 @@ const HOW_STEPS = [
   { num: '03', icon: '🚚', titleKey: 'how_step3_title', descKey: 'how_step3_desc' },
 ];
 
-const PARTNERS = [
-  'Ceylon Biscuits Limited', 'Dilmah Tea', 'MAS Holdings', 'Brandix', 'Red Bull',
-  'John Keells Holdings', 'Hemas Holdings', 'Hayleys', 'Dialog Axiata', 'Commercial Bank',
-];
-
 const FAQS = [
-  { q: 'Who can donate food?', a: 'Anyone — restaurants, hotels, bakeries, event organisers, or households with surplus food. Sign up as a donor, list what you have, and our officers take it from there.' },
-  { q: 'Is the food safe? How is it checked?', a: 'Every listing is reviewed by a field officer before it goes public. Expired or unsafe food is rejected at the gate, and donors see the reason why.' },
-  { q: 'How do recipients get the food?', a: 'Registered recipients and NGOs browse approved listings and send a request. Once the donor accepts, pickup or delivery is coordinated — and both sides get email updates at every step.' },
-  { q: 'Does it cost anything?', a: 'No. The platform is completely free for donors and recipients. Money donations through PayHere are optional and go toward logistics and community food drives.' },
-  { q: 'Can I volunteer or partner as an NGO?', a: 'Absolutely! Head to the Contact page and mention volunteering, or email us your organisation details to become a distribution partner.' },
+  { q: tr('Who can donate food?'), a: tr('Anyone with surplus food: restaurants, hotels, bakeries, event organisers or households. Sign up as a donor, add a photo, the quantity and when it expires, and tick that it is safe to eat. Your listing goes live straight away.') },
+  { q: tr('Is the food safe?'), a: tr('Donors confirm that the food is safe and not expired every time they post, and recipients can see photos, when it was prepared and when it expires. Anyone can report a listing, and the admin removes anything unsafe.') },
+  { q: tr('How do recipients get the food?'), a: tr('Recipients and approved NGOs see food in their own district first, then neighbouring districts. Ask for all of it or just part, and the quantity is held for you until the donor answers. When they accept, you receive their contact details to arrange pickup or delivery.') },
+  { q: tr('Is my address public?'), a: tr('No. Visitors only ever see the district and town. The exact address and phone number are shared only with the one recipient whose request the donor has accepted.') },
+  { q: tr('Can my organisation join as an NGO?'), a: tr('Yes. Sign up as an NGO; once the admin approves your organisation you can post events, appear in the NGO directory and request food.') },
 ];
 
 export default function Home() {
-  const { t } = useLanguage();
+  const { t, p } = useLanguage();
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
-  const [liveListings, setLiveListings] = useState([]);
-  const [liveTotals, setLiveTotals] = useState({ listings: 0, requests: 0 });
-  const [testimonials, setTestimonials] = useState([]);
+  const { user } = useAuth();
   const [openFaq, setOpenFaq] = useState(0);
 
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem('user');
-      setUser(stored ? JSON.parse(stored) : null);
-    } catch { setUser(null); }
+  // Live platform data (cached and shared with other pages by TanStack Query)
+  const listingsQ = usePublicListings({ limit: 6 });
+  const statsQ = usePublicStats();
+  const liveListings = listingsQ.data?.listings ?? [];
+  const liveTotals = {
+    listings: statsQ.data?.listings_available ?? 0,
+    requests: statsQ.data?.requests_open ?? 0,
+  };
 
-    const onStorage = () => {
-      try {
-        const s = localStorage.getItem('user');
-        setUser(s ? JSON.parse(s) : null);
-      } catch { setUser(null); }
-    };
-    window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
-  }, []);
-
-  // Live platform data: open listings, open requests, latest feedback
-  useEffect(() => {
-    let cancelled = false;
-    fetch(`${API_BASE}/api/listings?limit=6`)
-      .then(r => r.json())
-      .then(d => {
-        if (cancelled || !d.success) return;
-        setLiveListings(d.listings || []);
-        setLiveTotals(p => ({ ...p, listings: d.total ?? (d.listings || []).length }));
-      })
-      .catch(() => {});
-    fetch(`${API_BASE}/api/requests`)
-      .then(r => r.json())
-      .then(d => {
-        if (cancelled || !d.success) return;
-        setLiveTotals(p => ({ ...p, requests: (d.requests || []).length }));
-      })
-      .catch(() => {});
-    fetch(`${API_BASE}/api/feedback`)
-      .then(r => r.json())
-      .then(d => {
-        if (cancelled || !d.success) return;
-        setTestimonials((d.feedback || []).filter(f => f.comment).slice(0, 3));
-      })
-      .catch(() => {});
-    return () => { cancelled = true; };
-  }, []);
-
-  const handleDonate  = () => navigate(user ? '/donor-dashboard' : '/donate');
-  const handleReceive = () => navigate(user ? '/recipient-dashboard' : '/food-donations');
+  const handleDonate  = () => navigate('/post-food');
+  const handleReceive = () => navigate('/food');
   const handleGetStarted = () => {
-    if (user) navigate('/donor-dashboard');
+    if (user) navigate('/food');
     else window.dispatchEvent(new CustomEvent('openSignup'));
   };
 
@@ -91,7 +54,7 @@ export default function Home() {
       <section className="home-hero">
         <div className="home-hero__inner">
           <div className="home-hero__text">
-            <span className="home-hero__badge">🌱 Fighting Food Waste in Sri Lanka</span>
+            <span className="home-hero__badge">{p('🌱 Fighting Food Waste in Sri Lanka')}</span>
             <h1 className="home-hero__title">
               {t('home', 'hero_title')}<br />
               <span className="home-hero__title-accent">{t('home', 'hero_title2')}</span>
@@ -106,48 +69,47 @@ export default function Home() {
               </button>
             </div>
             <div className="home-hero__trust">
-              <span>✅ Officer-verified listings</span>
-              <span>📧 Email updates at every step</span>
-              <span>🆓 Free forever</span>
+              <span>{p('🔒 Contact shared only after you accept')}</span>
+              <span>{p('📧 Email updates at every step')}</span>
+              <span>{p('🆓 Free forever')}</span>
             </div>
             {user && (
               <p className="home-hero__welcome">
-                Welcome back, <strong>{user.name || user.email}</strong> ✨
+                {p('Welcome back,')} <strong>{user.name || user.email}</strong> ✨
               </p>
             )}
           </div>
           <div className="home-hero__media">
             <div className="home-hero__img-wrap">
-              <img
-                src="/slideshow/slide5.jpg"
-                alt="World Hunger Day — May 28"
-                className="home-hero__static-img"
-              />
+              <HeroArt />
             </div>
             <div className="home-hero__float home-hero__float--1">
               <span className="home-hero__float-icon">🥖</span>
               <div>
-                <strong>{liveTotals.listings || '—'} listings</strong>
-                <small>available right now</small>
+                <strong>{liveTotals.listings || '—'} {p('listings')}</strong>
+                <small>{p('available right now')}</small>
               </div>
             </div>
             <div className="home-hero__float home-hero__float--2">
               <span className="home-hero__float-icon">📬</span>
               <div>
-                <strong>{liveTotals.requests || '—'} requests</strong>
-                <small>waiting for a donor</small>
+                <strong>{liveTotals.requests || '—'} {p('requests')}</strong>
+                <small>{p('waiting for a donor')}</small>
               </div>
             </div>
             <div className="home-hero__float home-hero__float--3">
               <span className="home-hero__float-icon">✅</span>
               <div>
-                <strong>Verified</strong>
-                <small>by field officers</small>
+                <strong>{p('Nearby first')}</strong>
+                <small>{p('your district, then neighbours')}</small>
               </div>
             </div>
           </div>
         </div>
       </section>
+
+      {/* ── Why it matters: the hunger problem, with sourced figures ── */}
+      <HungerSection />
 
       {/* ── Impact counters (single, animated) ────────── */}
       <ImpactSection />
@@ -184,10 +146,10 @@ export default function Home() {
           <Reveal>
             <div className="home-live__header">
               <h2 className="home-live__title">
-                <span className="home-live__pulse" aria-hidden="true" /> Live on the platform
+                <span className="home-live__pulse" aria-hidden="true" /> {p('Live on the platform')}
               </h2>
               <p className="home-live__subtitle">
-                Real surplus food, listed by real donors — updated as it happens.
+                {p('Real surplus food, listed by real donors — updated as it happens.')}
               </p>
             </div>
           </Reveal>
@@ -198,17 +160,17 @@ export default function Home() {
                   <div className="home-live-card">
                     <div className="home-live-card__top">
                       <span className="home-live-card__emoji">🍲</span>
-                      <span className="home-live-card__badge">available</span>
+                      <span className="home-live-card__badge">{p('available')}</span>
                     </div>
                     <h3 className="home-live-card__name">{l.food_name}</h3>
-                    <p className="home-live-card__meta">📦 {l.quantity}</p>
-                    {l.location && <p className="home-live-card__meta">📍 {l.location}</p>}
-                    {l.expiry_date && <p className="home-live-card__meta">📅 Best before {l.expiry_date}</p>}
+                    <p className="home-live-card__meta">📦 {qty(l.quantity_available)} {l.unit} {p('left')}</p>
+                    <p className="home-live-card__meta">📍 {l.district}{l.area ? ` · ${l.area}` : ''}</p>
+                    <p className="home-live-card__meta">⏱ {timeLeft(l.expires_at).text} {p('left')}</p>
                     <button
                       className="home-live-card__btn"
-                      onClick={() => navigate(user ? '/recipient-dashboard' : '/food-donations')}
+                      onClick={() => navigate(`/listings/${l.id}`)}
                     >
-                      Request this →
+                      {p('Request this →')}
                     </button>
                   </div>
                 </Reveal>
@@ -218,52 +180,20 @@ export default function Home() {
             <Reveal>
               <div className="home-live__empty">
                 <span>🌾</span>
-                <p>All current listings have been claimed — check back soon, or <Link to="/donate">be the donor</Link> who fills this space.</p>
+                <p>{p('All current listings have been claimed — check back soon, or')} <Link to="/post-food">{p('be the donor')}</Link> {p('who fills this space.')}</p>
               </div>
             </Reveal>
           )}
         </div>
       </section>
 
-      {/* ── Testimonials ──────────────────────────────── */}
-      {testimonials.length > 0 && (
-        <section className="home-testimonials">
-          <div className="home-testimonials__inner">
-            <Reveal>
-              <h2 className="home-testimonials__title">💬 What the community says</h2>
-            </Reveal>
-            <div className="home-testimonials__grid">
-              {testimonials.map((f, i) => (
-                <Reveal key={f.id} delay={i * 120}>
-                  <figure className="home-testimonial">
-                    <div className="home-testimonial__stars" aria-label={`${f.rating || 5} stars`}>
-                      {'⭐'.repeat(Math.min(f.rating || 5, 5))}
-                    </div>
-                    <blockquote>"{f.comment}"</blockquote>
-                    <figcaption>
-                      <span className="home-testimonial__avatar">
-                        {(f.recipient_name || 'A').charAt(0).toUpperCase()}
-                      </span>
-                      <div>
-                        <strong>{f.recipient_name || 'Anonymous'}</strong>
-                        <small>{new Date(f.created_at).toLocaleDateString()}</small>
-                      </div>
-                    </figcaption>
-                  </figure>
-                </Reveal>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
       {/* ── Partner marquee ───────────────────────────── */}
       <section className="home-partners">
-        <p className="home-partners__label">Trusted by Sri Lanka's leading organisations</p>
+        <p className="home-partners__label">{p('Built for the people who share and receive food')}</p>
         <div className="home-partners__marquee">
           <div className="home-partners__track">
-            {[...PARTNERS, ...PARTNERS].map((p, i) => (
-              <span key={i} className="home-partners__item">🏢 {p}</span>
+            {[...WHO_ITS_FOR, ...WHO_ITS_FOR].map((item, i) => (
+              <span key={i} className="home-partners__item">{p(item)}</span>
             ))}
           </div>
         </div>
@@ -273,7 +203,7 @@ export default function Home() {
       <section className="home-faq">
         <div className="home-faq__inner">
           <Reveal>
-            <h2 className="home-faq__title">Frequently Asked Questions</h2>
+            <h2 className="home-faq__title">{p('Frequently Asked Questions')}</h2>
           </Reveal>
           <div className="home-faq__list">
             {FAQS.map((f, i) => (
@@ -284,11 +214,11 @@ export default function Home() {
                     onClick={() => setOpenFaq(openFaq === i ? -1 : i)}
                     aria-expanded={openFaq === i}
                   >
-                    <span>{f.q}</span>
+                    <span>{p(f.q)}</span>
                     <span className="home-faq__chevron" aria-hidden="true">▾</span>
                   </button>
                   <div className="home-faq__a">
-                    <p>{f.a}</p>
+                    <p>{p(f.a)}</p>
                   </div>
                 </div>
               </Reveal>

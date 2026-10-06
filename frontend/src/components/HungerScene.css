@@ -1,0 +1,48 @@
+/* Hunger scene: gentle, slow motion only. Everything stops under prefers-reduced-motion. */
+.hunger-scene {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.hs-star {
+  animation: hs-twinkle var(--d, 3s) ease-in-out infinite;
+}
+.hs-glow {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: hs-pulse 6s ease-in-out infinite;
+}
+.hs-rays {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: hs-spin 120s linear infinite;
+}
+.hs-bird {
+  animation: hs-fly 34s linear infinite;
+}
+.hs-dust {
+  animation: hs-float var(--d, 9s) ease-in-out infinite;
+}
+.hs-plant {
+  transform-box: fill-box;
+  transform-origin: 0% 100%;
+  animation: hs-sway 7s ease-in-out infinite;
+}
+.hs-palm {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+
+@keyframes hs-twinkle { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }
+@keyframes hs-pulse   { 0%, 100% { transform: scale(1); opacity: .9; } 50% { transform: scale(1.1); opacity: 1; } }
+@keyframes hs-spin    { to { transform: rotate(360deg); } }
+@keyframes hs-fly     { from { transform: translateX(-120px); } to { transform: translateX(1500px); } }
+@keyframes hs-float   { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(14px, -22px); } }
+@keyframes hs-sway    { 0%, 100% { transform: rotate(-1.5deg); } 50% { transform: rotate(2deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .hunger-scene * { animation: none !important; }
+}

@@ -5,7 +5,7 @@ services:
     environment:
       POSTGRES_DB:       sharing_excess
       POSTGRES_USER:     postgres
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -21,15 +21,12 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     environment:
-      DATABASE_URL:             postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/sharing_excess
-      SECRET_KEY:               ${SECRET_KEY:-change-me-in-production-32-chars!!}
+      DATABASE_URL:             postgresql://postgres:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/sharing_excess
+      SECRET_KEY:               ${SECRET_KEY:?set SECRET_KEY in .env (32+ random chars)}
       CORS_ORIGIN:              http://localhost
       CLOUDINARY_CLOUD_NAME:    ${CLOUDINARY_CLOUD_NAME:-}
       CLOUDINARY_API_KEY:       ${CLOUDINARY_API_KEY:-}
       CLOUDINARY_API_SECRET:    ${CLOUDINARY_API_SECRET:-}
-      PAYHERE_SANDBOX:          ${PAYHERE_SANDBOX:-true}
-      PAYHERE_MERCHANT_ID:      ${PAYHERE_MERCHANT_ID:-1211149}
-      PAYHERE_MERCHANT_SECRET:  ${PAYHERE_MERCHANT_SECRET:-Pay&HeRe}
       MAIL_HOST:                ${MAIL_HOST:-smtp.gmail.com}
       MAIL_PORT:                ${MAIL_PORT:-465}
       MAIL_USERNAME:            ${MAIL_USERNAME:-}
@@ -41,7 +38,7 @@ services:
       postgres:
         condition: service_healthy
     ports:
-      - "8003:8003"   # direct API / Swagger docs access
+      - "127.0.0.1:8003:8003"   # Swagger docs from this machine only; the public reaches the API through nginx
     networks:
       - se_net
 

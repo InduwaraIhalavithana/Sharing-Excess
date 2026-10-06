@@ -154,7 +154,7 @@
   background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 60%, #f0fdf4 100%);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-xl), 0 0 0 4px rgba(22, 163, 74, 0.18);
-  padding: 40px 48px;
+  padding: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -163,13 +163,6 @@
 
 [data-theme="dark"] .home-hero__img-wrap {
   background: linear-gradient(135deg, #0a2518 0%, #0f3d24 60%, #0a2518 100%);
-}
-
-.home-hero__static-img {
-  width: 100%;
-  max-width: 380px;
-  height: auto;
-  display: block;
 }
 
 /* ── Hero trust row ──────────────────────────────────────── */
@@ -268,7 +261,7 @@
 
 .home-live__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
   gap: 18px;
 }
 
@@ -355,84 +348,6 @@
 .home-live__empty a { color: var(--clr-primary); font-weight: 700; }
 
 /* ── Testimonials ────────────────────────────────────────── */
-.home-testimonials {
-  background: var(--bg-base);
-  padding: 56px var(--page-x);
-}
-
-.home-testimonials__inner { max-width: var(--max-width); margin: 0 auto; }
-
-.home-testimonials__title {
-  font-family: var(--font-sans);
-  font-size: clamp(1.5rem, 3vw, 2rem);
-  font-weight: 800;
-  color: var(--text-primary);
-  text-align: center;
-  margin-bottom: 36px;
-}
-
-.home-testimonials__grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 20px;
-  max-width: 1000px;
-  margin: 0 auto;
-}
-
-.home-testimonial {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-xl);
-  padding: 24px;
-  margin: 0;
-  box-shadow: var(--shadow-sm);
-  transition: transform var(--t-base), box-shadow var(--t-base);
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.home-testimonial:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
-
-.home-testimonial__stars { margin-bottom: 10px; font-size: 0.85rem; }
-
-.home-testimonial blockquote {
-  font-size: 0.9375rem;
-  color: var(--text-secondary);
-  line-height: 1.65;
-  font-style: italic;
-  margin: 0 0 16px;
-  flex: 1;
-}
-
-.home-testimonial figcaption {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.home-testimonial__avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--clr-primary) 0%, #0d9488 100%);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-  font-family: var(--font-sans);
-  flex-shrink: 0;
-}
-
-.home-testimonial figcaption strong {
-  display: block;
-  font-family: var(--font-sans);
-  font-size: 0.875rem;
-  color: var(--text-primary);
-}
-
-.home-testimonial figcaption small { color: var(--text-muted); font-size: 0.75rem; }
 
 /* ── Partner marquee ─────────────────────────────────────── */
 .home-partners {
@@ -662,18 +577,6 @@
   line-height: 1.6;
 }
 
-.home-how__connector {
-  position: absolute;
-  right: -20px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 1.5rem;
-  color: var(--clr-primary);
-  opacity: 0.45;
-  z-index: 1;
-  display: none; /* shown at large viewports only */
-}
-
 /* ── CTA Banner ──────────────────────────────────────────── */
 .home-cta-banner {
   background: linear-gradient(135deg, var(--clr-primary) 0%, #0d9488 100%);
@@ -775,9 +678,20 @@
   .home-cta-banner { padding: 48px var(--page-x); }
   .home-how { padding: 44px var(--page-x); }
   .home-live { padding: 44px var(--page-x); }
-  .home-testimonials { padding: 44px var(--page-x); }
   .home-faq { padding: 44px var(--page-x); }
   .home-hero__ctas { flex-direction: column; }
   .home-cta-primary, .home-cta-secondary { justify-content: center; }
   .home-cta-banner__btns { flex-direction: column; align-items: stretch; }
 }
+
+/* ── Hero illustration ───────────────────────────────────── */
+.hero-art { width: 100%; height: auto; display: block; border-radius: var(--radius-lg); }
+.hero-art__heart { transform-box: fill-box; transform-origin: center; animation: hero-art-beat 2.6s ease-in-out infinite; }
+.hero-art__produce { animation: hero-art-bob 4s ease-in-out infinite; }
+.hero-art__spark { transform-box: fill-box; transform-origin: center; animation: hero-art-twinkle 3s ease-in-out infinite; }
+.hero-art__spark--2 { animation-delay: .8s; }
+.hero-art__spark--3 { animation-delay: 1.6s; }
+@keyframes hero-art-beat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.09); } }
+@keyframes hero-art-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+@keyframes hero-art-twinkle { 0%, 100% { opacity: .25; transform: scale(.7); } 50% { opacity: 1; transform: scale(1.1); } }
+@media (prefers-reduced-motion: reduce) { .hero-art * { animation: none !important; } }

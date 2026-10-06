@@ -1,4 +1,4 @@
-export default function SkeletonCard() {
+function SkeletonCard() {
   return (
     <div className="dashboard-card skeleton-card" aria-hidden="true">
       <div className="skeleton-img" />
