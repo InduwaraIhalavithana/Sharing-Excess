@@ -13,6 +13,8 @@ const TITLES: Record<string, string> = {
   '/contact': 'Contact',
   '/feedback': 'Feedback',
   '/account': 'Account Settings',
+  '/privacy': 'Privacy Policy',
+  '/terms': 'Terms of Use',
   '/donor-dashboard': 'Donor Dashboard',
   '/recipient-dashboard': 'Recipient Dashboard',
   '/admin': 'Admin Panel',

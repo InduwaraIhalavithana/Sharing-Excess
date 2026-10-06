@@ -1,17 +1,18 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.dependencies import get_current_user, is_staff, require_roles
+from app.dependencies import get_current_user, is_staff, optional_user, require_roles
 from app.models import FoodListing, User
 from app.utils.uploads import save_upload
 
 router = APIRouter(prefix="/api/listings", tags=["listings"])
 
 
-def _listing_out(item: FoodListing) -> dict:
+def _listing_out(item: FoodListing, private: bool = False) -> dict:
+    """`private` (the donor themself, or staff) adds the donor's phone and email; everyone else never gets them."""
     return {
         "id": item.id,
         "donor_id": item.donor_id,
@@ -20,8 +21,8 @@ def _listing_out(item: FoodListing) -> dict:
         "expiry_date": item.expiry_date,
         "location": item.location,
         "description": item.description,
-        "contact_phone": item.contact_phone,
-        "contact_email": item.contact_email,
+        "contact_phone": item.contact_phone if private else None,
+        "contact_email": item.contact_email if private else None,
         "image_path": item.image_path,
         "status": item.status,
         "verification_status": item.verification_status,
@@ -40,12 +41,13 @@ def get_listings(
     page: int = 1,
     limit: int = 20,
     db: Session = Depends(get_db),
-    authorization: Optional[str] = Header(default=None),
+    me: Optional[User] = Depends(optional_user),
 ):
     query = db.query(FoodListing)
     if donor_id:
         # Unreviewed / rejected listings are visible only to their owner and staff
-        me = get_current_user(authorization, db)
+        if me is None:
+            raise HTTPException(401, "Not authenticated")
         if me.id != donor_id and not is_staff(me):
             raise HTTPException(403, "You can only view your own listings")
         # Donors see all their own listings, whatever the verification state
@@ -67,7 +69,9 @@ def get_listings(
     offset = (max(page, 1) - 1) * limit
     listings = query.order_by(FoodListing.created_at.desc()).offset(offset).limit(limit).all()
     return {"success": True, "total": total, "page": page, "limit": limit,
-            "listings": [_listing_out(item) for item in listings]}
+            "listings": [
+                _listing_out(item, private=bool(me and (is_staff(me) or me.id == item.donor_id)))
+                for item in listings]}
 
 
 @router.post("")
@@ -107,7 +111,7 @@ async def add_listing(
     db.refresh(listing)
     return {"success": True,
             "message": "Listing submitted — it will appear publicly once an officer approves it",
-            "listing": _listing_out(listing)}
+            "listing": _listing_out(listing, private=True)}
 
 
 @router.delete("/{listing_id}")

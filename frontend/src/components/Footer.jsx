@@ -68,9 +68,9 @@ export default function Footer() {
             {t('footer', 'copyright').replace('2025', String(year))}
           </p>
           <div className="se-footer__legal">
-            <a href="#" className="se-footer__link">{t('footer', 'privacy')}</a>
+            <Link to="/privacy" className="se-footer__link">{t('footer', 'privacy')}</Link>
             <span className="se-footer__sep">·</span>
-            <a href="#" className="se-footer__link">{t('footer', 'terms')}</a>
+            <Link to="/terms" className="se-footer__link">{t('footer', 'terms')}</Link>
           </div>
         </div>
       </div>
