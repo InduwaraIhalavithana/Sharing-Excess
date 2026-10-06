@@ -135,7 +135,9 @@ class MoneyDonation(Base):
     name       = Column(String(255), nullable=False)
     email      = Column(String(255), nullable=False, index=True)
     amount     = Column(Numeric(12, 2), nullable=False)
-    card_last4 = Column(String(4), nullable=False)
+    card_last4 = Column(String(4), nullable=True)            # only ever the last 4 digits, and only when known
+    source     = Column(String(20), nullable=False, server_default="manual")   # "payhere" | "manual"
+    payment_ref = Column(String(64), unique=True, nullable=True)  # PayHere order id: makes the callback idempotent
     created_at = Column(DateTime, server_default=func.now())
 
 

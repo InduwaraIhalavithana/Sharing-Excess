@@ -67,6 +67,9 @@ def _cleanup_test_rows(db):
 
         db.query(CommunityEvent).filter(CommunityEvent.title.like("pytest_%")).delete(synchronize_session=False)
         db.query(EventSubscriber).filter(EventSubscriber.email.like(f"{_EMAIL_PREFIX}%")).delete(synchronize_session=False)
+        from app.models import MoneyDonation
+
+        db.query(MoneyDonation).filter(MoneyDonation.email.like(f"{_EMAIL_PREFIX}%")).delete(synchronize_session=False)
         db.commit()
 
     def _purge():

@@ -191,12 +191,12 @@ class MoneyDonationRequest(BaseModel):
     name: str
     email: EmailStr
     amount: float
-    card_last4: str
+    card_last4: str = ""
 
     @field_validator("card_last4")
     @classmethod
     def validate_card(cls, v: str) -> str:
-        if not v.isdigit() or len(v) != 4:
+        if v and (not v.isdigit() or len(v) != 4):
             raise ValueError("card_last4 must be exactly 4 digits")
         return v
 

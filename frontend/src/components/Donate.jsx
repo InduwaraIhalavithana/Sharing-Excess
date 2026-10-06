@@ -40,6 +40,16 @@ export default function Donate() {
 
   const showToast = useCallback((msg, type = 'success') => setToast({ msg, type }), []);
 
+  // PayHere sends the donor back here with ?payment=success|cancelled. The redirect alone does not
+  // prove the payment - the server records it when PayHere confirms - so the wording says "confirming".
+  useEffect(() => {
+    const result = new URLSearchParams(window.location.search).get('payment');
+    if (!result) return;
+    if (result === 'success') showToast('Thank you! Your payment is being confirmed - you will get an email once it is recorded.');
+    else if (result === 'cancelled') showToast('Payment cancelled - you have not been charged.', 'error');
+    window.history.replaceState({}, '', window.location.pathname);
+  }, [showToast]);
+
   useEffect(() => {
     if (image) {
       const reader = new FileReader();
