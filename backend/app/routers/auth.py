@@ -17,10 +17,11 @@ from app.schemas import (
 )
 from app.services.accounts import purge_user
 from app.services.notifications import schedule_emails
+from app.services.otp import check_code, clear_code, issue_code
 from app.utils.email import forgot_password_email, send_email, verification_email
 from app.utils.jwt import create_access_token
 from app.utils.limiter import limiter
-from app.utils.security import generate_otp, hash_password, verify_password
+from app.utils.security import hash_password, verify_password
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -38,7 +39,6 @@ def signup(request: Request, body: SignupRequest, db: Session = Depends(get_db))
     if body.role not in ("donor", "recipient", "ngo"):
         raise HTTPException(400, "Choose an account type: donor, recipient or NGO")
     role = body.role
-    code = generate_otp()
     user = User(
         name=body.name,
         email=body.email,
@@ -51,8 +51,8 @@ def signup(request: Request, body: SignupRequest, db: Session = Depends(get_db))
         org_description=body.org_description.strip() or None if role == "ngo" else None,
         ngo_status="pending" if role == "ngo" else None,
         status="pending",
-        verification_code=code,
     )
+    code = issue_code(user)
     db.add(user)
     db.commit()
     db.refresh(user)
@@ -110,10 +110,10 @@ def verify_email(request: Request, body: VerifyEmailRequest, db: Session = Depen
         raise HTTPException(404, "User not found")
     if user.status != "pending":
         raise HTTPException(400, "This account is already verified")
-    if not user.verification_code or user.verification_code != body.code:
-        raise HTTPException(400, "Invalid verification code")
+    if not check_code(db, user, body.code):
+        raise HTTPException(400, "Invalid or expired verification code - request a new one")
     user.status = "active"
-    user.verification_code = None
+    clear_code(user)
     db.commit()
     return {"success": True, "message": "Email verified successfully"}
 
@@ -124,8 +124,7 @@ def resend_verification(request: Request, body: ResendVerificationRequest, db: S
     # Always return success to prevent email enumeration
     user = db.query(User).filter(User.email == body.email).first()
     if user and user.status == "pending":
-        code = generate_otp()
-        user.verification_code = code
+        code = issue_code(user)
         db.commit()
         send_email(body.email, "Email Verification – Sharing Excess",
                    verification_email(user.name, code))
@@ -138,8 +137,7 @@ def forgot_password(request: Request, body: ForgotPasswordRequest, db: Session =
     # Always return success to prevent email enumeration
     user = db.query(User).filter(User.email == body.email).first()
     if user:
-        code = generate_otp()
-        user.verification_code = code
+        code = issue_code(user)
         db.commit()
         send_email(body.email, "Password Reset – Sharing Excess",
                    forgot_password_email(code))
@@ -152,10 +150,10 @@ def reset_password(request: Request, body: ResetPasswordRequest, db: Session = D
     if not 8 <= len(body.new_password) <= 128:
         raise HTTPException(400, "Password must be 8-128 characters")
     user = db.query(User).filter(User.email == body.email).first()
-    if not user or not user.verification_code or user.verification_code != body.code:
-        raise HTTPException(400, "Invalid or expired reset code")
+    if not check_code(db, user, body.code):
+        raise HTTPException(400, "Invalid or expired reset code - request a new one")
     user.password = hash_password(body.new_password)
-    user.verification_code = None
+    clear_code(user)
     db.commit()
     return {"success": True, "message": "Password reset successfully"}
 

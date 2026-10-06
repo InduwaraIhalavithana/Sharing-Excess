@@ -56,7 +56,7 @@ Visitors without an account can browse listings, events and the NGO directory. T
 | Backend | FastAPI, SQLAlchemy 2, **Pydantic Settings**, **Alembic** migrations, Pillow, slowapi |
 | Database | PostgreSQL |
 | Auth | JWT (HS256) + PBKDF2-SHA256 password hashing |
-| Tests | pytest (145 tests, including migration tests on a scratch database) · Vitest + Testing Library (42 tests, including a check that every UI string exists in all three languages) |
+| Tests | pytest (177 tests, including migration tests on a scratch database) · Vitest + Testing Library (45 tests, including a check that every UI string exists in all three languages) |
 | Delivery | Docker Compose (Postgres + API + nginx), GitHub Actions CI |
 
 ## Quick start (Windows)

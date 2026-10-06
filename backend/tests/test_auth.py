@@ -104,12 +104,17 @@ class TestLogin:
         assert res.status_code == 403
 
 
+def _in_minutes(m):
+    from datetime import datetime, timedelta, timezone
+    return datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(minutes=m)
+
+
 class TestVerifyEmail:
     def test_verify_email_success(self, client, db):
         from app.models import User
-        from app.utils.security import generate_otp, hash_password
+        from app.services.otp import issue_code
+        from app.utils.security import hash_password
 
-        code = generate_otp()
         email = f"pytest_verify_{uuid.uuid4().hex[:6]}@example.com"
         user = User(
             name="Verify Me",
@@ -117,8 +122,8 @@ class TestVerifyEmail:
             password=hash_password("password123"),
             role="recipient",
             status="pending",
-            verification_code=code,
         )
+        code = issue_code(user)
         db.add(user)
         db.commit()
         db.refresh(user)
@@ -149,6 +154,7 @@ class TestVerifyEmail:
             role="recipient",
             status="pending",
             verification_code="123456",
+            verification_expires_at=_in_minutes(10),
         )
         db.add(user)
         db.commit()

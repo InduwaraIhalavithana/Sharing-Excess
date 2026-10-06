@@ -34,6 +34,8 @@ class User(Base):
     district          = Column(String(30), nullable=True)       # one of constants.DISTRICTS; drives "nearby first"
     status            = Column(SAEnum("pending", "active", "suspended", name="user_status"), nullable=False, default="pending")
     verification_code = Column(String(10), nullable=True)
+    verification_expires_at = Column(DateTime, nullable=True)     # naive UTC; see services/otp.py
+    verification_attempts   = Column(Integer, nullable=False, default=0, server_default="0")
     # Notification preferences. Empty list = "no filter": no districts -> own district and its neighbours,
     # no food types -> every type.
     notify_districts  = Column(ARRAY(Text), nullable=False, default=list, server_default="{}")
