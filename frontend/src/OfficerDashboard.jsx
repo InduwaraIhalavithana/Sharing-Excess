@@ -11,6 +11,7 @@ import { apiFetch } from './utils/api';
 import { API_BASE } from './config';
 import Toast from './components/Toast';
 import { TourKit, useTour } from './components/tour/TourKit';
+import { LIVE_EVENT } from './hooks/useLiveUpdates';
 
 ChartJS.register(
   CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend,
@@ -109,8 +110,9 @@ export default function OfficerDashboard() {
 
   const showToast = useCallback((msg, type = 'success') => setToast({ msg, type }), []);
 
-  const fetchAll = useCallback(async () => {
-    setLoading(true);
+  // `{ quiet: true }` refreshes in the background without flashing the loading skeleton
+  const fetchAll = useCallback(async (opts) => {
+    if (opts?.quiet !== true) setLoading(true);
     try {
       const staffCalls = [
         apiFetch(`${API_BASE}/api/officer/requests`).then(r => r.json()),
@@ -138,6 +140,14 @@ export default function OfficerDashboard() {
   }, [showToast]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
+
+  // Live updates: another staff member or a user changed something - refresh quietly
+  useEffect(() => {
+    let timer;
+    const onLive = () => { clearTimeout(timer); timer = setTimeout(() => fetchAll({ quiet: true }), 400); };
+    window.addEventListener(LIVE_EVENT, onLive);
+    return () => { window.removeEventListener(LIVE_EVENT, onLive); clearTimeout(timer); };
+  }, [fetchAll]);
 
   // Guard: only staff accounts may view this dashboard
   useEffect(() => {
