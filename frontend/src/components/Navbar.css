@@ -558,3 +558,10 @@
   .se-user-name          { display: none; }
   .se-user-chevron       { display: none; }
 }
+
+/* Phones: everything must fit one row or the hamburger gets pushed off-screen. */
+@media (max-width: 440px) {
+  .se-navbar__brand-text { display: none; }
+  .se-lang-btn           { padding: 4px 7px; }
+  .se-user-btn           { padding: 4px; }
+}
