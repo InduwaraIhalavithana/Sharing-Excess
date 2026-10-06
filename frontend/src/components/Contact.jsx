@@ -25,7 +25,6 @@ export default function Contact() {
         <div className="contact-info-strip">
           {[
             { icon: '📧', label: 'Email',   value: 'info@sharingexcess.lk', href: 'mailto:info@sharingexcess.lk' },
-            { icon: '📞', label: 'Phone',   value: '+94 77 123 4567',        href: 'tel:+94771234567' },
             { icon: '📍', label: 'Address', value: 'Uva Wellassa University, Badulla, Sri Lanka', href: null },
             { icon: '🕑', label: 'Hours',   value: 'Mon – Fri, 9am – 5pm',  href: null },
           ].map(c => (
@@ -86,22 +85,6 @@ export default function Contact() {
               ))}
             </div>
 
-            <div className="contact-side__social card">
-              <h3 className="contact-side__social-title">Follow Us</h3>
-              <div className="contact-social-links">
-                {[
-                  { icon: '📘', label: 'Facebook' },
-                  { icon: '🐦', label: 'Twitter' },
-                  { icon: '📷', label: 'Instagram' },
-                  { icon: '💼', label: 'LinkedIn' },
-                ].map(s => (
-                  <div key={s.label} className="contact-social-link">
-                    <span>{s.icon}</span>
-                    <span>{s.label}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
 
         </div>

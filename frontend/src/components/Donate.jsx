@@ -6,7 +6,7 @@ import { API_BASE } from '../config';
 import './Donate.css';
 import Toast from './Toast';
 import { apiFetch } from '../utils/api';
-import { usePublicListings } from '../hooks/queries';
+import { usePublicListings, usePublicStats } from '../hooks/queries';
 
 const PRESET_AMOUNTS = [6000, 4000, 3500, 3000, 2500, 2000];
 
@@ -34,6 +34,7 @@ export default function Donate() {
   });
 
   // Recently shared listings — shown to signed-out visitors as social proof
+  const { data: stats } = usePublicStats();
   const recentQ = usePublicListings({ limit: 4 });
   const recentListings = user ? [] : (recentQ.data?.listings ?? []);
 
@@ -390,16 +391,16 @@ export default function Donate() {
                   <h3 className="donate-impact__title">Your Donation Matters</h3>
                   <div className="donate-impact__stats">
                     <div className="donate-impact__stat">
-                      <span>1,575+</span>
-                      <p>Meals redistributed</p>
+                      <span>{(stats?.meals_delivered ?? 0).toLocaleString()}</span>
+                      <p>Meals delivered</p>
                     </div>
                     <div className="donate-impact__stat">
-                      <span>50+</span>
+                      <span>{(stats?.donors ?? 0).toLocaleString()}</span>
                       <p>Active donors</p>
                     </div>
                     <div className="donate-impact__stat">
-                      <span>12</span>
-                      <p>NGO partners</p>
+                      <span>{(stats?.listings_shared ?? 0).toLocaleString()}</span>
+                      <p>Listings shared</p>
                     </div>
                   </div>
                 </div>

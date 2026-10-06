@@ -1,10 +1,12 @@
 import Reveal from './Reveal.jsx';
+import { usePublicStats } from '../hooks/queries';
 
+// Live numbers (GET /api/public/stats)
 const STATS = [
-  { value: '1,575+', label: 'Meals Distributed', icon: '🍽️' },
-  { value: '50+',    label: 'Active Donors',     icon: '🤝' },
-  { value: '25+',    label: 'Partner NGOs',      icon: '🏢' },
-  { value: '2.5T',   label: 'Food Saved',        icon: '♻️' },
+  { field: 'meals_delivered', label: 'Meals Delivered',     icon: '🍽️' },
+  { field: 'donors',          label: 'Active Donors',       icon: '🤝' },
+  { field: 'recipients',      label: 'Registered Recipients', icon: '🏢' },
+  { field: 'listings_shared', label: 'Listings Shared',     icon: '♻️' },
 ];
 
 const WHY = [
@@ -36,6 +38,7 @@ const TECH = [
 ];
 
 export default function About() {
+  const { data: stats } = usePublicStats();
 
   return (
     <div className="about-page">
@@ -99,7 +102,7 @@ export default function About() {
               <Reveal key={s.label} delay={i * 100}>
                 <div className="about-stat card">
                   <span className="about-stat__icon">{s.icon}</span>
-                  <span className="about-stat__value">{s.value}</span>
+                  <span className="about-stat__value">{(stats?.[s.field] ?? 0).toLocaleString()}</span>
                   <span className="about-stat__label">{s.label}</span>
                 </div>
               </Reveal>
@@ -249,8 +252,8 @@ export default function About() {
             <div className="about-contact">
               {[
                 { icon: '📧', label: 'Email',   value: 'info@sharingexcess.lk' },
-                { icon: '📞', label: 'Phone',   value: '+94 77 123 4567' },
                 { icon: '📍', label: 'Address', value: 'Uva Wellassa University, Badulla, Sri Lanka' },
+                { icon: '🕑', label: 'Hours',   value: 'Mon – Fri, 9am – 5pm' },
               ].map(c => (
                 <div key={c.label} className="about-contact-item card">
                   <span className="about-contact-item__icon">{c.icon}</span>
@@ -260,17 +263,6 @@ export default function About() {
                   </div>
                 </div>
               ))}
-              <div className="about-contact-item card">
-                <span className="about-contact-item__icon">🌐</span>
-                <div>
-                  <strong>Follow Us</strong>
-                  <div className="about-social__links">
-                    {['📘', '🐦', '📷', '💼'].map((icon, i) => (
-                      <span key={i} className="about-social__link">{icon}</span>
-                    ))}
-                  </div>
-                </div>
-              </div>
             </div>
           </Reveal>
         </section>

@@ -146,8 +146,8 @@ const translations = {
       stats_title: 'Our Impact',
       impact_meals: 'Meals Redistributed',
       impact_donors: 'Registered Donors',
-      impact_ngos: 'Partner NGOs',
-      impact_areas: 'Districts Covered',
+      impact_recipients: 'Registered Recipients',
+      impact_listings: 'Listings Shared',
     },
     contact: {
       title: 'Get in Touch',
@@ -458,8 +458,8 @@ const translations = {
       stats_title: 'අපේ බලපෑම',
       impact_meals: 'නැවත බෙදා හරින ලද ආහාර',
       impact_donors: 'ලියාපදිංචි දායකයන්',
-      impact_ngos: 'හවුල් NGO',
-      impact_areas: 'ආවරිත දිස්ත්‍රික්ක',
+      impact_recipients: 'ලියාපදිංචි ලබන්නන්',
+      impact_listings: 'බෙදාගත් ලැයිස්තු',
     },
     contact: {
       title: 'සම්බන්ධ වන්න',
@@ -770,8 +770,8 @@ const translations = {
       stats_title: 'எங்கள் தாக்கம்',
       impact_meals: 'மறுவிநியோகம் செய்யப்பட்ட உணவுகள்',
       impact_donors: 'பதிவுசெய்த தானியாளர்கள்',
-      impact_ngos: 'கூட்டாளி NGOகள்',
-      impact_areas: 'உள்ளடக்கிய மாவட்டங்கள்',
+      impact_recipients: 'பதிவுசெய்த பெறுநர்கள்',
+      impact_listings: 'பகிர்ந்த பட்டியல்கள்',
     },
     contact: {
       title: 'தொடர்பு கொள்ளுங்கள்',
