@@ -30,7 +30,7 @@ export const fmtDate = (iso: string) => dateOnly.format(new Date(iso));
 export const fmtTime = (iso: string) => timeOnly.format(new Date(iso));
 
 /** "now" in Sri Lanka as the same naive string format the API uses, so the two can be compared. */
-export function nowColomboMs(): number {
+function nowColomboMs(): number {
   const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Asia/Colombo', year: 'numeric', month: '2-digit', day: '2-digit',
     hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,

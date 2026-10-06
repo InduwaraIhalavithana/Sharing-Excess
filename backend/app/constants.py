@@ -49,11 +49,6 @@ UNITS = ["kg", "g", "l", "ml", "packs", "packets", "portions", "pieces", "boxes"
 FULFILMENT = ["pickup", "delivery", "both"]
 EVENT_TYPES = ["food_drive", "volunteering", "distribution", "awareness", "workshop", "other"]
 
-# Request statuses that still hold part of a listing's stock (completed ones consumed it).
-HOLDING = ("pending", "accepted", "collected", "completed")
-# Statuses that give the stock back.
-RETURNING = ("declined", "cancelled", "no_show", "expired")
-
 
 def proximity_tier(user_district: str | None, district: str | None) -> int:
     """0 = same district, 1 = neighbouring, 2 = anywhere else (or unknown)."""

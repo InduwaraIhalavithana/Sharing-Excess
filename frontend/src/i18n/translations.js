@@ -5,20 +5,16 @@ const translations = {
     nav: {
       home: 'Home',
       about: 'About',
-      ngos: 'NGOs',
-      donate: 'Donate',
+      ngos: 'NGOs',
       events: 'Events',
       contact: 'Contact',
       feedback: 'Feedback',
       more: 'More',
-      live: 'live',
-      calendar: 'Calendar',
-      food_listings: 'Food Listings',
+      live: 'live',
       login: 'Login',
       logout: 'Logout',
       signup: 'Sign Up',
       dashboard: 'My Dashboard',
-      admin_panel: 'Admin Panel',
     },
     hunger: {
       eyebrow: 'Why this matters',
@@ -80,9 +76,7 @@ const translations = {
       login_link: 'Sign in',
       signup_btn: 'Create Account',
       verify_title: 'Verify Your Email',
-      verify_subtitle: 'We sent a 6-digit code to',
-      verify_code: 'Verification Code',
-      verify_placeholder: '000000',
+      verify_subtitle: 'We sent a 6-digit code to',
       verify_btn: 'Verify Email',
       resend: 'Resend code',
       resend_msg: "Didn't receive it?",
@@ -95,59 +89,19 @@ const translations = {
     },
     donor: {
       dashboard_title: 'Donor Dashboard',
-      welcome: 'Welcome back,',
-      my_listings: 'My Listings',
-      add_listing: 'Add New Listing',
-      pending_requests: 'Pending Requests',
+      welcome: 'Welcome back,',
+      add_listing: 'Add New Listing',
       no_listings: 'No listings yet. Create your first food donation listing!',
-      no_requests: 'No pending requests at the moment.',
-      food_name: 'Food Item',
-      quantity: 'Quantity',
-      expiry: 'Expiry Date',
-      location: 'Pickup Location',
-      description: 'Description',
-      status: 'Status',
-      status_available: 'Available',
-      status_claimed: 'Claimed',
-      status_expired: 'Expired',
-      accept_request: 'Accept',
-      decline_request: 'Decline',
-      mark_delivered: 'Mark Delivered',
-      total_donations: 'Total Donations',
-      meals_provided: 'Meals Provided',
+      no_requests: 'No pending requests at the moment.',
     },
     recipient: {
       dashboard_title: 'Recipient Dashboard',
-      welcome: 'Welcome back,',
-      available_food: 'Available Food',
-      my_requests: 'My Requests',
-      request_food: 'Request Food',
-      no_food: 'No food listings available at the moment.',
-      no_requests: 'No requests yet.',
-      food_name: 'Food Item',
-      quantity: 'Quantity',
-      needed_by: 'Needed By',
-      location: 'Delivery Location',
-      status_pending: 'Pending',
-      status_accepted: 'Accepted',
-      status_declined: 'Declined',
-      status_delivered: 'Delivered',
-      give_feedback: 'Give Feedback',
+      welcome: 'Welcome back,',
+      no_requests: 'No requests yet.',
     },
     feedback: {
       title: 'Share Your Feedback',
-      subtitle: 'Your experience helps us improve',
-      rating: 'Rating',
-      comment: 'Your Comments',
-      comment_placeholder: 'Tell us about your experience...',
-      image: 'Upload Photo (optional)',
-      submit: 'Submit Feedback',
-      success: 'Thank you for your feedback!',
-      general_title: 'General Feedback',
-      general_subtitle: 'Share thoughts about our platform',
-      all_feedback: 'Community Feedback',
-      no_feedback: 'No feedback yet. Be the first!',
-      view_feedback: 'View All Feedback',
+      subtitle: 'Your experience helps us improve',
     },
     about: {
       title: 'About Sharing Excess',
@@ -166,116 +120,27 @@ const translations = {
     },
     contact: {
       title: 'Get in Touch',
-      subtitle: "Have questions? We'd love to hear from you.",
-      name: 'Your Name',
-      email: 'Your Email',
-      subject: 'Subject',
-      message: 'Message',
-      message_placeholder: 'How can we help you?',
-      send_btn: 'Send Message',
-      success: 'Message sent successfully!',
-      address_title: 'Our Address',
-      phone_title: 'Phone',
-      email_title: 'Email',
-      hours_title: 'Office Hours',
+      subtitle: "Have questions? We'd love to hear from you.",
       hours_value: 'Monday – Friday, 9am – 5pm',
-    },
-    donate: {
-      title: 'Donate Food',
-      subtitle: 'List surplus food for those who need it',
-      food_name: 'Food Item Name',
-      food_name_placeholder: 'e.g., Rice, Bread, Curry',
-      quantity: 'Quantity',
-      quantity_placeholder: 'e.g., 50 meals, 10 kg',
-      expiry: 'Best Before / Expiry Date',
-      location: 'Pickup Address',
-      location_placeholder: 'Full address for pickup',
-      description: 'Additional Notes',
-      description_placeholder: 'Dietary info, storage, etc.',
-      image: 'Food Photo (optional)',
-      submit: 'List Food',
-      success: 'Your donation has been listed!',
-      not_logged_in: 'Please sign in to donate food',
-      wrong_role: 'Only donors can create listings',
     },
     ngos: {
       title: 'Our NGO Partners',
-      subtitle: 'Organizations helping distribute food across Sri Lanka',
-      no_ngos: 'No NGOs listed yet.',
-      contact: 'Contact',
-      location: 'Location',
-      focus: 'Focus Area',
+      subtitle: 'Organizations helping distribute food across Sri Lanka',
     },
     events: {
       title: 'Events & Drives',
       subtitle: 'Upcoming food collection drives and community events',
       upcoming: 'Upcoming Events',
       past: 'Past Events',
-      no_events: 'No upcoming events scheduled.',
-      date: 'Date',
-      location: 'Location',
-      organizer: 'Organizer',
-      register: 'Register',
+      no_events: 'No upcoming events scheduled.',
     },
     calendar: {
-      title: 'Event Calendar',
-      add_event: 'Add Event',
-      event_title: 'Event Title',
-      event_date: 'Date',
-      event_location: 'Location',
-      event_desc: 'Description',
-      save: 'Save Event',
-      delete: 'Delete Event',
-    },
-    admin: {
-      dashboard_title: 'Admin Dashboard',
-      pending_requests: 'Pending Requests',
-      active_listings: 'Active Listings',
-      all_users: 'All Users',
-      analytics: 'Analytics',
-      accept: 'Accept',
-      decline: 'Decline',
-      deliver: 'Mark Delivered',
-      filter_all: 'All',
-      filter_pending: 'Pending',
-      filter_accepted: 'Accepted',
-      filter_delivered: 'Delivered',
-      total_meals: 'Total Meals',
-      total_donors: 'Donors',
-      total_recipients: 'Recipients',
-      total_ngos: 'NGOs',
-    },
-    common: {
-      loading: 'Loading...',
-      error: 'Something went wrong.',
-      retry: 'Try Again',
-      save: 'Save',
-      cancel: 'Cancel',
-      delete: 'Delete',
-      edit: 'Edit',
-      view: 'View',
-      close: 'Close',
-      confirm: 'Confirm',
-      back: 'Back',
-      next: 'Next',
-      submit: 'Submit',
-      search: 'Search',
-      filter: 'Filter',
-      all: 'All',
-      yes: 'Yes',
-      no: 'No',
-      required: 'Required',
-      optional: 'Optional',
-      success: 'Success!',
-      language: 'Language',
-      dark_mode: 'Dark Mode',
-      light_mode: 'Light Mode',
+      title: 'Event Calendar',
     },
     footer: {
       tagline: 'Fighting food waste, feeding communities across Sri Lanka.',
       contact_title: 'Contact',
-      links_title: 'Quick Links',
-      follow_title: 'Follow Us',
+      links_title: 'Quick Links',
       copyright: '© 2025 Sharing Excess. All rights reserved.',
       privacy: 'Privacy Policy',
       terms: 'Terms of Use',
@@ -330,20 +195,16 @@ const translations = {
     nav: {
       home: 'නිවස',
       about: 'අපි ගැන',
-      ngos: 'NGO',
-      donate: 'ආහාර දෙනව',
+      ngos: 'NGO',
       events: 'සිදුවීම්',
       contact: 'අමතන්න',
       feedback: 'ප්‍රතිපෝෂණ',
       more: 'තවත්',
-      live: 'සජීවී',
-      calendar: 'දින දර්ශනය',
-      food_listings: 'ආහාර ලැයිස්තු',
+      live: 'සජීවී',
       login: 'ඇතුල් වන්න',
       logout: 'ඉවත් වන්න',
       signup: 'ලියාපදිංචිය',
       dashboard: 'මගේ ඩෑෂ්බෝඩ්',
-      admin_panel: 'Admin පැනලය',
     },
     hunger: {
       eyebrow: 'මෙය වැදගත් වන්නේ ඇයි',
@@ -405,9 +266,7 @@ const translations = {
       login_link: 'ඇතුළු වන්න',
       signup_btn: 'ගිනුම සාදන්න',
       verify_title: 'ඊමේල් තහවුරු කරන්න',
-      verify_subtitle: '6-ඉලක්කම් කේතය යවා ඇත',
-      verify_code: 'තහවුරු කේතය',
-      verify_placeholder: '000000',
+      verify_subtitle: '6-ඉලක්කම් කේතය යවා ඇත',
       verify_btn: 'ඊමේල් තහවුරු කරන්න',
       resend: 'කේතය නැවත යවන්න',
       resend_msg: 'ලැබුණේ නැද්ද?',
@@ -420,59 +279,19 @@ const translations = {
     },
     donor: {
       dashboard_title: 'දායක ඩෑෂ්බෝඩ්',
-      welcome: 'ආයුබෝවන්,',
-      my_listings: 'මගේ ලැයිස්තු',
-      add_listing: 'නව ලැයිස්තුවක් එකතු කරන්න',
-      pending_requests: 'අපේක්ෂිත ඉල්ලීම්',
+      welcome: 'ආයුබෝවන්,',
+      add_listing: 'නව ලැයිස්තුවක් එකතු කරන්න',
       no_listings: 'ලැයිස්තු නොමැත. පළමු ලැයිස්තුව සාදන්න!',
-      no_requests: 'අපේක්ෂිත ඉල්ලීම් නොමැත.',
-      food_name: 'ආහාරය',
-      quantity: 'ප්‍රමාණය',
-      expiry: 'කල් ඉකුත් දිනය',
-      location: 'ස්ථානය',
-      description: 'විස්තරය',
-      status: 'තත්වය',
-      status_available: 'ලබාගත හැකිය',
-      status_claimed: 'ඉල්ලා ඇත',
-      status_expired: 'කල් ඉකුත් ය',
-      accept_request: 'පිළිගන්න',
-      decline_request: 'ප්‍රතික්ෂේප කරන්න',
-      mark_delivered: 'ලබා දෙන ලදී',
-      total_donations: 'මුළු දායකත්ව',
-      meals_provided: 'ලබා දුන් ආහාර',
+      no_requests: 'අපේක්ෂිත ඉල්ලීම් නොමැත.',
     },
     recipient: {
       dashboard_title: 'ලබාගන්නා ඩෑෂ්බෝඩ්',
-      welcome: 'ආයුබෝවන්,',
-      available_food: 'ලබා ගත හැකි ආහාර',
-      my_requests: 'මගේ ඉල්ලීම්',
-      request_food: 'ආහාර ඉල්ලන්න',
-      no_food: 'දැනට ආහාර ලැයිස්තු නොමැත.',
-      no_requests: 'ඉල්ලීම් නොමැත.',
-      food_name: 'ආහාරය',
-      quantity: 'ප්‍රමාණය',
-      needed_by: 'අවශ්‍ය දිනය',
-      location: 'ලිපිනය',
-      status_pending: 'අපේක්ෂිත',
-      status_accepted: 'පිළිගත්',
-      status_declined: 'ප්‍රතික්ෂේප',
-      status_delivered: 'ලබා ගත්',
-      give_feedback: 'ප්‍රතිපෝෂණ',
+      welcome: 'ආයුබෝවන්,',
+      no_requests: 'ඉල්ලීම් නොමැත.',
     },
     feedback: {
       title: 'ඔබේ ප්‍රතිපෝෂණ',
-      subtitle: 'ඔබේ අත්දැකීම් අපව වැඩිදියුණු කිරීමට උපකාරී වේ',
-      rating: 'ශ්‍රේණිගත කිරීම',
-      comment: 'ඔබේ අදහස්',
-      comment_placeholder: 'ඔබේ අත්දැකීම ගැන පවසන්න...',
-      image: 'ඡායාරූපය (විකල්ප)',
-      submit: 'ප්‍රතිපෝෂණ ඉදිරිපත් කරන්න',
-      success: 'ස්තූතියි!',
-      general_title: 'සාමාන්‍ය ප්‍රතිපෝෂණ',
-      general_subtitle: 'අපේ වේදිකාව ගැන අදහස්',
-      all_feedback: 'ප්‍රජා ප්‍රතිපෝෂණ',
-      no_feedback: 'ප්‍රතිපෝෂණ නොමැත.',
-      view_feedback: 'සියලු ප්‍රතිපෝෂණ',
+      subtitle: 'ඔබේ අත්දැකීම් අපව වැඩිදියුණු කිරීමට උපකාරී වේ',
     },
     about: {
       title: 'Sharing Excess ගැන',
@@ -491,116 +310,27 @@ const translations = {
     },
     contact: {
       title: 'සම්බන්ධ වන්න',
-      subtitle: 'ප්‍රශ්න ඇතිද? ඔබෙන් ඇසීමට අපි කැමතිය.',
-      name: 'ඔබේ නම',
-      email: 'ඊමේල්',
-      subject: 'විෂය',
-      message: 'පණිවිඩය',
-      message_placeholder: 'අපට කෙසේ සහාය විය හැකිද?',
-      send_btn: 'පණිවිඩ යවන්න',
-      success: 'පණිවිඩය සාර්ථකව යවා ඇත!',
-      address_title: 'ලිපිනය',
-      phone_title: 'දුරකතනය',
-      email_title: 'ඊමේල්',
-      hours_title: 'කාර්යාල වේලාවන්',
+      subtitle: 'ප්‍රශ්න ඇතිද? ඔබෙන් ඇසීමට අපි කැමතිය.',
       hours_value: 'සඳුදා – සිකුරාදා, 9am – 5pm',
-    },
-    donate: {
-      title: 'ආහාර දෙනව',
-      subtitle: 'අවශ්‍ය අය සඳහා අතිරික්ත ආහාර ලැයිස්තු කරන්න',
-      food_name: 'ආහාර නාමය',
-      food_name_placeholder: 'උදා: බත්, පාන්, කරි',
-      quantity: 'ප්‍රමාණය',
-      quantity_placeholder: 'උදා: 50 ආහාර, 10 kg',
-      expiry: 'කල් ඉකුත් දිනය',
-      location: 'ලබාගත හැකි ලිපිනය',
-      location_placeholder: 'සම්පූර්ණ ලිපිනය',
-      description: 'අතිරේක සටහන්',
-      description_placeholder: 'ආහාර තොරතුරු, ගබඩාව, ආදිය',
-      image: 'ආහාර ඡායාරූපය (විකල්ප)',
-      submit: 'ලැයිස්තු කරන්න',
-      success: 'ඔබේ දායකත්වය ලැයිස්තු කෙරිණ!',
-      not_logged_in: 'ආහාර දෙනවා සඳහා ලොගින් වන්න',
-      wrong_role: 'දායකයන්ට පමණක් ලැයිස්තු සෑදිය හැකිය',
     },
     ngos: {
       title: 'අපේ NGO හවුල්කරුවන්',
-      subtitle: 'ශ්‍රී ලංකාව පුරා ආහාර බෙදාහැරීමට සහාය වන සංවිධාන',
-      no_ngos: 'NGO ලැයිස්තු නොමැත.',
-      contact: 'සම්බන්ධ',
-      location: 'ස්ථානය',
-      focus: 'අවධාන ක්ෂේත්‍රය',
+      subtitle: 'ශ්‍රී ලංකාව පුරා ආහාර බෙදාහැරීමට සහාය වන සංවිධාන',
     },
     events: {
       title: 'සිදුවීම් සහ ඩ්‍රයිව්',
       subtitle: 'ළඟ ඇති ආහාර එකතු කිරීමේ ඩ්‍රයිව් සහ ප්‍රජා සිදුවීම්',
       upcoming: 'ළඟ ඇති සිදුවීම්',
       past: 'පෙර සිදුවීම්',
-      no_events: 'ළඟ ඇති සිදුවීම් නොමැත.',
-      date: 'දිනය',
-      location: 'ස්ථානය',
-      organizer: 'සංවිධායකයා',
-      register: 'ලියාපදිංචිය',
+      no_events: 'ළඟ ඇති සිදුවීම් නොමැත.',
     },
     calendar: {
-      title: 'සිදුවීම් දින දර්ශනය',
-      add_event: 'සිදුවීමක් එකතු කරන්න',
-      event_title: 'සිදුවීම් නාමය',
-      event_date: 'දිනය',
-      event_location: 'ස්ථානය',
-      event_desc: 'විස්තරය',
-      save: 'සිදුවීම සුරකින්න',
-      delete: 'සිදුවීම මකන්න',
-    },
-    admin: {
-      dashboard_title: 'Admin ඩෑෂ්බෝඩ්',
-      pending_requests: 'අපේක්ෂිත ඉල්ලීම්',
-      active_listings: 'ක්‍රියාකාරී ලැයිස්තු',
-      all_users: 'සියලු පරිශීලකයන්',
-      analytics: 'විශ්ලේෂණය',
-      accept: 'පිළිගන්න',
-      decline: 'ප්‍රතික්ෂේප',
-      deliver: 'ලබා දෙන ලදී',
-      filter_all: 'සියල්ල',
-      filter_pending: 'අපේක්ෂිත',
-      filter_accepted: 'පිළිගත්',
-      filter_delivered: 'ලබා ගත්',
-      total_meals: 'මුළු ආහාර',
-      total_donors: 'දායකයන්',
-      total_recipients: 'ලබාගන්නන්',
-      total_ngos: 'NGO',
-    },
-    common: {
-      loading: 'පූරණය වෙමින්...',
-      error: 'දෝෂයකි.',
-      retry: 'නැවත උත්සාහ කරන්න',
-      save: 'සුරකින්න',
-      cancel: 'අවලංගු',
-      delete: 'මකන්න',
-      edit: 'සංස්කරණය',
-      view: 'බලන්න',
-      close: 'වසන්න',
-      confirm: 'තහවුරු කරන්න',
-      back: 'ආපසු',
-      next: 'ඊළඟ',
-      submit: 'ඉදිරිපත් කරන්න',
-      search: 'සොයන්න',
-      filter: 'පෙරීම',
-      all: 'සියල්ල',
-      yes: 'ඔව්',
-      no: 'නැත',
-      required: 'අවශ්‍ය',
-      optional: 'විකල්ප',
-      success: 'සාර්ථකයි!',
-      language: 'භාෂාව',
-      dark_mode: 'අඳුරු ප්‍රකාරය',
-      light_mode: 'ආලෝකමත් ප්‍රකාරය',
+      title: 'සිදුවීම් දින දර්ශනය',
     },
     footer: {
       tagline: 'ශ්‍රී ලංකාව පුරා ආහාර නාස්තිය සටන් කිරීම.',
       contact_title: 'සම්බන්ධ',
-      links_title: 'ශීඝ්‍ර සබැඳි',
-      follow_title: 'අනුගමනය කරන්න',
+      links_title: 'ශීඝ්‍ර සබැඳි',
       copyright: '© 2025 Sharing Excess. සියලු හිමිකම් ඇවිරිණ.',
       privacy: 'රහස්‍යතා ප්‍රතිපත්තිය',
       terms: 'භාවිත කොන්දේසි',
@@ -655,20 +385,16 @@ const translations = {
     nav: {
       home: 'முகப்பு',
       about: 'எங்களைப் பற்றி',
-      ngos: 'NGO',
-      donate: 'உணவு வழங்கு',
+      ngos: 'NGO',
       events: 'நிகழ்வுகள்',
       contact: 'தொடர்பு',
       feedback: 'கருத்து',
       more: 'மேலும்',
-      live: 'நேரலை',
-      calendar: 'நாட்காட்டி',
-      food_listings: 'உணவு பட்டியல்',
+      live: 'நேரலை',
       login: 'உள்நுழைவு',
       logout: 'வெளியேறு',
       signup: 'பதிவு செய்',
       dashboard: 'என் டாஷ்போர்டு',
-      admin_panel: 'Admin பலகை',
     },
     hunger: {
       eyebrow: 'இது ஏன் முக்கியம்',
@@ -730,9 +456,7 @@ const translations = {
       login_link: 'உள்நுழைவு',
       signup_btn: 'கணக்கு உருவாக்கவும்',
       verify_title: 'மின்னஞ்சலை சரிபார்க்கவும்',
-      verify_subtitle: '6-இலக்க குறியீடு அனுப்பப்பட்டது',
-      verify_code: 'சரிபார்ப்பு குறியீடு',
-      verify_placeholder: '000000',
+      verify_subtitle: '6-இலக்க குறியீடு அனுப்பப்பட்டது',
       verify_btn: 'மின்னஞ்சலை சரிபார்க்கவும்',
       resend: 'குறியீட்டை மீண்டும் அனுப்பு',
       resend_msg: 'கிடைக்கவில்லையா?',
@@ -745,59 +469,19 @@ const translations = {
     },
     donor: {
       dashboard_title: 'தானியாளர் டாஷ்போர்டு',
-      welcome: 'வருக,',
-      my_listings: 'என் பட்டியல்கள்',
-      add_listing: 'புதிய பட்டியல் சேர்க்கவும்',
-      pending_requests: 'நிலுவையிலுள்ள கோரிக்கைகள்',
+      welcome: 'வருக,',
+      add_listing: 'புதிய பட்டியல் சேர்க்கவும்',
       no_listings: 'பட்டியல் இல்லை. முதல் பட்டியலை உருவாக்கவும்!',
-      no_requests: 'நிலுவைக் கோரிக்கைகள் இல்லை.',
-      food_name: 'உணவு பொருள்',
-      quantity: 'அளவு',
-      expiry: 'காலாவதி தேதி',
-      location: 'இடம்',
-      description: 'விவரம்',
-      status: 'நிலை',
-      status_available: 'கிடைக்கும்',
-      status_claimed: 'கோரப்பட்டது',
-      status_expired: 'காலாவதி',
-      accept_request: 'ஏற்கவும்',
-      decline_request: 'மறுக்கவும்',
-      mark_delivered: 'வழங்கப்பட்டதாக குறிக்கவும்',
-      total_donations: 'மொத்த தானங்கள்',
-      meals_provided: 'வழங்கிய உணவுகள்',
+      no_requests: 'நிலுவைக் கோரிக்கைகள் இல்லை.',
     },
     recipient: {
       dashboard_title: 'பெறுபவர் டாஷ்போர்டு',
-      welcome: 'வருக,',
-      available_food: 'கிடைக்கும் உணவு',
-      my_requests: 'என் கோரிக்கைகள்',
-      request_food: 'உணவு கோருங்கள்',
-      no_food: 'இப்போது உணவு பட்டியல்கள் இல்லை.',
-      no_requests: 'கோரிக்கைகள் இல்லை.',
-      food_name: 'உணவு பொருள்',
-      quantity: 'அளவு',
-      needed_by: 'தேவை தேதி',
-      location: 'இடம்',
-      status_pending: 'நிலுவையில்',
-      status_accepted: 'ஏற்கப்பட்டது',
-      status_declined: 'மறுக்கப்பட்டது',
-      status_delivered: 'வழங்கப்பட்டது',
-      give_feedback: 'கருத்து தெரிவிக்கவும்',
+      welcome: 'வருக,',
+      no_requests: 'கோரிக்கைகள் இல்லை.',
     },
     feedback: {
       title: 'உங்கள் கருத்தை பகிருங்கள்',
-      subtitle: 'உங்கள் அனுபவம் எங்களை மேம்படுத்த உதவுகிறது',
-      rating: 'மதிப்பீடு',
-      comment: 'உங்கள் கருத்துகள்',
-      comment_placeholder: 'உங்கள் அனுபவத்தை சொல்லுங்கள்...',
-      image: 'புகைப்படம் (விருப்பமானது)',
-      submit: 'கருத்தை சமர்ப்பிக்கவும்',
-      success: 'கருத்திற்கு நன்றி!',
-      general_title: 'பொது கருத்து',
-      general_subtitle: 'எங்கள் தளத்தைப் பற்றிய எண்ணங்கள்',
-      all_feedback: 'சமூக கருத்துகள்',
-      no_feedback: 'கருத்துகள் இல்லை.',
-      view_feedback: 'அனைத்து கருத்துகளும்',
+      subtitle: 'உங்கள் அனுபவம் எங்களை மேம்படுத்த உதவுகிறது',
     },
     about: {
       title: 'Sharing Excess பற்றி',
@@ -816,116 +500,27 @@ const translations = {
     },
     contact: {
       title: 'தொடர்பு கொள்ளுங்கள்',
-      subtitle: 'கேள்விகள் உள்ளதா? நாங்கள் கேட்கத் தயாராக இருக்கிறோம்.',
-      name: 'உங்கள் பெயர்',
-      email: 'மின்னஞ்சல்',
-      subject: 'விஷயம்',
-      message: 'செய்தி',
-      message_placeholder: 'நாங்கள் எப்படி உதவலாம்?',
-      send_btn: 'செய்தி அனுப்பவும்',
-      success: 'செய்தி வெற்றிகரமாக அனுப்பப்பட்டது!',
-      address_title: 'முகவரி',
-      phone_title: 'தொலைபேசி',
-      email_title: 'மின்னஞ்சல்',
-      hours_title: 'அலுவலக நேரம்',
+      subtitle: 'கேள்விகள் உள்ளதா? நாங்கள் கேட்கத் தயாராக இருக்கிறோம்.',
       hours_value: 'திங்கள் – வெள்ளி, காலை 9 – மாலை 5',
-    },
-    donate: {
-      title: 'உணவு வழங்குங்கள்',
-      subtitle: 'தேவையுள்ளவர்களுக்கு மிகை உணவை பட்டியலிடுங்கள்',
-      food_name: 'உணவு பொருளின் பெயர்',
-      food_name_placeholder: 'எ.கா. சாதம், ரொட்டி, கறி',
-      quantity: 'அளவு',
-      quantity_placeholder: 'எ.கா. 50 உணவுகள், 10 kg',
-      expiry: 'காலாவதி தேதி',
-      location: 'பிக்கப் முகவரி',
-      location_placeholder: 'முழு முகவரி',
-      description: 'கூடுதல் குறிப்புகள்',
-      description_placeholder: 'உணவு தகவல், சேமிப்பு, போன்றவை',
-      image: 'உணவு புகைப்படம் (விருப்பமானது)',
-      submit: 'பட்டியலிடுங்கள்',
-      success: 'உங்கள் தானம் பட்டியலிடப்பட்டது!',
-      not_logged_in: 'உணவு வழங்க உள்நுழையுங்கள்',
-      wrong_role: 'தானியாளர்கள் மட்டுமே பட்டியல்களை உருவாக்க முடியும்',
     },
     ngos: {
       title: 'எங்கள் NGO கூட்டாளிகள்',
-      subtitle: 'இலங்கை முழுவதும் உணவு விநியோகிக்க உதவும் அமைப்புகள்',
-      no_ngos: 'NGO பட்டியல்கள் இல்லை.',
-      contact: 'தொடர்பு',
-      location: 'இடம்',
-      focus: 'கவனம் செலுத்தும் துறை',
+      subtitle: 'இலங்கை முழுவதும் உணவு விநியோகிக்க உதவும் அமைப்புகள்',
     },
     events: {
       title: 'நிகழ்வுகள் & டிரைவ்கள்',
       subtitle: 'வரவிருக்கும் உணவு சேகரிப்பு டிரைவ்கள் மற்றும் சமூக நிகழ்வுகள்',
       upcoming: 'வரவிருக்கும் நிகழ்வுகள்',
       past: 'கடந்த நிகழ்வுகள்',
-      no_events: 'திட்டமிட்ட நிகழ்வுகள் இல்லை.',
-      date: 'தேதி',
-      location: 'இடம்',
-      organizer: 'ஏற்பாட்டாளர்',
-      register: 'பதிவு',
+      no_events: 'திட்டமிட்ட நிகழ்வுகள் இல்லை.',
     },
     calendar: {
-      title: 'நிகழ்வு நாட்காட்டி',
-      add_event: 'நிகழ்வு சேர்க்கவும்',
-      event_title: 'நிகழ்வு தலைப்பு',
-      event_date: 'தேதி',
-      event_location: 'இடம்',
-      event_desc: 'விவரம்',
-      save: 'நிகழ்வை சேமிக்கவும்',
-      delete: 'நிகழ்வை நீக்கவும்',
-    },
-    admin: {
-      dashboard_title: 'Admin டாஷ்போர்டு',
-      pending_requests: 'நிலுவையிலுள்ள கோரிக்கைகள்',
-      active_listings: 'செயலில் உள்ள பட்டியல்கள்',
-      all_users: 'அனைத்து பயனர்களும்',
-      analytics: 'பகுப்பாய்வு',
-      accept: 'ஏற்கவும்',
-      decline: 'மறுக்கவும்',
-      deliver: 'வழங்கப்பட்டதாக குறிக்கவும்',
-      filter_all: 'அனைத்தும்',
-      filter_pending: 'நிலுவையில்',
-      filter_accepted: 'ஏற்கப்பட்டது',
-      filter_delivered: 'வழங்கப்பட்டது',
-      total_meals: 'மொத்த உணவுகள்',
-      total_donors: 'தானியாளர்கள்',
-      total_recipients: 'பெறுபவர்கள்',
-      total_ngos: 'NGOகள்',
-    },
-    common: {
-      loading: 'ஏற்றுகிறது...',
-      error: 'பிழை ஏற்பட்டது.',
-      retry: 'மீண்டும் முயற்சிக்கவும்',
-      save: 'சேமிக்கவும்',
-      cancel: 'ரத்து',
-      delete: 'நீக்கவும்',
-      edit: 'திருத்தவும்',
-      view: 'பார்க்கவும்',
-      close: 'மூடவும்',
-      confirm: 'உறுதிப்படுத்தவும்',
-      back: 'பின்னால்',
-      next: 'அடுத்து',
-      submit: 'சமர்ப்பிக்கவும்',
-      search: 'தேடுங்கள்',
-      filter: 'வடிகட்டு',
-      all: 'அனைத்தும்',
-      yes: 'ஆம்',
-      no: 'இல்லை',
-      required: 'தேவை',
-      optional: 'விருப்பமானது',
-      success: 'வெற்றி!',
-      language: 'மொழி',
-      dark_mode: 'இருண்ட பயன்முறை',
-      light_mode: 'ஒளி பயன்முறை',
+      title: 'நிகழ்வு நாட்காட்டி',
     },
     footer: {
       tagline: 'இலங்கை முழுவதும் உணவு வீண்விரயத்தை எதிர்த்துப் போராடுகிறோம்.',
       contact_title: 'தொடர்பு',
-      links_title: 'விரைவு இணைப்புகள்',
-      follow_title: 'பின்தொடருங்கள்',
+      links_title: 'விரைவு இணைப்புகள்',
       copyright: '© 2025 Sharing Excess. அனைத்து உரிமைகளும் பாதுகாக்கப்பட்டவை.',
       privacy: 'தனியுரிமை கொள்கை',
       terms: 'பயன்பாட்டு விதிமுறைகள்',

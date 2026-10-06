@@ -3,9 +3,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { API_BASE } from '../config';
 import { keys } from './queries';
 
-/** Fired on `window` for every live signal, so pages that don't use TanStack Query (the admin panel) can refetch. */
-export const LIVE_EVENT = 'se:live';
-
 type Topic = 'listings' | 'requests' | 'feedback' | 'events' | 'notifications';
 
 /**
@@ -33,7 +30,6 @@ export function useLiveUpdates() {
       if (topic === 'notifications') qc.invalidateQueries({ queryKey: keys.notifications });
       if (topic === 'events') qc.invalidateQueries({ queryKey: keys.events });
       qc.invalidateQueries({ queryKey: keys.stats });
-      window.dispatchEvent(new CustomEvent(LIVE_EVENT, { detail: topic }));
     };
 
     return () => source.close();
