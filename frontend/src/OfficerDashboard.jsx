@@ -880,7 +880,7 @@ export default function OfficerDashboard() {
                             <td style={{ fontWeight: 600 }}>{m.name || '—'}</td>
                             <td style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{m.email || '—'}</td>
                             <td style={{ fontWeight: 600, color: '#16a34a' }}>LKR {Number(m.amount).toLocaleString()}</td>
-                            <td>•••• {m.card_last4}</td>
+                            <td>{m.card_last4 ? `•••• ${m.card_last4}` : (m.source === 'payhere' ? 'PayHere' : 'Offline')}</td>
                             <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{new Date(m.created_at).toLocaleDateString()}</td>
                           </tr>
                         ))}

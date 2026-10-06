@@ -230,7 +230,7 @@ def list_money_donations(current_user: User = Depends(require_admin), db: Sessio
     donations = db.query(MoneyDonation).order_by(MoneyDonation.created_at.desc()).all()
     return {"success": True, "donations": [
         {"id": d.id, "name": d.name, "email": d.email,
-         "amount": float(d.amount), "card_last4": d.card_last4,
+         "amount": float(d.amount), "card_last4": d.card_last4, "source": d.source,
          "created_at": d.created_at}
         for d in donations
     ]}
