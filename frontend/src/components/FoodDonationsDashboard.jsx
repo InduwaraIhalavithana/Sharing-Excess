@@ -1,37 +1,21 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { API_BASE, APP_ROOT } from '../config';
+import { APP_ROOT } from '../config';
+import { useDebounced } from '../hooks/useDebounced';
+import { usePublicListings } from '../hooks/queries';
 import { SkeletonGrid } from './SkeletonCard.jsx';
 
 export default function FoodDonationsDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [donations, setDonations] = useState([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [search, setSearch] = useState('');
-
-  const fetchDonations = useCallback(async (q = '') => {
-    setLoading(true);
-    setError('');
-    try {
-      const response = await fetch(`${API_BASE}/api/listings${q ? `?q=${encodeURIComponent(q)}` : ''}`);
-      const data = await response.json();
-      if (data.success) {
-        setDonations(data.listings || []);
-        setTotal(data.total ?? (data.listings || []).length);
-      } else {
-        setError(data.message || 'Failed to fetch food donations');
-      }
-    } catch {
-      setError('Network error. Please try again.');
-    }
-    setLoading(false);
-  }, []);
-
-  useEffect(() => { fetchDonations(); }, [fetchDonations]);
+  const debouncedSearch = useDebounced(search, 300);
+  const { data, isPending: loading, isError, refetch } = usePublicListings({ q: debouncedSearch, limit: 50 });
+  const donations = data?.listings ?? [];
+  const total = data?.total ?? donations.length;
+  const error = isError ? 'Network error. Please try again.' : '';
+  const fetchDonations = () => refetch();
 
   const handleRequest = () => {
     if (!user) { window.dispatchEvent(new Event('openLogin')); return; }
@@ -63,14 +47,14 @@ export default function FoodDonationsDashboard() {
             type="text"
             placeholder="Search food, location…"
             value={search}
-            onChange={e => { setSearch(e.target.value); fetchDonations(e.target.value); }}
+            onChange={e => setSearch(e.target.value)}
           />
           {search && (
-            <button className="btn btn-outline btn-sm" onClick={() => { setSearch(''); fetchDonations(''); }}>
+            <button className="btn btn-outline btn-sm" onClick={() => setSearch('')}>
               ✕ Clear
             </button>
           )}
-          <button className="btn btn-outline btn-sm fd-refresh" onClick={() => fetchDonations(search)}>
+          <button className="btn btn-outline btn-sm fd-refresh" onClick={fetchDonations}>
             ↻ Refresh
           </button>
         </div>
@@ -81,7 +65,7 @@ export default function FoodDonationsDashboard() {
           <div className="dd-empty">
             <span className="dd-empty__icon">⚠️</span>
             <p>{error}</p>
-            <button className="btn btn-primary btn-sm" onClick={() => fetchDonations(search)}>Try again</button>
+            <button className="btn btn-primary btn-sm" onClick={fetchDonations}>Try again</button>
           </div>
         ) : donations.length === 0 ? (
           <div className="dd-empty">

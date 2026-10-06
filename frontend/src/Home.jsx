@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useLanguage } from './i18n/LanguageContext';
 import ImpactSection from './components/ImpactSection';
 import Reveal from './components/Reveal.jsx';
-import { API_BASE } from './config';
+import { useAuth } from './contexts/AuthContext';
+import { usePublicListings, usePublicStats, useFeedbackList } from './hooks/queries';
 import './HomeCustom.css';
 
 const HOW_STEPS = [
@@ -28,55 +29,19 @@ const FAQS = [
 export default function Home() {
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
-  const [liveListings, setLiveListings] = useState([]);
-  const [liveTotals, setLiveTotals] = useState({ listings: 0, requests: 0 });
-  const [testimonials, setTestimonials] = useState([]);
+  const { user } = useAuth();
   const [openFaq, setOpenFaq] = useState(0);
 
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem('user');
-      setUser(stored ? JSON.parse(stored) : null);
-    } catch { setUser(null); }
-
-    const onStorage = () => {
-      try {
-        const s = localStorage.getItem('user');
-        setUser(s ? JSON.parse(s) : null);
-      } catch { setUser(null); }
-    };
-    window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
-  }, []);
-
-  // Live platform data: open listings, open requests, latest feedback
-  useEffect(() => {
-    let cancelled = false;
-    fetch(`${API_BASE}/api/listings?limit=6`)
-      .then(r => r.json())
-      .then(d => {
-        if (cancelled || !d.success) return;
-        setLiveListings(d.listings || []);
-      })
-      .catch(() => {});
-    // Counts only - the request list itself is private to logged-in users
-    fetch(`${API_BASE}/api/public/stats`)
-      .then(r => r.json())
-      .then(d => {
-        if (cancelled || !d.success) return;
-        setLiveTotals({ listings: d.listings_available ?? 0, requests: d.requests_open ?? 0 });
-      })
-      .catch(() => {});
-    fetch(`${API_BASE}/api/feedback`)
-      .then(r => r.json())
-      .then(d => {
-        if (cancelled || !d.success) return;
-        setTestimonials((d.feedback || []).filter(f => f.comment).slice(0, 3));
-      })
-      .catch(() => {});
-    return () => { cancelled = true; };
-  }, []);
+  // Live platform data (cached and shared with other pages by TanStack Query)
+  const listingsQ = usePublicListings({ limit: 6 });
+  const statsQ = usePublicStats();
+  const feedbackQ = useFeedbackList();
+  const liveListings = listingsQ.data?.listings ?? [];
+  const liveTotals = {
+    listings: statsQ.data?.listings_available ?? 0,
+    requests: statsQ.data?.requests_open ?? 0,
+  };
+  const testimonials = (feedbackQ.data?.feedback ?? []).filter(f => f.comment).slice(0, 3);
 
   const handleDonate  = () => navigate(user ? '/donor-dashboard' : '/donate');
   const handleReceive = () => navigate(user ? '/recipient-dashboard' : '/food-donations');
