@@ -2,11 +2,13 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.dependencies import get_current_user
 from app.models import User
 from app.schemas import (
     SignupRequest, LoginRequest,
     VerifyEmailRequest, ResendVerificationRequest,
     ForgotPasswordRequest, ResetPasswordRequest,
+    ProfileUpdate, ChangePasswordRequest,
 )
 from app.utils.security import hash_password, verify_password, generate_otp
 from app.utils.email import send_email, verification_email, forgot_password_email
@@ -144,3 +146,41 @@ def reset_password(request: Request, body: ResetPasswordRequest, db: Session = D
     user.verification_code = None
     db.commit()
     return {"success": True, "message": "Password reset successfully"}
+
+
+# ── Account settings (signed-in user) ────────────────────────────────────────
+
+def _me(u: User) -> dict:
+    return {"id": u.id, "name": u.name, "email": u.email, "role": u.role,
+            "phone_number": u.phone_number, "location": u.location, "status": u.status}
+
+
+@router.get("/me")
+def get_me(me: User = Depends(get_current_user)):
+    return {"success": True, "user": _me(me)}
+
+
+@router.put("/me")
+def update_me(body: ProfileUpdate, db: Session = Depends(get_db), me: User = Depends(get_current_user)):
+    """Name, phone and location only - email and role can never be changed here."""
+    me.name = body.name
+    me.phone_number = body.phone_number or None
+    me.location = body.location.strip() or None
+    db.commit()
+    db.refresh(me)
+    return {"success": True, "message": "Profile updated", "user": _me(me)}
+
+
+@router.post("/change-password")
+@limiter.limit("5/minute")
+def change_password(request: Request, body: ChangePasswordRequest,
+                    db: Session = Depends(get_db), me: User = Depends(get_current_user)):
+    if not verify_password(body.current_password, me.password):
+        raise HTTPException(400, "Your current password is incorrect")
+    if len(body.new_password) < 8:
+        raise HTTPException(400, "New password must be at least 8 characters")
+    if body.new_password == body.current_password:
+        raise HTTPException(400, "New password must be different from the current one")
+    me.password = hash_password(body.new_password)
+    db.commit()
+    return {"success": True, "message": "Password changed"}

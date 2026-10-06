@@ -40,6 +40,33 @@ class ResetPasswordRequest(BaseModel):
     new_password: str
 
 
+class ProfileUpdate(BaseModel):
+    name: str
+    phone_number: str = ""
+    location: str = ""
+
+    @field_validator("name")
+    @classmethod
+    def _name(cls, v: str) -> str:
+        v = v.strip()
+        if not 2 <= len(v) <= 100:
+            raise ValueError("Name must be 2-100 characters")
+        return v
+
+    @field_validator("phone_number")
+    @classmethod
+    def _phone(cls, v: str) -> str:
+        v = v.strip()
+        if v and not (7 <= len(v) <= 20 and all(ch.isdigit() or ch in "+- ()" for ch in v)):
+            raise ValueError("Enter a valid phone number")
+        return v
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+
 # ── User ─────────────────────────────────────────────────────────────────────
 
 class UserOut(BaseModel):

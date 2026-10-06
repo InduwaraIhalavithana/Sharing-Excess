@@ -20,6 +20,7 @@ const CalendarPage = lazy(() => import('./components/CalendarPage'));
 const Contact = lazy(() => import('./components/Contact'));
 const Events = lazy(() => import('./components/Events'));
 const FeedbackPage = lazy(() => import('./FeedbackPage'));
+const AccountSettings = lazy(() => import('./components/AccountSettings'));
 const NotFound = lazy(() => import('./components/NotFound'));
 
 function PageFallback() {
@@ -68,6 +69,7 @@ function AppContent() {
                 <Route path="/calendar" element={<CalendarPage />} />
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/feedback" element={<FeedbackPage />} />
+                <Route path="/account" element={<AccountSettings />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
