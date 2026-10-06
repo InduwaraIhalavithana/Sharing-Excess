@@ -6,7 +6,7 @@ import SpotlightTour, { type TourStep } from './SpotlightTour';
 /** Which tour a page has. Each key lists the data-tour targets, in order. */
 export const TOURS = {
   donor: ['donor-stats', 'donor-add', 'donor-tabs', 'donor-requests', 'user-menu'],
-  recipient: ['recipient-stats', 'recipient-request', 'recipient-tabs', 'recipient-search', 'recipient-food', 'user-menu'],
+  recipient: ['recipient-stats', 'recipient-tabs', 'recipient-search', 'recipient-food', 'user-menu'],
   admin: ['admin-nav', 'admin-stats', 'admin-verify', 'admin-refresh'],
 } as const;
 

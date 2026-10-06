@@ -3,7 +3,7 @@ import { usePublicStats } from '../hooks/queries';
 
 // Live numbers (GET /api/public/stats)
 const STATS = [
-  { field: 'meals_delivered', label: 'Meals Delivered',     icon: '🍽️' },
+  { field: 'handovers_completed', label: 'Handovers Completed', icon: '🍽️' },
   { field: 'donors',          label: 'Active Donors',       icon: '🤝' },
   { field: 'recipients',      label: 'Registered Recipients', icon: '🏢' },
   { field: 'listings_shared', label: 'Listings Shared',     icon: '♻️' },
@@ -18,23 +18,23 @@ const WHY = [
 
 const HOW = [
   { num: '1', title: 'List',       body: 'Restaurants, hotels, and households list surplus food on our platform' },
-  { num: '2', title: 'Verify',     body: 'Field officers review every listing for safety before it goes public' },
-  { num: '3', title: 'Match',      body: 'NGOs and recipients browse available food and request what they need' },
-  { num: '4', title: 'Deliver',    body: 'Pickups are coordinated, delivery is tracked, and impact is measured' },
+  { num: '2', title: 'Go live',    body: 'The listing is visible at once, nearest district first, with photos and the expiry time' },
+  { num: '3', title: 'Request',    body: 'Recipients and NGOs ask for all or part of it; the quantity is held until the donor answers' },
+  { num: '4', title: 'Hand over',  body: 'On acceptance the donor and recipient share contact details, arrange pickup, then rate each other' },
 ];
 
 const TIMELINE = [
   { icon: '💡', title: 'The Idea',            body: 'Watching perfectly good food go to waste while communities struggled sparked the question: what if surplus could reach the people who need it, the same day?' },
   { icon: '🏗️', title: 'Building the Platform', body: 'Designed and built end-to-end as a solo project — the FastAPI backend, PostgreSQL database, React frontend, and everything in between.' },
-  { icon: '🔐', title: 'Making It Trustworthy', body: 'Added officer verification for every listing, JWT-secured roles, email notifications, and PayHere donations — so donors and recipients can trust the process.' },
+  { icon: '🔐', title: 'Making It Trustworthy', body: 'Added district-first matching, held stock, private contact details until a donor accepts, two-way ratings, NGO approval, and alerts by bell and email — so donors and recipients can trust the process.' },
   { icon: '🚀', title: 'Today & Beyond',       body: 'A fully working food redistribution platform for Sri Lanka — with multilingual support, dark mode, and a growing feature set. This is just the beginning.' },
 ];
 
 const TECH = [
   { group: 'Frontend',  items: ['⚛️ React 19', '⚡ Vite', '🧭 React Router', '📊 Chart.js'] },
   { group: 'Backend',   items: ['🐍 FastAPI', '🐘 PostgreSQL', '🧱 SQLAlchemy', '🔑 JWT Auth'] },
-  { group: 'Services',  items: ['💳 PayHere', '📧 SMTP Email', '☁️ Cloudinary', '🐳 Docker'] },
-  { group: 'Quality',   items: ['🧪 pytest (31 tests)', '🌍 3 Languages', '🌙 Dark Mode', '📱 Responsive'] },
+  { group: 'Services',  items: ['📧 SMTP Email', '☁️ Cloudinary', '🐳 Docker'] },
+  { group: 'Quality',   items: ['🧪 pytest', '🌍 3 Languages', '🌙 Dark Mode', '📱 Responsive'] },
 ];
 
 export default function About() {
@@ -169,7 +169,7 @@ export default function About() {
                 </p>
                 <p className="about-dev__bio">
                   From the FastAPI backend and PostgreSQL database to the React frontend,
-                  the officer verification workflow, payment integration, and trilingual UI —
+                  the district-first matching, stock tracking, ratings, and trilingual UI —
                   every line of this platform was written to fight hunger and food waste in Sri Lanka.
                 </p>
                 <div className="about-dev__badges">

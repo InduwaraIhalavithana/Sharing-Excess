@@ -3,11 +3,12 @@ import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { locate } from '../data/sriLankaPlaces';
+import { Link } from 'react-router-dom';
 import type { Listing } from '../types/api';
+import { qty } from '../utils/format';
 
 interface Props {
   listings: Listing[];
-  onRequest: () => void;
 }
 
 const SRI_LANKA: [number, number] = [7.8731, 80.7718];
@@ -33,22 +34,18 @@ function FitToMarkers({ points }: { points: [number, number][] }) {
   return null;
 }
 
-export default function FoodMap({ listings, onRequest }: Props) {
+export default function FoodMap({ listings }: Props) {
   // Group listings by the town they mention, so several in Colombo make one pin with a count
-  const { groups, unplaced } = useMemo(() => {
+  const { groups } = useMemo(() => {
     const byPlace = new Map<string, { name: string; lat: number; lng: number; items: Listing[] }>();
-    const missing: Listing[] = [];
     for (const l of listings) {
-      const place = locate(l.location);
-      if (!place) {
-        missing.push(l);
-        continue;
-      }
+      const place = locate(l.area) ?? locate(l.district);
+      if (!place) continue;   // every listing has a district, which is always a known place
       const g = byPlace.get(place.name) ?? { ...place, items: [] };
       g.items.push(l);
       byPlace.set(place.name, g);
     }
-    return { groups: [...byPlace.values()], unplaced: missing };
+    return { groups: [...byPlace.values()] };
   }, [listings]);
 
   const points = useMemo<[number, number][]>(() => groups.map((g) => [g.lat, g.lng]), [groups]);
@@ -68,25 +65,15 @@ export default function FoodMap({ listings, onRequest }: Props) {
               <ul className="fd-map__list">
                 {g.items.map((l) => (
                   <li key={l.id}>
-                    <b>{l.food_name}</b> · {l.quantity}
-                    {l.expiry_date && <span> · best before {l.expiry_date}</span>}
-                    <div className="fd-map__where">{l.location}</div>
+                    <Link to={`/listings/${l.id}`}><b>{l.food_name}</b></Link> · {qty(l.quantity_available)} {l.unit}
+                    <div className="fd-map__where">{l.area ?? l.district}</div>
                   </li>
                 ))}
               </ul>
-              <button type="button" className="btn btn-primary btn-sm" onClick={onRequest}>
-                📦 Request
-              </button>
             </Popup>
           </Marker>
         ))}
       </MapContainer>
-      {unplaced.length > 0 && (
-        <p className="fd-map__note">
-          {unplaced.length} listing{unplaced.length !== 1 ? 's' : ''} can't be placed on the map (location not recognised) -
-          switch to the list view to see {unplaced.length !== 1 ? 'them' : 'it'}.
-        </p>
-      )}
     </div>
   );
 }

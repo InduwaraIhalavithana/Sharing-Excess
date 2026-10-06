@@ -4,21 +4,27 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ErrorBoundary from './components/ErrorBoundary';
 import { SkeletonGrid } from './components/SkeletonCard';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Navigate, Routes, Route, useLocation } from 'react-router-dom';
+import { useAuth } from './contexts/AuthContext';
+import { dashboardPath } from './utils/format';
 import { usePageTitle } from './hooks/usePageTitle';
 import { useLiveUpdates } from './hooks/useLiveUpdates';
 import { useScrollReveal } from './hooks/useScrollReveal';
 import './theme-polish.css';
+import './redesign.css';
 
 // Each page is its own chunk, downloaded only when first visited.
 const Home = lazy(() => import('./Home'));
 const About = lazy(() => import('./components/About'));
 const DonorDashboard = lazy(() => import('./DonorDashboard'));
 const RecipientDashboard = lazy(() => import('./RecipientDashboard'));
-const OfficerDashboard = lazy(() => import('./OfficerDashboard'));
+const NgoDashboard = lazy(() => import('./NgoDashboard'));
+const AdminDashboard = lazy(() => import('./AdminDashboard'));
 const NGOs = lazy(() => import('./components/NGOs'));
-const Donate = lazy(() => import('./components/Donate'));
-const FoodDonationsDashboard = lazy(() => import('./components/FoodDonationsDashboard'));
+const PostFood = lazy(() => import('./components/PostFood'));
+const Browse = lazy(() => import('./components/Browse'));
+const ListingDetail = lazy(() => import('./components/ListingDetail'));
+const PublicProfile = lazy(() => import('./components/PublicProfile'));
 const CalendarPage = lazy(() => import('./components/CalendarPage'));
 const Contact = lazy(() => import('./components/Contact'));
 const Events = lazy(() => import('./components/Events'));
@@ -34,6 +40,13 @@ function PageFallback() {
       <SkeletonGrid />
     </div>
   );
+}
+
+/** Notification links like /dashboard/requests point at "your dashboard", whichever kind of account you have. */
+function MyDashboard({ tab }: { tab?: string }) {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/" replace />;
+  return <Navigate to={`${dashboardPath(user.role)}${tab && user.role !== 'admin' ? `?tab=${tab}` : ''}`} replace />;
 }
 
 function AppContent() {
@@ -61,7 +74,7 @@ function AppContent() {
       <ErrorBoundary>
         <Suspense fallback={<PageFallback />}>
           <Routes>
-            <Route path="/admin" element={<OfficerDashboard />} />
+            <Route path="/admin" element={<AdminDashboard />} />
           </Routes>
         </Suspense>
       </ErrorBoundary>
@@ -82,9 +95,18 @@ function AppContent() {
                 <Route path="/recipient-dashboard" element={<RecipientDashboard />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/ngos" element={<NGOs />} />
-                <Route path="/donate" element={<Donate />} />
+                <Route path="/ngo-dashboard" element={<NgoDashboard />} />
+                <Route path="/post-food" element={<PostFood />} />
+                <Route path="/food" element={<Browse />} />
+                <Route path="/listings" element={<Navigate to="/food" replace />} />
+                <Route path="/listings/:id" element={<ListingDetail />} />
+                <Route path="/profile/:id" element={<PublicProfile />} />
+                <Route path="/dashboard" element={<MyDashboard />} />
+                <Route path="/dashboard/requests" element={<MyDashboard tab="requests" />} />
+                {/* old addresses keep working */}
+                <Route path="/donate" element={<Navigate to="/post-food" replace />} />
+                <Route path="/food-donations" element={<Navigate to="/food" replace />} />
                 <Route path="/events" element={<Events />} />
-                <Route path="/food-donations" element={<FoodDonationsDashboard />} />
                 <Route path="/calendar" element={<CalendarPage />} />
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/feedback" element={<FeedbackPage />} />

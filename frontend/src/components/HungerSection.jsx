@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../i18n/LanguageContext';
-import { useAuth } from '../contexts/AuthContext';
 import { useCountUp } from '../hooks/useCountUp';
 import Reveal from './Reveal.jsx';
 import HungerScene from './HungerScene';
@@ -37,7 +36,6 @@ function HungerStat({ id, active, delay }) {
 export default function HungerSection() {
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const { user } = useAuth();
   const ref = useRef(null);
   const [active, setActive] = useState(false);
 
@@ -71,10 +69,10 @@ export default function HungerSection() {
           </div>
           <Reveal delay={420}>
             <div className="hunger__ctas">
-              <button className="home-cta-primary" onClick={() => navigate(user ? '/donor-dashboard' : '/donate')}>
+              <button className="home-cta-primary" onClick={() => navigate('/post-food')}>
                 🍽️ {t('home', 'donate_btn')}
               </button>
-              <button className="hunger__cta-ghost" onClick={() => navigate(user ? '/recipient-dashboard' : '/food-donations')}>
+              <button className="hunger__cta-ghost" onClick={() => navigate('/food')}>
                 📦 {t('home', 'receive_btn')}
               </button>
             </div>

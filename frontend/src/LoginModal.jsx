@@ -29,7 +29,7 @@ export default function LoginModal({ onClose, onLoginSuccess, onSwitchToSignup, 
     setLoading(true);
     try {
       const endpoint = mode === 'admin'
-        ? `${API_BASE}/api/auth/officer-login`
+        ? `${API_BASE}/api/auth/admin-login`
         : `${API_BASE}/api/auth/login`;
       const res = await fetch(endpoint, {
         method: 'POST',
@@ -38,7 +38,7 @@ export default function LoginModal({ onClose, onLoginSuccess, onSwitchToSignup, 
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        const rawUser = data.user || data.officer;
+        const rawUser = data.user || data.admin;
         const user = { ...rawUser, name: rawUser.name || 'User' };
         login(user, data.token);
         onLoginSuccess(user);

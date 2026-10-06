@@ -1,9 +1,13 @@
-import { useState } from 'react';
-import { Link, Navigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, Navigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext';
+import { useLanguage } from '../i18n/LanguageContext';
+import { useMeta } from '../hooks/queries';
+import { CATEGORY_ICON, dashboardPath } from '../utils/format';
+import { DistrictSelect } from './ui';
 import { api, ApiError } from '../utils/api';
 import {
   deleteAccountSchema, passwordSchema, profileSchema,
@@ -12,17 +16,6 @@ import {
 import type { User } from '../types/api';
 import Toast, { type ToastState } from './Toast';
 
-const ROLE_LABEL: Record<string, string> = {
-  donor: 'Donor',
-  recipient: 'Recipient',
-  adminofficer: 'Admin Officer',
-};
-
-const HOME_FOR: Record<string, string> = {
-  donor: '/donor-dashboard',
-  recipient: '/recipient-dashboard',
-  adminofficer: '/admin',
-};
 
 function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
   return (
@@ -36,6 +29,9 @@ function Field({ label, error, children }: { label: string; error?: string; chil
 
 export default function AccountSettings() {
   const { user, login, logout } = useAuth();
+  const { t } = useLanguage();
+  const { data: meta } = useMeta();
+  const { hash } = useLocation();
   const [toast, setToast] = useState<ToastState | null>(null);
 
   const profile = useForm<ProfileForm>({
@@ -44,6 +40,7 @@ export default function AccountSettings() {
       name: user?.name ?? '',
       phone_number: user?.phone_number ?? '',
       location: user?.location ?? '',
+      district: user?.district ?? '',
     },
   });
 
@@ -82,6 +79,34 @@ export default function AccountSettings() {
     },
   });
 
+  useEffect(() => {
+    if (hash) setTimeout(() => document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
+  }, [hash, user?.id]);
+
+  // Alert preferences: which districts and food types ring the bell / send an email. Empty = the sensible default.
+  const [nDistricts, setNDistricts] = useState<string[]>(user?.notify_districts ?? []);
+  const [nTypes, setNTypes] = useState<string[]>(user?.notify_food_types ?? []);
+  const [nEmail, setNEmail] = useState<boolean>(user?.notify_email ?? true);
+  useEffect(() => {
+    setNDistricts(user?.notify_districts ?? []);
+    setNTypes(user?.notify_food_types ?? []);
+    setNEmail(user?.notify_email ?? true);
+  }, [user?.notify_districts, user?.notify_food_types, user?.notify_email]);
+  const savePrefs = useMutation({
+    mutationFn: () =>
+      api<{ user: User }>('/api/auth/me', {
+        method: 'PUT',
+        body: JSON.stringify({
+          name: user?.name, phone_number: user?.phone_number ?? '', location: user?.location ?? '',
+          notify_districts: nDistricts, notify_food_types: nTypes, notify_email: nEmail,
+        }),
+      }),
+    onSuccess: (res) => { login(res.user); setToast({ msg: t('acct', 'prefs_saved') }); },
+    onError: (err: Error) => setToast({ msg: err.message, type: 'error' }),
+  });
+  const toggle = (list: string[], set: (v: string[]) => void, v: string) =>
+    set(list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
+
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const deleteForm = useForm<DeleteAccountForm>({
     resolver: zodResolver(deleteAccountSchema),
@@ -117,19 +142,19 @@ export default function AccountSettings() {
         <div className="acct-hero">
           <div className="acct-avatar" aria-hidden="true">{initial}</div>
           <div>
-            <h1 className="dd-title">Account settings</h1>
+            <h1 className="dd-title">{t('nav', 'account_settings')}</h1>
             <p className="dd-welcome">
-              {user.email} · <span className="acct-role">{ROLE_LABEL[user.role] ?? user.role}</span>
+              {user.email} · <span className="acct-role">{t('role', user.role)}</span>
             </p>
           </div>
         </div>
-        <Link to={HOME_FOR[user.role] ?? '/'} className="btn btn-primary">← Back to dashboard</Link>
+        <Link to={dashboardPath(user.role)} className="btn btn-primary">← {t('acct', 'back')}</Link>
       </div>
 
       <div className="acct-grid">
         <form className="dashboard-card acct-card" onSubmit={profile.handleSubmit((d) => saveProfile.mutate(d))} noValidate>
           <h2 className="acct-card__title">👤 Your details</h2>
-          <p className="acct-card__hint">Donors and recipients see your name and phone to coordinate pickups.</p>
+          <p className="acct-card__hint">{t('acct', 'details_hint')}</p>
 
           <Field label="Full name" error={e1.name?.message}>
             <input className="form-control" autoComplete="name" {...profile.register('name')} />
@@ -137,8 +162,12 @@ export default function AccountSettings() {
           <Field label="Phone number" error={e1.phone_number?.message}>
             <input className="form-control" type="tel" autoComplete="tel" placeholder="077 123 4567" {...profile.register('phone_number')} />
           </Field>
-          <Field label="Location" error={e1.location?.message}>
-            <input className="form-control" autoComplete="address-level2" placeholder="e.g. Badulla" {...profile.register('location')} />
+          <Field label={t('post', 'district')} error={e1.district?.message}>
+            <DistrictSelect value={profile.watch('district')} onChange={(v) => profile.setValue('district', v, { shouldDirty: true, shouldValidate: true })} invalid={!!e1.district} />
+            <p className="acct-card__hint">{t('acct', 'district_hint')}</p>
+          </Field>
+          <Field label={t('acct', 'town')} error={e1.location?.message}>
+            <input className="form-control" autoComplete="address-level2" placeholder="e.g. Bandarawela" {...profile.register('location')} />
           </Field>
           <Field label="Email">
             <input className="form-control" value={user.email} disabled readOnly />
@@ -170,12 +199,43 @@ export default function AccountSettings() {
         </form>
       </div>
 
-      {user.role !== 'adminofficer' && (
+      {user.role !== 'admin' && (
+        <div className="dashboard-card acct-card" id="notifications">
+          <h2 className="acct-card__title">🔔 {t('acct', 'alerts_title')}</h2>
+          <p className="acct-card__hint">{t('acct', 'alerts_hint')}</p>
+          <span className="form-label">{t('acct', 'alert_districts')}</span>
+          <div className="se-catbar">
+            {(meta?.districts ?? []).map((d) => (
+              <button key={d} type="button" aria-pressed={nDistricts.includes(d)} className={`se-catchip${nDistricts.includes(d) ? ' on' : ''}`}
+                onClick={() => toggle(nDistricts, setNDistricts, d)}>{d}</button>
+            ))}
+          </div>
+          <p className="acct-card__hint">{nDistricts.length === 0 ? t('acct', 'districts_default') : `${nDistricts.length} ✓`}</p>
+          {user.role !== 'donor' && (
+            <>
+          <span className="form-label">{t('acct', 'alert_types')}</span>
+          <div className="se-catbar">
+            {(meta?.categories ?? []).map((c) => (
+              <button key={c} type="button" aria-pressed={nTypes.includes(c)} className={`se-catchip${nTypes.includes(c) ? ' on' : ''}`}
+                onClick={() => toggle(nTypes, setNTypes, c)}>{CATEGORY_ICON[c]} {t('cat', c)}</button>
+            ))}
+          </div>
+          <p className="acct-card__hint">{nTypes.length === 0 ? t('acct', 'types_default') : `${nTypes.length} ✓`}</p>
+            </>
+          )}
+          <label className="acct-danger__check" style={{ margin: '12px 0' }}>
+            <input type="checkbox" checked={nEmail} onChange={(e) => setNEmail(e.target.checked)} /> {t('acct', 'email_too')}
+          </label>
+          <button className="btn btn-primary" onClick={() => savePrefs.mutate()} disabled={savePrefs.isPending}>{t('ui', 'save')}</button>
+        </div>
+      )}
+
+      {user.role !== 'admin' && (
         <div className="dashboard-card acct-danger">
           <h2 className="acct-card__title">🗑️ Delete my account</h2>
           <p className="acct-card__hint">
-            This permanently removes your account and everything tied to it: your {user.role === 'donor' ? 'listings' : 'requests'},
-            feedback, event sign-ups and uploaded photos. It cannot be undone. Donation records may be kept for accounting.
+            This permanently removes your account and everything tied to it: your {user.role === 'donor' ? 'listings and the requests on them' : 'requests'},
+            ratings, feedback, event sign-ups and uploaded photos. It cannot be undone.
           </p>
           {!confirmingDelete ? (
             <button className="btn adm-btn-danger" onClick={() => setConfirmingDelete(true)}>Delete my account…</button>

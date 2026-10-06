@@ -5,9 +5,10 @@ import ImpactSection from './components/ImpactSection';
 import HungerSection from './components/HungerSection';
 import Reveal from './components/Reveal.jsx';
 import HeroArt from './components/HeroArt';
-import { WHO_ITS_FOR } from './data/samplePartners';
+import { WHO_ITS_FOR } from './data/audience';
 import { useAuth } from './contexts/AuthContext';
-import { usePublicListings, usePublicStats, useFeedbackList } from './hooks/queries';
+import { usePublicListings, usePublicStats } from './hooks/queries';
+import { qty, timeLeft } from './utils/format';
 import './HomeCustom.css';
 
 const HOW_STEPS = [
@@ -17,11 +18,11 @@ const HOW_STEPS = [
 ];
 
 const FAQS = [
-  { q: 'Who can donate food?', a: 'Anyone — restaurants, hotels, bakeries, event organisers, or households with surplus food. Sign up as a donor, list what you have, and our officers take it from there.' },
-  { q: 'Is the food safe? How is it checked?', a: 'Every listing is reviewed by a field officer before it goes public. Expired or unsafe food is rejected at the gate, and donors see the reason why.' },
-  { q: 'How do recipients get the food?', a: 'Registered recipients and NGOs browse approved listings and send a request. Once the donor accepts, pickup or delivery is coordinated — and both sides get email updates at every step.' },
-  { q: 'Does it cost anything?', a: 'No. The platform is completely free for donors and recipients. Money donations through PayHere are optional and go toward logistics and community food drives.' },
-  { q: 'Can I volunteer or partner as an NGO?', a: 'Absolutely! Head to the Contact page and mention volunteering, or email us your organisation details to become a distribution partner.' },
+  { q: 'Who can donate food?', a: 'Anyone with surplus food: restaurants, hotels, bakeries, event organisers or households. Sign up as a donor, add a photo, the quantity and when it expires, and tick that it is safe to eat. Your listing goes live straight away.' },
+  { q: 'Is the food safe?', a: 'Donors confirm that the food is safe and not expired every time they post, and recipients can see photos, when it was prepared and when it expires. Anyone can report a listing, and the admin removes anything unsafe.' },
+  { q: 'How do recipients get the food?', a: 'Recipients and approved NGOs see food in their own district first, then neighbouring districts. Ask for all of it or just part, and the quantity is held for you until the donor answers. When they accept, you receive their contact details to arrange pickup or delivery.' },
+  { q: 'Is my address public?', a: 'No. Visitors only ever see the district and town. The exact address and phone number are shared only with the one recipient whose request the donor has accepted.' },
+  { q: 'Can my organisation join as an NGO?', a: 'Yes. Sign up as an NGO; once the admin approves your organisation you can post events, appear in the NGO directory and request food.' },
 ];
 
 export default function Home() {
@@ -33,18 +34,16 @@ export default function Home() {
   // Live platform data (cached and shared with other pages by TanStack Query)
   const listingsQ = usePublicListings({ limit: 6 });
   const statsQ = usePublicStats();
-  const feedbackQ = useFeedbackList();
   const liveListings = listingsQ.data?.listings ?? [];
   const liveTotals = {
     listings: statsQ.data?.listings_available ?? 0,
     requests: statsQ.data?.requests_open ?? 0,
   };
-  const testimonials = (feedbackQ.data?.feedback ?? []).filter(f => f.comment).slice(0, 3);
 
-  const handleDonate  = () => navigate(user ? '/donor-dashboard' : '/donate');
-  const handleReceive = () => navigate(user ? '/recipient-dashboard' : '/food-donations');
+  const handleDonate  = () => navigate('/post-food');
+  const handleReceive = () => navigate('/food');
   const handleGetStarted = () => {
-    if (user) navigate('/donor-dashboard');
+    if (user) navigate('/food');
     else window.dispatchEvent(new CustomEvent('openSignup'));
   };
 
@@ -100,8 +99,8 @@ export default function Home() {
             <div className="home-hero__float home-hero__float--3">
               <span className="home-hero__float-icon">✅</span>
               <div>
-                <strong>Verified</strong>
-                <small>by field officers</small>
+                <strong>Nearby first</strong>
+                <small>your district, then neighbours</small>
               </div>
             </div>
           </div>
@@ -163,12 +162,12 @@ export default function Home() {
                       <span className="home-live-card__badge">available</span>
                     </div>
                     <h3 className="home-live-card__name">{l.food_name}</h3>
-                    <p className="home-live-card__meta">📦 {l.quantity}</p>
-                    {l.location && <p className="home-live-card__meta">📍 {l.location}</p>}
-                    {l.expiry_date && <p className="home-live-card__meta">📅 Best before {l.expiry_date}</p>}
+                    <p className="home-live-card__meta">📦 {qty(l.quantity_available)} {l.unit} left</p>
+                    <p className="home-live-card__meta">📍 {l.district}{l.area ? ` · ${l.area}` : ''}</p>
+                    <p className="home-live-card__meta">⏱ {timeLeft(l.expires_at).text} left</p>
                     <button
                       className="home-live-card__btn"
-                      onClick={() => navigate(user ? '/recipient-dashboard' : '/food-donations')}
+                      onClick={() => navigate(`/listings/${l.id}`)}
                     >
                       Request this →
                     </button>
@@ -180,44 +179,12 @@ export default function Home() {
             <Reveal>
               <div className="home-live__empty">
                 <span>🌾</span>
-                <p>All current listings have been claimed — check back soon, or <Link to="/donate">be the donor</Link> who fills this space.</p>
+                <p>All current listings have been claimed — check back soon, or <Link to="/post-food">be the donor</Link> who fills this space.</p>
               </div>
             </Reveal>
           )}
         </div>
       </section>
-
-      {/* ── Testimonials ──────────────────────────────── */}
-      {testimonials.length > 0 && (
-        <section className="home-testimonials">
-          <div className="home-testimonials__inner">
-            <Reveal>
-              <h2 className="home-testimonials__title">💬 What the community says</h2>
-            </Reveal>
-            <div className="home-testimonials__grid">
-              {testimonials.map((f, i) => (
-                <Reveal key={f.id} delay={i * 120}>
-                  <figure className="home-testimonial">
-                    <div className="home-testimonial__stars" aria-label={`${f.rating || 5} stars`}>
-                      {'⭐'.repeat(Math.min(f.rating || 5, 5))}
-                    </div>
-                    <blockquote>"{f.comment}"</blockquote>
-                    <figcaption>
-                      <span className="home-testimonial__avatar">
-                        {(f.recipient_name || 'A').charAt(0).toUpperCase()}
-                      </span>
-                      <div>
-                        <strong>{f.recipient_name || 'Anonymous'}</strong>
-                        <small>{new Date(f.created_at).toLocaleDateString()}</small>
-                      </div>
-                    </figcaption>
-                  </figure>
-                </Reveal>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* ── Partner marquee ───────────────────────────── */}
       <section className="home-partners">

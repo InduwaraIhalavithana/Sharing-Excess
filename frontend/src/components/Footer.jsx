@@ -10,7 +10,7 @@ export default function Footer() {
     { to: '/',         label: t('nav', 'home') },
     { to: '/about',    label: t('nav', 'about') },
     { to: '/ngos',     label: t('nav', 'ngos') },
-    { to: '/donate',   label: t('nav', 'donate') },
+    { to: '/food',     label: t('nav', 'food') },
     { to: '/events',   label: t('nav', 'events') },
     { to: '/feedback', label: t('nav', 'feedback') },
   ];
