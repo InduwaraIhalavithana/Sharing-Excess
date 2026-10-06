@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useLanguage } from './i18n/LanguageContext';
 import ImpactSection from './components/ImpactSection';
 import Reveal from './components/Reveal.jsx';
+import HeroArt from './components/HeroArt';
 import { useAuth } from './contexts/AuthContext';
 import { usePublicListings, usePublicStats, useFeedbackList } from './hooks/queries';
 import './HomeCustom.css';
@@ -83,11 +84,7 @@ export default function Home() {
           </div>
           <div className="home-hero__media">
             <div className="home-hero__img-wrap">
-              <img
-                src="/slideshow/slide5.jpg"
-                alt="World Hunger Day — May 28"
-                className="home-hero__static-img"
-              />
+              <HeroArt />
             </div>
             <div className="home-hero__float home-hero__float--1">
               <span className="home-hero__float-icon">🥖</span>
