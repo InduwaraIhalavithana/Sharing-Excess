@@ -3,6 +3,10 @@
 // src/i18n/translations.test.ts fails if any key used by the app is missing from any language.
 
 const en = {
+  home: {
+    how_step2_title: 'Request', how_step2_desc: 'People and NGOs nearby ask for all or part of it. The amount is held until the donor answers.',
+    how_step3_title: 'Hand over & rate', how_step3_desc: 'Arrange pickup or delivery, mark it collected, and rate each other.',
+  },
   nav: { food: 'Find Food', account_settings: 'Account settings' },
   role: { donor: 'Donor', recipient: 'Recipient', ngo: 'NGO', admin: 'Admin' },
   status: {
@@ -90,6 +94,14 @@ const en = {
   recipient: { no_requests: 'You have not requested any food yet. Find something nearby and tap “Request”.' },
   notif: { title: 'Notifications', mark_all: 'Mark all read', empty: 'Nothing yet. We will tell you when food appears near you.' },
   acct: {
+    profile_updated: 'Profile updated.', password_changed: 'Password changed.', deleted_bye: 'Your account and its data have been deleted. Goodbye - thank you for sharing.',
+    full_name: 'Full name', email: 'Email', save_changes: 'Save changes', current_pw: 'Current password', new_pw: 'New password',
+    confirm_pw: 'Confirm new password', update_pw: 'Update password', your_pw: 'Your password', delete_perm: 'Permanently delete my account',
+    your_details: 'Your details', change_password: 'Change password', delete_title: 'Delete my account',
+    email_hint: 'Your email is your login and can’t be changed here.', pw_hint: 'Use at least 8 characters. You’ll stay signed in on this device.',
+    delete_btn: 'Delete my account…', understand: 'I understand this cannot be undone', keep: 'Keep my account',
+    delete_hint_donor: 'This permanently removes your account, your listings and the requests on them, ratings, feedback, event sign-ups and uploaded photos. It cannot be undone.',
+    delete_hint: 'This permanently removes your account, your requests, ratings, feedback, event sign-ups and uploaded photos. It cannot be undone.',
     back: 'Back to dashboard', details_hint: 'Your phone is shared only with people you have agreed a handover with.',
     district_hint: 'Used to show you the nearest food and events first.', town: 'Town / area',
     alerts_title: 'Alerts', alerts_hint: 'Choose which districts and food types ring your bell and arrive by email.',
@@ -180,6 +192,10 @@ const en = {
 };
 
 const si = {
+  home: {
+    how_step2_title: 'ඉල්ලන්න', how_step2_desc: 'ළඟ සිටින අය සහ NGO සියල්ල හෝ කොටසක් ඉල්ලයි. දායකයා පිළිතුරු දෙන තෙක් ප්‍රමාණය රඳවා ගනී.',
+    how_step3_title: 'භාර දී ශ්‍රේණිගත කරන්න', how_step3_desc: 'ගැනීම හෝ බෙදා හැරීම සකස් කර, ලබා ගත් බව සලකුණු කර, එකිනෙකා ශ්‍රේණිගත කරන්න.',
+  },
   nav: { food: 'ආහාර සොයන්න', account_settings: 'ගිණුම් සැකසුම්' },
   role: { donor: 'දායකයා', recipient: 'ලබන්නා', ngo: 'රාජ්‍ය නොවන සංවිධානය', admin: 'පරිපාලක' },
   status: {
@@ -264,6 +280,14 @@ const si = {
   recipient: { no_requests: 'ඔබ තවම ආහාර ඉල්ලා නැත. ළඟ ඇති දෙයක් සොයා “ඉල්ලන්න” ඔබන්න.' },
   notif: { title: 'දැනුම්දීම්', mark_all: 'සියල්ල කියවූ ලෙස', empty: 'තවම නැත. ඔබ ළඟ ආහාර පෙනෙන විට දන්වන්නෙමු.' },
   acct: {
+    profile_updated: 'පැතිකඩ යාවත්කාලීන විය.', password_changed: 'මුරපදය වෙනස් විය.', deleted_bye: 'ඔබේ ගිණුම සහ දත්ත මකා ඇත. ස්තූතියි, ආයුබෝවන්.',
+    full_name: 'සම්පූර්ණ නම', email: 'විද්‍යුත් තැපෑල', save_changes: 'වෙනස්කම් සුරකින්න', current_pw: 'වත්මන් මුරපදය', new_pw: 'නව මුරපදය',
+    confirm_pw: 'නව මුරපදය තහවුරු කරන්න', update_pw: 'මුරපදය යාවත්කාලීන කරන්න', your_pw: 'ඔබේ මුරපදය', delete_perm: 'මගේ ගිණුම ස්ථිරවම මකන්න',
+    your_details: 'ඔබේ විස්තර', change_password: 'මුරපදය වෙනස් කරන්න', delete_title: 'මගේ ගිණුම මකන්න',
+    email_hint: 'ඔබේ විද්‍යුත් තැපෑල ඔබේ පිවිසුමයි, මෙහි වෙනස් කළ නොහැක.', pw_hint: 'අවම වශයෙන් අක්ෂර 8ක් භාවිත කරන්න. මෙම උපාංගයේ ඔබ පිවිසී සිටිනු ඇත.',
+    delete_btn: 'මගේ ගිණුම මකන්න…', understand: 'මෙය ආපසු හැරවිය නොහැකි බව මට වැටහේ', keep: 'මගේ ගිණුම තබා ගන්න',
+    delete_hint_donor: 'මෙය ඔබේ ගිණුම, ලැයිස්තු සහ ඒවායේ ඉල්ලීම්, ශ්‍රේණිගත කිරීම්, ප්‍රතිපෝෂණ, සිදුවීම් සහභාගිත්ව සහ උඩුගත කළ ඡායාරූප ස්ථිරවම ඉවත් කරයි. ආපසු හැරවිය නොහැක.',
+    delete_hint: 'මෙය ඔබේ ගිණුම, ඉල්ලීම්, ශ්‍රේණිගත කිරීම්, ප්‍රතිපෝෂණ, සිදුවීම් සහභාගිත්ව සහ උඩුගත කළ ඡායාරූප ස්ථිරවම ඉවත් කරයි. ආපසු හැරවිය නොහැක.',
     back: 'ඩෑෂ්බෝඩ් එකට ආපසු', details_hint: 'ඔබේ දුරකථනය බෙදාගන්නේ ඔබ භාර දීමක් එකඟ වූ අය සමඟ පමණි.',
     district_hint: 'ළඟම ආහාර සහ සිදුවීම් මුලින් පෙන්වීමට භාවිත කෙරේ.', town: 'නගරය / ප්‍රදේශය',
     alerts_title: 'දැනුම්දීම්', alerts_hint: 'කුමන දිස්ත්‍රික්ක සහ ආහාර වර්ග සඳහා සීනුව නාද වී විද්‍යුත් තැපෑල ලැබිය යුතුදැයි තෝරන්න.',
@@ -352,6 +376,10 @@ const si = {
 };
 
 const ta = {
+  home: {
+    how_step2_title: 'கோருங்கள்', how_step2_desc: 'அருகிலுள்ளவர்களும் NGO களும் முழுவதையும் அல்லது ஒரு பகுதியைக் கோருகின்றனர். நன்கொடையாளர் பதிலளிக்கும் வரை அளவு ஒதுக்கப்படும்.',
+    how_step3_title: 'ஒப்படைத்து மதிப்பிடுங்கள்', how_step3_desc: 'எடுத்தல் அல்லது விநியோகத்தை ஏற்பாடு செய்து, பெறப்பட்டது எனக் குறித்து, ஒருவரையொருவர் மதிப்பிடுங்கள்.',
+  },
   nav: { food: 'உணவைத் தேடு', account_settings: 'கணக்கு அமைப்புகள்' },
   role: { donor: 'நன்கொடையாளர்', recipient: 'பெறுநர்', ngo: 'அரசுசாரா அமைப்பு', admin: 'நிர்வாகி' },
   status: {
@@ -436,6 +464,14 @@ const ta = {
   recipient: { no_requests: 'நீங்கள் இன்னும் உணவு கோரவில்லை. அருகில் ஏதாவது கண்டு “கோரு” அழுத்தவும்.' },
   notif: { title: 'அறிவிப்புகள்', mark_all: 'அனைத்தும் படிக்கப்பட்டது', empty: 'இன்னும் இல்லை. உங்கள் அருகில் உணவு வந்ததும் தெரிவிப்போம்.' },
   acct: {
+    profile_updated: 'சுயவிவரம் புதுப்பிக்கப்பட்டது.', password_changed: 'கடவுச்சொல் மாற்றப்பட்டது.', deleted_bye: 'உங்கள் கணக்கும் தரவும் நீக்கப்பட்டன. நன்றி, பிரியாவிடை.',
+    full_name: 'முழுப் பெயர்', email: 'மின்னஞ்சல்', save_changes: 'மாற்றங்களைச் சேமி', current_pw: 'தற்போதைய கடவுச்சொல்', new_pw: 'புதிய கடவுச்சொல்',
+    confirm_pw: 'புதிய கடவுச்சொல்லை உறுதிசெய்', update_pw: 'கடவுச்சொல்லைப் புதுப்பி', your_pw: 'உங்கள் கடவுச்சொல்', delete_perm: 'எனது கணக்கை நிரந்தரமாக நீக்கு',
+    your_details: 'உங்கள் விவரங்கள்', change_password: 'கடவுச்சொல்லை மாற்று', delete_title: 'எனது கணக்கை நீக்கு',
+    email_hint: 'உங்கள் மின்னஞ்சலே உங்கள் உள்நுழைவு; இங்கே மாற்ற முடியாது.', pw_hint: 'குறைந்தது 8 எழுத்துகளைப் பயன்படுத்துங்கள். இந்தச் சாதனத்தில் உள்நுழைந்தே இருப்பீர்கள்.',
+    delete_btn: 'எனது கணக்கை நீக்கு…', understand: 'இதைத் திரும்பப் பெற முடியாது என்பதை அறிவேன்', keep: 'எனது கணக்கை வைத்துக்கொள்',
+    delete_hint_donor: 'இது உங்கள் கணக்கு, பட்டியல்கள் மற்றும் அவற்றின் கோரிக்கைகள், மதிப்பீடுகள், கருத்துகள், நிகழ்வுப் பதிவுகள், பதிவேற்றிய புகைப்படங்களை நிரந்தரமாக நீக்கும். திரும்பப் பெற முடியாது.',
+    delete_hint: 'இது உங்கள் கணக்கு, கோரிக்கைகள், மதிப்பீடுகள், கருத்துகள், நிகழ்வுப் பதிவுகள், பதிவேற்றிய புகைப்படங்களை நிரந்தரமாக நீக்கும். திரும்பப் பெற முடியாது.',
     back: 'டாஷ்போர்டுக்குத் திரும்பு', details_hint: 'ஒப்படைப்பை ஒப்புக்கொண்டவர்களுடன் மட்டுமே உங்கள் தொலைபேசி பகிரப்படும்.',
     district_hint: 'அருகிலுள்ள உணவையும் நிகழ்வுகளையும் முதலில் காட்டப் பயன்படும்.', town: 'நகரம் / பகுதி',
     alerts_title: 'அறிவிப்புகள்', alerts_hint: 'எந்த மாவட்டங்கள், உணவு வகைகள் மணி ஒலிக்கவும் மின்னஞ்சலில் வரவும் வேண்டும் என்பதைத் தேர்ந்தெடுக்கவும்.',

@@ -76,7 +76,7 @@ export default function Contact() {
               {[
                 { q: 'How quickly do you respond?', a: 'We aim to reply within 1–2 business days.' },
                 { q: 'Can I volunteer with you?', a: 'Yes! Mention it in your message and we\'ll send details.' },
-                { q: 'How do I become an NGO partner?', a: 'Email us at info@sharingexcess.lk with your organisation details.' },
+                { q: 'How do I become an NGO partner?', a: 'Sign up with an NGO account. Once the admin approves your organisation you can post events, appear in the NGO directory and request food.' },
               ].map((faq, i) => (
                 <div key={i} className="contact-faq-item">
                   <p className="contact-faq-item__q">❓ {faq.q}</p>

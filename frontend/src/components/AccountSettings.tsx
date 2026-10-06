@@ -54,7 +54,7 @@ export default function AccountSettings() {
       api<{ user: User }>('/api/auth/me', { method: 'PUT', body: JSON.stringify(data) }),
     onSuccess: (res) => {
       login(res.user); // keep the navbar name and stored session in sync
-      setToast({ msg: 'Profile updated.' });
+      setToast({ msg: t('acct', 'profile_updated') });
     },
     onError: (err: Error) => setToast({ msg: err.message, type: 'error' }),
   });
@@ -67,7 +67,7 @@ export default function AccountSettings() {
       }),
     onSuccess: () => {
       password.reset();
-      setToast({ msg: 'Password changed.' });
+      setToast({ msg: t('acct', 'password_changed') });
     },
     onError: (err: Error) => {
       // A wrong current password belongs next to that field, not in a toast
@@ -116,7 +116,7 @@ export default function AccountSettings() {
     mutationFn: (data: DeleteAccountForm) =>
       api('/api/auth/me', { method: 'DELETE', body: JSON.stringify({ password: data.password }) }),
     onSuccess: () => {
-      setToast({ msg: 'Your account and its data have been deleted. Goodbye - thank you for sharing.' });
+      setToast({ msg: t('acct', 'deleted_bye') });
       setTimeout(logout, 2200); // let the message be read, then sign out (which returns to the home page)
     },
     onError: (err: Error) => {
@@ -153,13 +153,13 @@ export default function AccountSettings() {
 
       <div className="acct-grid">
         <form className="dashboard-card acct-card" onSubmit={profile.handleSubmit((d) => saveProfile.mutate(d))} noValidate>
-          <h2 className="acct-card__title">👤 Your details</h2>
+          <h2 className="acct-card__title">👤 {t('acct', 'your_details')}</h2>
           <p className="acct-card__hint">{t('acct', 'details_hint')}</p>
 
-          <Field label="Full name" error={e1.name?.message}>
+          <Field label={t('acct', 'full_name')} error={e1.name?.message}>
             <input className="form-control" autoComplete="name" {...profile.register('name')} />
           </Field>
-          <Field label="Phone number" error={e1.phone_number?.message}>
+          <Field label={t('post', 'phone')} error={e1.phone_number?.message}>
             <input className="form-control" type="tel" autoComplete="tel" placeholder="077 123 4567" {...profile.register('phone_number')} />
           </Field>
           <Field label={t('post', 'district')} error={e1.district?.message}>
@@ -169,32 +169,32 @@ export default function AccountSettings() {
           <Field label={t('acct', 'town')} error={e1.location?.message}>
             <input className="form-control" autoComplete="address-level2" placeholder="e.g. Bandarawela" {...profile.register('location')} />
           </Field>
-          <Field label="Email">
+          <Field label={t('acct', 'email')}>
             <input className="form-control" value={user.email} disabled readOnly />
-            <p className="acct-card__hint">Your email is your login and can't be changed here.</p>
+            <p className="acct-card__hint">{t('acct', 'email_hint')}</p>
           </Field>
 
           <button className="btn btn-primary" type="submit" disabled={saveProfile.isPending || !profile.formState.isDirty}>
-            {saveProfile.isPending ? 'Saving…' : 'Save changes'}
+            {saveProfile.isPending ? '…' : t('acct', 'save_changes')}
           </button>
         </form>
 
         <form className="dashboard-card acct-card" onSubmit={password.handleSubmit((d) => changePassword.mutate(d))} noValidate>
-          <h2 className="acct-card__title">🔐 Change password</h2>
-          <p className="acct-card__hint">Use at least 8 characters. You'll stay signed in on this device.</p>
+          <h2 className="acct-card__title">🔐 {t('acct', 'change_password')}</h2>
+          <p className="acct-card__hint">{t('acct', 'pw_hint')}</p>
 
-          <Field label="Current password" error={e2.current_password?.message}>
+          <Field label={t('acct', 'current_pw')} error={e2.current_password?.message}>
             <input className="form-control" type="password" autoComplete="current-password" {...password.register('current_password')} />
           </Field>
-          <Field label="New password" error={e2.new_password?.message}>
+          <Field label={t('acct', 'new_pw')} error={e2.new_password?.message}>
             <input className="form-control" type="password" autoComplete="new-password" {...password.register('new_password')} />
           </Field>
-          <Field label="Confirm new password" error={e2.confirm_password?.message}>
+          <Field label={t('acct', 'confirm_pw')} error={e2.confirm_password?.message}>
             <input className="form-control" type="password" autoComplete="new-password" {...password.register('confirm_password')} />
           </Field>
 
           <button className="btn btn-primary" type="submit" disabled={changePassword.isPending}>
-            {changePassword.isPending ? 'Updating…' : 'Update password'}
+            {changePassword.isPending ? '…' : t('acct', 'update_pw')}
           </button>
         </form>
       </div>
@@ -232,27 +232,26 @@ export default function AccountSettings() {
 
       {user.role !== 'admin' && (
         <div className="dashboard-card acct-danger">
-          <h2 className="acct-card__title">🗑️ Delete my account</h2>
+          <h2 className="acct-card__title">🗑️ {t('acct', 'delete_title')}</h2>
           <p className="acct-card__hint">
-            This permanently removes your account and everything tied to it: your {user.role === 'donor' ? 'listings and the requests on them' : 'requests'},
-            ratings, feedback, event sign-ups and uploaded photos. It cannot be undone.
+            {user.role === 'donor' ? t('acct', 'delete_hint_donor') : t('acct', 'delete_hint')}
           </p>
           {!confirmingDelete ? (
-            <button className="btn adm-btn-danger" onClick={() => setConfirmingDelete(true)}>Delete my account…</button>
+            <button className="btn adm-btn-danger" onClick={() => setConfirmingDelete(true)}>{t('acct', 'delete_btn')}</button>
           ) : (
             <form className="acct-danger__form" onSubmit={deleteForm.handleSubmit((d) => deleteAccount.mutate(d))} noValidate>
-              <Field label="Your password" error={deleteForm.formState.errors.password?.message}>
+              <Field label={t('acct', 'your_pw')} error={deleteForm.formState.errors.password?.message}>
                 <input className="form-control" type="password" autoComplete="current-password" {...deleteForm.register('password')} />
               </Field>
               <label className="acct-danger__check">
-                <input type="checkbox" {...deleteForm.register('understood')} /> I understand this cannot be undone
+                <input type="checkbox" {...deleteForm.register('understood')} /> {t('acct', 'understand')}
               </label>
               {deleteForm.formState.errors.understood && <p className="acct-error" role="alert">{deleteForm.formState.errors.understood.message}</p>}
               <div className="acct-danger__actions">
                 <button className="btn adm-btn-danger" type="submit" disabled={deleteAccount.isPending}>
-                  {deleteAccount.isPending ? 'Deleting…' : 'Permanently delete my account'}
+                  {deleteAccount.isPending ? '…' : t('acct', 'delete_perm')}
                 </button>
-                <button className="btn btn-outline" type="button" onClick={() => { setConfirmingDelete(false); deleteForm.reset(); }}>Keep my account</button>
+                <button className="btn btn-outline" type="button" onClick={() => { setConfirmingDelete(false); deleteForm.reset(); }}>{t('acct', 'keep')}</button>
               </div>
             </form>
           )}
