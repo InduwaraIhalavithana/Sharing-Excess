@@ -3,6 +3,7 @@ from sqlalchemy import (
     Column,
     DateTime,
     ForeignKey,
+    Index,
     Integer,
     Numeric,
     SmallInteger,
@@ -53,6 +54,7 @@ class User(Base):
 
 class FoodListing(Base):
     __tablename__ = "food_listings"
+    __table_args__ = (Index("ix_food_listings_status_expires", "status", "expires_at"),)
 
     id                 = Column(Integer, primary_key=True, index=True)
     donor_id           = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
@@ -127,12 +129,12 @@ class Feedback(Base):
 class Rating(Base):
     """After a handover is completed, each side rates the other once."""
     __tablename__ = "ratings"
-    __table_args__ = (UniqueConstraint("request_id", "rater_id", name="uq_rating_once"),)
+    __table_args__ = (UniqueConstraint("request_id", "rater_id", name="uq_rating_once"), Index("ix_ratings_ratee", "ratee_id"))
 
     id         = Column(Integer, primary_key=True)
     request_id = Column(Integer, ForeignKey("food_requests.id", ondelete="CASCADE"), nullable=False)
     rater_id   = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    ratee_id   = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    ratee_id   = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     score      = Column(SmallInteger, nullable=False)
     comment    = Column(Text, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
@@ -145,6 +147,7 @@ class Rating(Base):
 class Report(Base):
     """Anyone can report a listing, user or event; the admin reviews them."""
     __tablename__ = "reports"
+    __table_args__ = (Index("ix_reports_status", "status"), Index("ix_reports_target", "target_type", "target_id"))
 
     id          = Column(Integer, primary_key=True)
     reporter_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
@@ -161,6 +164,7 @@ class Report(Base):
 
 class Notification(Base):
     __tablename__ = "notifications"
+    __table_args__ = (Index("ix_notifications_user", "user_id", "is_read", "created_at"),)
 
     id         = Column(Integer, primary_key=True)
     user_id    = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)

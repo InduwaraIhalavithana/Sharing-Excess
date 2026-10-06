@@ -178,3 +178,32 @@ describe('NotificationBell', () => {
     expect(calls.some((c) => c.url.endsWith('/api/notifications/5/read') && c.method === 'POST')).toBe(true);
   });
 });
+
+describe('accessibility fixes from the audit', () => {
+  it('the login dialog is a labelled modal whose fields have names', async () => {
+    mockApi({});
+    const { default: LoginModal } = await import('../LoginModal.jsx');
+    wrap(<LoginModal onClose={() => {}} onLoginSuccess={() => {}} onSwitchToSignup={() => {}} onForgotPassword={() => {}} />);
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog).toHaveAttribute('aria-modal', 'true');
+    expect(within(dialog).getByLabelText(/email/i)).toBeInTheDocument();
+    expect(within(dialog).getByLabelText(/^password$/i)).toBeInTheDocument();
+  });
+
+  it('district filters announce themselves', async () => {
+    mockApi({ '/api/meta': { success: true, districts: ['Colombo'], categories: [], units: [], fulfilment: [], event_types: [], neighbours: {} } });
+    const { DistrictSelect } = await import('./ui');
+    wrap(<DistrictSelect value="" onChange={() => {}} allLabel="All districts" />);
+    expect(await screen.findByRole('combobox', { name: /district/i })).toBeInTheDocument();
+  });
+
+  it('account settings labels focus their fields', async () => {
+    signIn('recipient');
+    mockApi({ '/api/meta': { success: true, districts: ['Gampaha'], categories: [], units: [], fulfilment: [], event_types: [], neighbours: {} },
+      '/api/auth/me': { success: true, user: JSON.parse(localStorage.getItem('user') ?? 'null') } });
+    const { default: AccountSettings } = await import('./AccountSettings');
+    wrap(<AccountSettings />);
+    expect(await screen.findByLabelText(/full name/i)).toHaveValue('Nimali');
+    expect(screen.getByLabelText(/current password/i)).toHaveAttribute('type', 'password');
+  });
+});

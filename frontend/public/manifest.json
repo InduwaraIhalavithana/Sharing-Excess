@@ -13,7 +13,7 @@
   "theme_color": "#16a34a",
   "background_color": "#f0f6f1",
   "shortcuts": [
-    { "name": "Available food", "url": "/food-donations" },
+    { "name": "Available food", "url": "/food" },
     { "name": "My dashboard", "url": "/recipient-dashboard" }
   ]
 }

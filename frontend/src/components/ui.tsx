@@ -154,14 +154,14 @@ export function Empty({ icon, children, action }: { icon: string; children: Reac
 }
 
 /** <select> of the 25 districts (names come from /api/meta so the list lives in one place). */
-export function DistrictSelect({ value, onChange, allLabel, id, required, invalid }: {
-  value: string; onChange: (v: string) => void; allLabel?: string; id?: string; required?: boolean; invalid?: boolean;
+export function DistrictSelect({ value, onChange, allLabel, id, required, invalid, label }: {
+  value: string; onChange: (v: string) => void; allLabel?: string; id?: string; required?: boolean; invalid?: boolean; label?: string;
 }) {
   const { data } = useMeta();
   const { t } = useLanguage();
   return (
-    <select id={id} className={`form-control${invalid ? ' error' : ''}`} value={value} required={required}
-      onChange={(e) => onChange(e.target.value)}>
+    <select id={id} aria-label={label ?? t('post', 'district')} className={`form-control${invalid ? ' error' : ''}`} value={value}
+      required={required} onChange={(e) => onChange(e.target.value)}>
       <option value="">{allLabel ?? t('ui', 'choose_district')}</option>
       {(data?.districts ?? []).map((d) => <option key={d} value={d}>{d}</option>)}
     </select>

@@ -162,6 +162,7 @@ def delete_any_listing(listing_id: int, db: Session = Depends(get_db)):
     if not listing:
         raise HTTPException(404, "Listing not found")
     photos = list(listing.images or [])
+    db.query(Report).filter(Report.target_type == "listing", Report.target_id == listing_id).delete(synchronize_session=False)
     ids = [r.id for r in db.query(FoodRequest.id).filter(FoodRequest.listing_id == listing_id)]
     if ids:
         db.query(Feedback).filter(Feedback.request_id.in_(ids)).update({Feedback.request_id: None},

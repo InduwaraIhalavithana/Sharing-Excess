@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from datetime import datetime
 from decimal import Decimal
 from typing import Optional
@@ -15,6 +16,22 @@ def _district(v: str) -> str:
     if not match:
         raise ValueError("Choose one of the 25 districts of Sri Lanka")
     return match
+
+
+def _text(v: str, field: str, low: int, high: int) -> str:
+    """Single-line text: control characters become spaces, length is bounded (a longer value would be a database error)."""
+    v = re.sub(r"[\r\n\t]+", " ", (v or "")).strip()
+    if not low <= len(v) <= high:
+        raise ValueError(f"{field} must be {low}-{high} characters" if low else f"{field} must be at most {high} characters")
+    return v
+
+
+def validate_text(v: str, field: str, low: int, high: int) -> str:
+    return _text(v, field, low, high)
+
+
+def validate_phone(v: str) -> str:
+    return _phone(v)
 
 
 def _phone(v: str) -> str:
@@ -46,6 +63,33 @@ class SignupRequest(BaseModel):
     @classmethod
     def _p(cls, v: str) -> str:
         return _phone(v)
+
+    @field_validator("name")
+    @classmethod
+    def _name(cls, v: str) -> str:
+        return _text(v, "Name", 2, 100)
+
+    @field_validator("location")
+    @classmethod
+    def _loc(cls, v: str) -> str:
+        return _text(v, "Location", 0, 255)
+
+    @field_validator("org_name")
+    @classmethod
+    def _org(cls, v: str) -> str:
+        return _text(v, "Organisation name", 0, 200)
+
+    @field_validator("org_description")
+    @classmethod
+    def _orgd(cls, v: str) -> str:
+        return _text(v, "Description", 0, 2000)
+
+    @field_validator("password")
+    @classmethod
+    def _pw(cls, v: str) -> str:
+        if len(v) > 128:
+            raise ValueError("Password must be at most 128 characters")
+        return v
 
     @model_validator(mode="after")
     def _ngo(self):
@@ -100,6 +144,11 @@ class ProfileUpdate(BaseModel):
     def _p(cls, v: str) -> str:
         return _phone(v)
 
+    @field_validator("location")
+    @classmethod
+    def _loc(cls, v: str) -> str:
+        return _text(v, "Location", 0, 255)
+
     @field_validator("district")
     @classmethod
     def _d(cls, v: Optional[str]) -> Optional[str]:
@@ -145,6 +194,26 @@ class ListingUpdate(BaseModel):
     prepared_at: Optional[datetime] = None
     fulfilment: Optional[str] = None
 
+    @field_validator("food_name")
+    @classmethod
+    def _fn(cls, v):
+        return None if v is None else _text(v, "Food name", 2, 255)
+
+    @field_validator("description")
+    @classmethod
+    def _desc(cls, v):
+        return None if v is None else _text(v, "Description", 0, 2000)
+
+    @field_validator("area")
+    @classmethod
+    def _area(cls, v):
+        return None if v is None else _text(v, "Area", 0, 120)
+
+    @field_validator("pickup_address")
+    @classmethod
+    def _addr(cls, v):
+        return None if v is None else _text(v, "Pickup address", 0, 500)
+
     @field_validator("category")
     @classmethod
     def _c(cls, v):
@@ -162,7 +231,12 @@ class ListingUpdate(BaseModel):
     @field_validator("quantity_total")
     @classmethod
     def _q(cls, v):
-        if v is not None and not Decimal("0") < v <= Decimal("100000"):
+        if v is None:
+            return v
+        if not v.is_finite():
+            raise ValueError("Quantity must be a number")
+        v = v.quantize(Decimal("0.01"))
+        if not Decimal("0") < v <= Decimal("100000"):
             raise ValueError("Quantity must be more than 0")
         return v
 
@@ -193,9 +267,12 @@ class RequestCreate(BaseModel):
     @field_validator("quantity_requested")
     @classmethod
     def _q(cls, v):
+        if not v.is_finite():
+            raise ValueError("Quantity must be a number")
+        v = v.quantize(Decimal("0.01"))   # the database keeps two decimals: 0.004 would silently become 0
         if not Decimal("0") < v <= Decimal("100000"):
             raise ValueError("Quantity must be more than 0")
-        return v.quantize(Decimal("0.01"))
+        return v
 
     @field_validator("message")
     @classmethod
@@ -303,6 +380,24 @@ class ContactRequest(BaseModel):
     subject: str = ""
     message: str
 
+    @field_validator("name")
+    @classmethod
+    def _n(cls, v: str) -> str:
+        return _text(v, "Name", 1, 100)
+
+    @field_validator("subject")
+    @classmethod
+    def _s(cls, v: str) -> str:
+        return _text(v, "Subject", 0, 150)
+
+    @field_validator("message")
+    @classmethod
+    def _m(cls, v: str) -> str:
+        v = v.strip()
+        if not 1 <= len(v) <= 3000:
+            raise ValueError("Message must be 1-3000 characters")
+        return v
+
 
 # ── Community events ─────────────────────────────────────────────────────────
 
@@ -322,10 +417,7 @@ class EventIn(BaseModel):
     @field_validator("title")
     @classmethod
     def _title(cls, v: str) -> str:
-        v = v.strip()
-        if not 3 <= len(v) <= 200:
-            raise ValueError("Title must be 3-200 characters")
-        return v
+        return _text(v, "Title", 3, 200)
 
     @field_validator("location")
     @classmethod
