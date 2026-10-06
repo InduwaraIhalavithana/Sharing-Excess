@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../i18n/LanguageContext';
 import { usePublicStats } from '../hooks/queries';
+import { useCountUp } from '../hooks/useCountUp';
 
 // Live numbers from the database (GET /api/public/stats) - nothing here is hardcoded
 const STATS = [
@@ -10,24 +11,6 @@ const STATS = [
   { field: 'recipients',      labelKey: 'impact_recipients', icon: '🏢' },
   { field: 'listings_shared', labelKey: 'impact_listings',   icon: '📍' },
 ];
-
-function useCountUp(target, duration = 1800, active = false) {
-  const [count, setCount] = useState(0);
-  useEffect(() => {
-    if (!active) return;
-    let frame = 0;
-    const total = Math.ceil(duration / 16);
-    const step = target / total;
-    const id = setInterval(() => {
-      frame++;
-      const next = Math.min(Math.round(step * frame), target);
-      setCount(next);
-      if (next >= target) clearInterval(id);
-    }, 16);
-    return () => clearInterval(id);
-  }, [target, duration, active]);
-  return count;
-}
 
 function StatItem({ stat, active, value }) {
   const { t } = useLanguage();

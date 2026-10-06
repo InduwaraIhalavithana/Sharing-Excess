@@ -23,6 +23,7 @@ export default function Navbar() {
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   // Live impact ticker - how many listings are open right now
   const { data: stats } = usePublicStats();
@@ -36,6 +37,7 @@ export default function Navbar() {
   const [pendingSignup, setPendingSignup] = useState(null);
 
   const userMenuRef = useRef(null);
+  const moreRef = useRef(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -46,6 +48,7 @@ export default function Navbar() {
   useEffect(() => {
     setMenuOpen(false);
     setUserMenuOpen(false);
+    setMoreOpen(false);
   }, [location.pathname]);
 
   useEffect(() => {
@@ -53,9 +56,19 @@ export default function Navbar() {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
         setUserMenuOpen(false);
       }
+      if (moreRef.current && !moreRef.current.contains(e.target)) {
+        setMoreOpen(false);
+      }
+    };
+    const onKey = (e) => {
+      if (e.key === 'Escape') { setUserMenuOpen(false); setMoreOpen(false); }
     };
     document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', handler);
+      document.removeEventListener('keydown', onKey);
+    };
   }, []);
 
   // Listen for events dispatched from other components
@@ -118,10 +131,14 @@ export default function Navbar() {
     { to: '/contact',  label: t('nav', 'contact') },
     { to: '/feedback', label: t('nav', 'feedback') },
   ];
+  // On medium screens the last links fold into a "More" dropdown so the bar never overflows.
+  const SECONDARY = ['/events', '/contact', '/feedback'];
+  const moreLinks = navLinks.filter(({ to }) => SECONDARY.includes(to));
+  const moreActive = moreLinks.some(({ to }) => isActive(to));
 
   return (
     <>
-      <header className={`se-navbar${scrolled ? ' scrolled' : ''}`} role="banner">
+      <header className={`se-navbar${scrolled ? ' scrolled' : ''}`} role="banner" data-lang={lang}>
         <div className="se-navbar__inner">
           {/* Brand */}
           <Link to="/" className="se-navbar__brand" aria-label="Sharing Excess Home">
@@ -138,19 +155,52 @@ export default function Navbar() {
               <Link
                 key={to}
                 to={to}
-                className={`se-navbar__link${isActive(to) ? ' active' : ''}`}
+                className={`se-navbar__link${SECONDARY.includes(to) ? ' se-navbar__link--secondary' : ''}${isActive(to) ? ' active' : ''}`}
               >
                 <span className="se-navbar__link-icon" aria-hidden="true">{NAV_ICONS[to]}</span>
                 <span className="se-navbar__link-label">{label}</span>
               </Link>
             ))}
+
+            {/* "More" dropdown: visible only on medium screens, where the secondary links are hidden above */}
+            <div className="se-more" ref={moreRef}>
+              <button
+                type="button"
+                className={`se-navbar__link se-more__btn${moreActive ? ' active' : ''}${moreOpen ? ' open' : ''}`}
+                onClick={() => setMoreOpen(p => !p)}
+                aria-expanded={moreOpen}
+                aria-haspopup="true"
+              >
+                <span className="se-navbar__link-label">{t('nav', 'more')}</span>
+                <span className="se-more__chevron" aria-hidden="true">▾</span>
+              </button>
+              <div className={`se-more__menu${moreOpen ? ' open' : ''}`} role="menu" aria-hidden={!moreOpen}>
+                {moreLinks.map(({ to, label }) => (
+                  <Link
+                    key={to}
+                    to={to}
+                    role="menuitem"
+                    tabIndex={moreOpen ? 0 : -1}
+                    className={`se-more__item${isActive(to) ? ' active' : ''}`}
+                    onClick={() => setMoreOpen(false)}
+                  >
+                    <span className="se-more__item-icon" aria-hidden="true">{NAV_ICONS[to]}</span>
+                    {label}
+                  </Link>
+                ))}
+              </div>
+            </div>
           </nav>
 
           {/* Live impact ticker */}
           {liveCount !== null && liveCount > 0 && (
-            <Link to="/food-donations" className="se-navbar__ticker" title="Food available right now">
+            <Link
+              to="/food-donations"
+              className="se-navbar__ticker"
+              title={`${liveCount} food listing${liveCount !== 1 ? 's' : ''} available right now`}
+            >
               <span className="se-navbar__ticker-dot" aria-hidden="true" />
-              🍽️ {liveCount} listing{liveCount !== 1 ? 's' : ''} live
+              <strong>{liveCount}</strong> {t('nav', 'live')}
             </Link>
           )}
 
