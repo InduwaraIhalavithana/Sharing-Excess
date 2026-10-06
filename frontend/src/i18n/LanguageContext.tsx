@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
 import translations from './translations';
+import { phrases } from './phrases';
 
 export type Lang = 'en' | 'si' | 'ta';
 
@@ -7,6 +8,8 @@ interface LanguageValue {
   lang: Lang;
   setLanguage: (lang: Lang) => void;
   t: (section: string, key: string) => string;
+  /** Translate a whole English sentence (marketing pages); unknown sentences stay English. */
+  p: (text: string) => string;
 }
 
 type Dictionary = Record<string, Record<string, Record<string, string>>>;
@@ -31,7 +34,12 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     [lang],
   );
 
-  return <LanguageContext.Provider value={{ lang, setLanguage, t }}>{children}</LanguageContext.Provider>;
+  const p = useCallback(
+    (text: string) => (lang === 'en' ? text : (phrases as Record<string, Record<string, string>>)[lang]?.[text] ?? text),
+    [lang],
+  );
+
+  return <LanguageContext.Provider value={{ lang, setLanguage, t, p }}>{children}</LanguageContext.Provider>;
 }
 
 export function useLanguage(): LanguageValue {

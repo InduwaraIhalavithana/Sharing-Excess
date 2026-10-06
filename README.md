@@ -2,7 +2,21 @@
 
 **A food-redistribution platform for Sri Lanka.** Donors post surplus food, people nearby see it first, request all or part of it, and the donor accepts or declines (with a reason). On acceptance the two share contact details and arrange pickup or delivery. NGOs post events. One admin account handles approvals and moderation: it does not check food quality or supervise handovers. Built as a final-year project at Uva Wellassa University.
 
-> The screenshots in `docs/screenshots/` predate the 2026-10 redesign and are being retaken.
+![Home page](docs/screenshots/01-home.jpg)
+
+| Food near you (nearest district first) | Map view |
+|---|---|
+| ![Available food](docs/screenshots/02-available-food.jpg) | ![Map](docs/screenshots/03-map.jpg) |
+
+| Donor dashboard | Recipient dashboard |
+|---|---|
+| ![Donor](docs/screenshots/04-donor-dashboard.jpg) | ![Recipient](docs/screenshots/05-recipient-dashboard.jpg) |
+
+| Admin panel | Guided tour (dark mode) | Phone |
+|---|---|---|
+| ![Admin](docs/screenshots/06-admin-overview.jpg) | ![Tour](docs/screenshots/07-guided-tour-dark.jpg) | ![Mobile](docs/screenshots/08-mobile.jpg) |
+
+> The screenshots show clearly-labelled **demo data**, not real donors or recipients.
 
 ---
 

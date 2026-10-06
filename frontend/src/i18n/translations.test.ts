@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import translations from './translations';
+import { phrases } from './phrases';
 
 type Dict = Record<string, Record<string, Record<string, string>>>;
 const dict = translations as unknown as Dict;
 
 // Every source file of the app as text (Vite inlines them, so this needs no Node file APIs).
 const files = import.meta.glob('../**/*.{js,jsx,ts,tsx}', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
-const appFiles = Object.entries(files).filter(([path]) => !/\.test\.|translations\.js|redesign\.js/.test(path));
+const appFiles = Object.entries(files).filter(([path]) => !/\.test\.|translations\.js|redesign\.js|phrases\.js/.test(path));
 
 /** Every literal t('section', 'key') in the app, plus the keys that are built at run time. */
 function usedKeys(): [string, string][] {
@@ -38,6 +39,27 @@ function usedKeys(): [string, string][] {
   }
   return [...found].map((k) => k.split('.') as [string, string]);
 }
+
+/** Every sentence passed to p('...') or tr('...') (marketing pages), unescaped. */
+function usedPhrases(): string[] {
+  const found = new Set<string>();
+  const re = /\b(?:p|tr)\(\s*(['"`])((?:\\.|(?!\1)[^\\])*)\1\s*\)/g;
+  for (const [, text] of appFiles) {
+    for (const m of text.matchAll(re)) found.add(m[2].replace(/\\(['"`\\])/g, '$1'));
+  }
+  return [...found];
+}
+
+describe('marketing-page phrases', () => {
+  const used = usedPhrases();
+  it('finds the sentences the pages use', () => expect(used.length).toBeGreaterThan(100));
+  for (const lang of ['si', 'ta'] as const) {
+    it(`has every sentence in ${lang}`, () => {
+      const table = (phrases as Record<string, Record<string, string>>)[lang];
+      expect(used.filter((x) => !table[x])).toEqual([]);
+    });
+  }
+});
 
 describe('translations', () => {
   const keys = usedKeys();

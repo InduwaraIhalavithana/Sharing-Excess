@@ -1,9 +1,11 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import { useLanguage } from '../i18n/LanguageContext';
 
 const UPDATED = '6 October 2026';
 
 function Page({ title, intro, children, other }: { title: string; intro: string; children: ReactNode; other: { to: string; label: string } }) {
+  const { lang, p } = useLanguage();
   return (
     <div className="legal-page">
       <div className="legal-hero">
@@ -14,6 +16,9 @@ function Page({ title, intro, children, other }: { title: string; intro: string;
         </div>
       </div>
       <div className="container legal-body">
+        {lang !== 'en' && (
+          <p className="legal-note" role="note">{p('This page is shown in English only. If anything is unclear, please contact us and we will explain it.')}</p>
+        )}
         <p className="legal-note" role="note">
           Sharing Excess is a student project of Uva Wellassa University. This page describes in plain language what the
           site really does. It is not legal advice and is available in English only.
