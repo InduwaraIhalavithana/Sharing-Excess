@@ -20,7 +20,7 @@ def send_email(to: str, subject: str, html_body: str) -> bool:
         return False
 
     msg = MIMEMultipart("alternative")
-    msg["Subject"] = subject
+    msg["Subject"] = " ".join(subject.split())   # a line break in a header would be a header-injection hole
     msg["From"]    = f"{from_name} <{username}>"
     msg["To"]      = to
     msg.attach(MIMEText(html_body, "html"))

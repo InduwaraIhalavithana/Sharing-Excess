@@ -11,7 +11,7 @@ from app.constants import CATEGORIES, FULFILMENT, NEIGHBOURS, proximity_tier
 from app.database import get_db
 from app.dependencies import get_current_user, is_admin, optional_user, require_roles
 from app.models import FoodListing, FoodRequest, Rating, User
-from app.schemas import ListingUpdate, ReasonBody, validate_district, validate_unit
+from app.schemas import ListingUpdate, ReasonBody, validate_district, validate_phone, validate_text, validate_unit
 from app.services import stock
 from app.services.notifications import announce_listing, notify, schedule_emails
 from app.utils.params import district_list, one_district
@@ -22,6 +22,7 @@ router = APIRouter(prefix="/api/listings", tags=["listings"])
 
 MAX_IMAGES = 3
 MAX_DAYS_AHEAD = 30
+LISTING_STATUSES = ("active", "sold_out", "expired", "closed")
 TIER_LABEL = {0: "same_district", 1: "neighbouring", 2: "other"}
 SHARED_STATUSES = ("accepted", "collected", "completed")  # the donor said yes: contact details may be shown
 
@@ -118,6 +119,8 @@ def get_listings(
             raise HTTPException(403, "You can only view your own listings")
         query = query.filter(FoodListing.donor_id == donor_id)
         if status:
+            if status not in LISTING_STATUSES:
+                raise HTTPException(400, "Unknown status")
             query = query.filter(FoodListing.status == status)
     else:
         query = query.filter(FoodListing.status == "active", FoodListing.expires_at > now_colombo(),
@@ -193,9 +196,14 @@ async def add_listing(
     """Goes live immediately - no review step. Needs 1-3 photos and the donor's safety confirmation."""
     if not safety_confirmed:
         raise HTTPException(400, "Please confirm that this food is safe to eat and not expired")
-    food_name = food_name.strip()
-    if not 2 <= len(food_name) <= 255:
-        raise HTTPException(400, "Food name must be 2-255 characters")
+    try:
+        food_name = validate_text(food_name, "Food name", 2, 255)
+        description = validate_text(description, "Description", 0, 2000)
+        area = validate_text(area, "Area", 0, 120)
+        pickup_address = validate_text(pickup_address, "Pickup address", 0, 500)
+        contact_phone = validate_phone(contact_phone)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from None
     if category not in CATEGORIES:
         raise HTTPException(400, "Unknown food category")
     if fulfilment not in FULFILMENT:
@@ -204,6 +212,8 @@ async def add_listing(
         qty = Decimal(quantity_total).quantize(Decimal("0.01"))
     except InvalidOperation:
         raise HTTPException(400, "Quantity must be a number") from None
+    if not qty.is_finite():
+        raise HTTPException(400, "Quantity must be a number")
     try:
         unit = validate_unit(unit)
         district = validate_district(district)

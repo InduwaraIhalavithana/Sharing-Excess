@@ -122,6 +122,8 @@ def create_event(body: EventIn, background: BackgroundTasks, db: Session = Depen
 def update_event(event_id: int, body: EventIn, db: Session = Depends(get_db),
                  me: User = Depends(require_approved_ngo)):
     event = _own_event(db, event_id, me)
+    if body.starts_at != event.starts_at and body.starts_at <= now_colombo():
+        raise HTTPException(400, "The event must start in the future")
     going = db.query(func.count(EventSignup.id)).filter(EventSignup.event_id == event_id).scalar()
     if body.capacity is not None and body.capacity < going:
         raise HTTPException(400, f"{going} people have already joined - capacity cannot be lower than that")

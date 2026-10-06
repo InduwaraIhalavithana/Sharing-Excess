@@ -20,6 +20,7 @@ from app.utils.timeutil import now_colombo
 
 router = APIRouter(prefix="/api/requests", tags=["requests"])
 
+REQUEST_STATUSES = ("pending", "accepted", "declined", "cancelled", "collected", "completed", "no_show", "expired")
 SHARED = ("accepted", "collected", "completed")
 
 # status -> who may move a request there, from which statuses
@@ -99,7 +100,10 @@ def get_requests(
     if listing_id:
         q = q.filter(FoodRequest.listing_id == listing_id)
     if status:
-        q = q.filter(FoodRequest.status.in_([s.strip() for s in status.split(",")]))
+        wanted = [x.strip() for x in status.split(",") if x.strip()]
+        if not wanted or any(x not in REQUEST_STATUSES for x in wanted):
+            raise HTTPException(400, "Unknown status")
+        q = q.filter(FoodRequest.status.in_(wanted))
     rows = q.order_by(FoodRequest.created_at.desc(), FoodRequest.id.desc()).limit(500).all()
     rated = _rated_ids(db, me, [r.id for r in rows])
     return {"success": True, "requests": [request_out(r, me, rated) for r in rows]}

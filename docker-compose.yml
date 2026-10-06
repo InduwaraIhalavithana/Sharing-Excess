@@ -24,7 +24,6 @@ services:
       DATABASE_URL:             postgresql://postgres:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/sharing_excess
       SECRET_KEY:               ${SECRET_KEY:?set SECRET_KEY in .env (32+ random chars)}
       CORS_ORIGIN:              http://localhost
-      API_PUBLIC_URL:           http://localhost:8003
       CLOUDINARY_CLOUD_NAME:    ${CLOUDINARY_CLOUD_NAME:-}
       CLOUDINARY_API_KEY:       ${CLOUDINARY_API_KEY:-}
       CLOUDINARY_API_SECRET:    ${CLOUDINARY_API_SECRET:-}
@@ -39,7 +38,7 @@ services:
       postgres:
         condition: service_healthy
     ports:
-      - "8003:8003"   # direct API / Swagger docs access
+      - "127.0.0.1:8003:8003"   # Swagger docs from this machine only; the public reaches the API through nginx
     networks:
       - se_net
 

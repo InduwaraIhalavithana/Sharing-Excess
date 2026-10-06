@@ -25,6 +25,8 @@ async def submit_feedback(
         raise HTTPException(403, "The admin reads feedback, they do not send it")
     if not comment.strip():
         raise HTTPException(400, "Comment is required")
+    if len(comment) > 3000:
+        raise HTTPException(400, "Comment must be 3000 characters or fewer")
     if rating is not None and not 1 <= rating <= 5:
         raise HTTPException(400, "Rating must be 1 to 5")
 

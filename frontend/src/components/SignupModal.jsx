@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useModalA11y } from '../hooks/useModalA11y';
 import { useLanguage } from '../i18n/LanguageContext';
 import { API_BASE } from '../config';
 import { DistrictSelect } from './ui';
 
 export default function SignupModal({ onClose, onSignupSuccess, onSwitchToLogin }) {
+  const boxRef = useModalA11y();
   const { t } = useLanguage();
   const [form, setForm] = useState({
     name: '', email: '', password: '', confirmPassword: '',
@@ -74,7 +76,7 @@ export default function SignupModal({ onClose, onSignupSuccess, onSwitchToLogin 
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-box modal-box--wide" onClick={e => e.stopPropagation()}>
+      <div ref={boxRef} className="modal-box modal-box--wide" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <h2>{t('auth', 'signup_title')}</h2>
           <p>{t('auth', 'signup_subtitle')}</p>

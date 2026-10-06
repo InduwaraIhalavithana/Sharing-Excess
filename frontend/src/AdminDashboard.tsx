@@ -129,7 +129,7 @@ export default function AdminDashboard() {
 
       <div className="adm-main">
         <header className="adm-topbar">
-          <div className="adm-topbar__title">{t('admin', `nav_${section}`)}</div>
+          <h1 className="adm-topbar__title" style={{ margin: 0 }}>{t('admin', `nav_${section}`)}</h1>
           <div className="adm-topbar__right">
             <Link to="/" className="adm-refresh-btn">🌐 {t('admin', 'view_site')}</Link>
             <button className="adm-refresh-btn" data-tour="admin-refresh" onClick={refetchAll}>↻ {t('ui', 'refresh')}</button>

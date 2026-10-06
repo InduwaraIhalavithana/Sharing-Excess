@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Children, cloneElement, isValidElement, useEffect, useId, useState } from 'react';
 import { Link, Navigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -17,11 +17,21 @@ import type { User } from '../types/api';
 import Toast, { type ToastState } from './Toast';
 
 
+/** A label tied to the first control inside it, so screen readers announce it and a click on the label focuses it. */
 function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
+  const id = useId();
+  let tied = false;
+  const kids = Children.map(children, (child) => {
+    if (!tied && isValidElement<{ id?: string }>(child) && child.type !== 'p') {
+      tied = true;
+      return cloneElement(child, { id: child.props.id ?? id });
+    }
+    return child;
+  });
   return (
     <div className="form-group">
-      <label className="form-label">{label}</label>
-      {children}
+      <label className="form-label" htmlFor={id}>{label}</label>
+      {kids}
       {error && <p className="acct-error" role="alert">{error}</p>}
     </div>
   );
@@ -80,7 +90,7 @@ export default function AccountSettings() {
   });
 
   useEffect(() => {
-    if (hash) setTimeout(() => document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
+    if (hash) setTimeout(() => document.getElementById(hash.slice(1))?.scrollIntoView({ block: 'start' }), 150);
   }, [hash, user?.id]);
 
   // Alert preferences: which districts and food types ring the bell / send an email. Empty = the sensible default.
@@ -104,8 +114,8 @@ export default function AccountSettings() {
     onSuccess: (res) => { login(res.user); setToast({ msg: t('acct', 'prefs_saved') }); },
     onError: (err: Error) => setToast({ msg: err.message, type: 'error' }),
   });
-  const toggle = (list: string[], set: (v: string[]) => void, v: string) =>
-    set(list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
+  const toggle = (set: React.Dispatch<React.SetStateAction<string[]>>, v: string) =>
+    set((list) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]));
 
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const deleteForm = useForm<DeleteAccountForm>({
@@ -207,7 +217,7 @@ export default function AccountSettings() {
           <div className="se-catbar">
             {(meta?.districts ?? []).map((d) => (
               <button key={d} type="button" aria-pressed={nDistricts.includes(d)} className={`se-catchip${nDistricts.includes(d) ? ' on' : ''}`}
-                onClick={() => toggle(nDistricts, setNDistricts, d)}>{d}</button>
+                onClick={() => toggle(setNDistricts, d)}>{d}</button>
             ))}
           </div>
           <p className="acct-card__hint">{nDistricts.length === 0 ? t('acct', 'districts_default') : `${nDistricts.length} ✓`}</p>
@@ -217,7 +227,7 @@ export default function AccountSettings() {
           <div className="se-catbar">
             {(meta?.categories ?? []).map((c) => (
               <button key={c} type="button" aria-pressed={nTypes.includes(c)} className={`se-catchip${nTypes.includes(c) ? ' on' : ''}`}
-                onClick={() => toggle(nTypes, setNTypes, c)}>{CATEGORY_ICON[c]} {t('cat', c)}</button>
+                onClick={() => toggle(setNTypes, c)}>{CATEGORY_ICON[c]} {t('cat', c)}</button>
             ))}
           </div>
           <p className="acct-card__hint">{nTypes.length === 0 ? t('acct', 'types_default') : `${nTypes.length} ✓`}</p>

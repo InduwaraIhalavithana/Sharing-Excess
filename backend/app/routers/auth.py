@@ -108,7 +108,9 @@ def verify_email(request: Request, body: VerifyEmailRequest, db: Session = Depen
     user = db.query(User).filter(User.id == body.user_id).first()
     if not user:
         raise HTTPException(404, "User not found")
-    if user.verification_code != body.code:
+    if user.status != "pending":
+        raise HTTPException(400, "This account is already verified")
+    if not user.verification_code or user.verification_code != body.code:
         raise HTTPException(400, "Invalid verification code")
     user.status = "active"
     user.verification_code = None
@@ -147,10 +149,10 @@ def forgot_password(request: Request, body: ForgotPasswordRequest, db: Session =
 @router.post("/reset-password")
 @limiter.limit("5/minute")
 def reset_password(request: Request, body: ResetPasswordRequest, db: Session = Depends(get_db)):
-    if len(body.new_password) < 8:
-        raise HTTPException(400, "Password must be at least 8 characters")
+    if not 8 <= len(body.new_password) <= 128:
+        raise HTTPException(400, "Password must be 8-128 characters")
     user = db.query(User).filter(User.email == body.email).first()
-    if not user or user.verification_code != body.code:
+    if not user or not user.verification_code or user.verification_code != body.code:
         raise HTTPException(400, "Invalid or expired reset code")
     user.password = hash_password(body.new_password)
     user.verification_code = None
@@ -199,8 +201,8 @@ def change_password(request: Request, body: ChangePasswordRequest,
                     db: Session = Depends(get_db), me: User = Depends(get_current_user)):
     if not verify_password(body.current_password, me.password):
         raise HTTPException(400, "Your current password is incorrect")
-    if len(body.new_password) < 8:
-        raise HTTPException(400, "New password must be at least 8 characters")
+    if not 8 <= len(body.new_password) <= 128:
+        raise HTTPException(400, "New password must be 8-128 characters")
     if body.new_password == body.current_password:
         raise HTTPException(400, "New password must be different from the current one")
     me.password = hash_password(body.new_password)
