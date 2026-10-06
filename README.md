@@ -49,7 +49,7 @@
 | Backend | FastAPI, SQLAlchemy 2, **Pydantic Settings**, **Alembic** migrations, Pillow, slowapi |
 | Database | PostgreSQL |
 | Auth | JWT (HS256) + PBKDF2-SHA256 password hashing |
-| Tests | pytest (85 tests) · Vitest + Testing Library (21 tests) |
+| Tests | pytest (89 tests) · Vitest + Testing Library (21 tests) |
 | Delivery | Docker Compose (Postgres + API + nginx), GitHub Actions CI |
 
 ## Quick start (Windows)

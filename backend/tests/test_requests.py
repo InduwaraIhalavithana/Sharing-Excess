@@ -248,3 +248,17 @@ class TestDonorBoardScope:
         ids = {r["id"] for r in client.get("/api/requests?donor_view=true", headers=bearer(token)).json()["requests"]}
         assert open_req.id in ids
         assert hidden.id not in ids
+
+
+class TestFeedbackFlag:
+    def test_request_reports_whether_feedback_was_given(self, client, recipient, recipient_token, db):
+        from app.models import Feedback
+
+        req = _request(db, recipient.id, "Delivered Thing", status="delivered")
+        before = client.get(f"/api/requests?recipient_id={recipient.id}", headers=bearer(recipient_token)).json()["requests"]
+        assert [r for r in before if r["id"] == req.id][0]["feedback_given"] is False
+
+        db.add(Feedback(recipient_id=recipient.id, request_id=req.id, comment="Lovely, thank you", rating=5))
+        db.commit()
+        after = client.get(f"/api/requests?recipient_id={recipient.id}", headers=bearer(recipient_token)).json()["requests"]
+        assert [r for r in after if r["id"] == req.id][0]["feedback_given"] is True

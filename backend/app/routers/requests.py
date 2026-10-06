@@ -48,6 +48,7 @@ def _request_out(r: FoodRequest) -> dict:
         "donor_id":          donor_id,
         "donor_name":        donor_name,
         "donor_phone":       donor_phone,
+        "feedback_given":    bool(r.feedback),
     }
 
 

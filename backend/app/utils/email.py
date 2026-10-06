@@ -2,6 +2,7 @@ import logging
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from html import escape
 
 from app.config import settings
 
@@ -37,6 +38,8 @@ def send_email(to: str, subject: str, html_body: str) -> bool:
 # ── Email templates ──────────────────────────────────────────────────────────
 
 def verification_email(name: str, code: str) -> str:
+    name = escape(name)
+    code = escape(code)
     return f"""
 <html><body style="font-family:Arial,sans-serif;color:#333">
   <div style="max-width:600px;margin:0 auto;padding:20px">
@@ -55,6 +58,7 @@ def verification_email(name: str, code: str) -> str:
 
 
 def forgot_password_email(code: str) -> str:
+    code = escape(code)
     return f"""
 <html><body style="font-family:Arial,sans-serif;color:#333">
   <div style="max-width:600px;margin:0 auto;padding:20px">
@@ -68,6 +72,7 @@ def forgot_password_email(code: str) -> str:
 
 
 def money_donation_email(name: str, amount: float) -> str:
+    name = escape(name)
     return f"""
 <html><body style="font-family:Arial,sans-serif;color:#333">
   <div style="max-width:600px;margin:0 auto;padding:20px;text-align:center">
@@ -82,6 +87,10 @@ def money_donation_email(name: str, amount: float) -> str:
 
 
 def request_accepted_email(recipient_name: str, food_name: str, donor_name: str, donor_phone: str) -> str:
+    recipient_name = escape(recipient_name)
+    food_name = escape(food_name)
+    donor_name = escape(donor_name)
+    donor_phone = escape(donor_phone)
     phone_line = f"<p>📞 Donor phone: <b>{donor_phone}</b></p>" if donor_phone else ""
     return f"""
 <html><body style="font-family:Arial,sans-serif;color:#333">
@@ -101,6 +110,8 @@ def request_accepted_email(recipient_name: str, food_name: str, donor_name: str,
 
 
 def request_declined_email(recipient_name: str, food_name: str) -> str:
+    recipient_name = escape(recipient_name)
+    food_name = escape(food_name)
     return f"""
 <html><body style="font-family:Arial,sans-serif;color:#333">
   <div style="max-width:600px;margin:0 auto;padding:20px">
@@ -118,6 +129,8 @@ def request_declined_email(recipient_name: str, food_name: str) -> str:
 
 
 def request_delivered_email(recipient_name: str, food_name: str) -> str:
+    recipient_name = escape(recipient_name)
+    food_name = escape(food_name)
     return f"""
 <html><body style="font-family:Arial,sans-serif;color:#333">
   <div style="max-width:600px;margin:0 auto;padding:20px">
@@ -135,6 +148,10 @@ def request_delivered_email(recipient_name: str, food_name: str) -> str:
 
 
 def contact_notification_email(name: str, sender_email: str, subject: str, message: str) -> str:
+    name = escape(name)
+    sender_email = escape(sender_email)
+    subject = escape(subject)
+    message = escape(message)
     return f"""
 <html><body style="font-family:Arial,sans-serif;color:#333">
   <div style="max-width:600px;margin:0 auto;padding:20px">
@@ -143,5 +160,42 @@ def contact_notification_email(name: str, sender_email: str, subject: str, messa
     <p><b>Subject:</b> {subject}</p>
     <hr>
     <p>{message}</p>
+  </div>
+</body></html>"""
+
+
+def listing_approved_email(donor_name: str, food_name: str) -> str:
+    donor_name, food_name = escape(donor_name), escape(food_name)
+    return f"""
+<html><body style="font-family:Arial,sans-serif;color:#333">
+  <div style="max-width:600px;margin:0 auto;padding:20px">
+    <div style="background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;padding:20px;text-align:center;border-radius:10px 10px 0 0">
+      <h1>Sharing Excess</h1><p>Your listing is live</p>
+    </div>
+    <div style="background:#f9f9f9;padding:30px;border-radius:0 0 10px 10px">
+      <h2>Hello {donor_name},</h2>
+      <p>Good news - your listing <b>{food_name}</b> has been checked by our team and is now visible to people who need it.</p>
+      <p>You will get another email when someone requests it. Thank you for sharing!</p>
+      <p>- The Sharing Excess Team</p>
+    </div>
+  </div>
+</body></html>"""
+
+
+def listing_rejected_email(donor_name: str, food_name: str, reason: str) -> str:
+    donor_name, food_name, reason = escape(donor_name), escape(food_name), escape(reason)
+    return f"""
+<html><body style="font-family:Arial,sans-serif;color:#333">
+  <div style="max-width:600px;margin:0 auto;padding:20px">
+    <div style="background:linear-gradient(135deg,#d97706,#b45309);color:#fff;padding:20px;text-align:center;border-radius:10px 10px 0 0">
+      <h1>Sharing Excess</h1><p>Your listing needs a change</p>
+    </div>
+    <div style="background:#f9f9f9;padding:30px;border-radius:0 0 10px 10px">
+      <h2>Hello {donor_name},</h2>
+      <p>We could not publish your listing <b>{food_name}</b> yet. The reviewer wrote:</p>
+      <blockquote style="border-left:4px solid #d97706;margin:16px 0;padding:8px 16px;background:#fff">{reason}</blockquote>
+      <p>You are welcome to add a corrected listing from your dashboard. We appreciate you wanting to help.</p>
+      <p>- The Sharing Excess Team</p>
+    </div>
   </div>
 </body></html>"""

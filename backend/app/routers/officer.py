@@ -9,6 +9,7 @@ from app.database import get_db
 from app.dependencies import require_admin, require_staff
 from app.models import Escalation, Feedback, FoodListing, FoodRequest, MoneyDonation, User
 from app.schemas import ListingUpdate, RequestUpdate, UserUpdate
+from app.utils.email import listing_approved_email, listing_rejected_email, send_email
 
 
 class FeedbackReply(BaseModel):
@@ -147,6 +148,14 @@ def verify_listing(listing_id: int, body: VerifyListingBody,
         listing.verification_status = "rejected"
         listing.rejection_reason = body.reason.strip()
     db.commit()
+    donor = listing.donor
+    if donor and donor.email:
+        if listing.verification_status == "approved":
+            send_email(donor.email, "Your listing is live - Sharing Excess",
+                       listing_approved_email(donor.name, listing.food_name))
+        else:
+            send_email(donor.email, "Your listing needs a change - Sharing Excess",
+                       listing_rejected_email(donor.name, listing.food_name, listing.rejection_reason or ""))
     return {"success": True, "verification_status": listing.verification_status}
 
 
