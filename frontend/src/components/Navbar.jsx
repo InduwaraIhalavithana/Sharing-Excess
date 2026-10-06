@@ -198,7 +198,7 @@ export default function Navbar() {
                   <div className="se-user-dropdown" role="menu">
                     <div className="se-user-dropdown__info">
                       <p className="dropdown-name">{user.name || user.email}</p>
-                      <p className="dropdown-role">{user.role}</p>
+                      <p className="dropdown-role">{user.role === 'adminofficer' ? 'Admin Officer' : user.role}</p>
                     </div>
                     <Link
                       to={getDashboardPath()}
@@ -207,6 +207,14 @@ export default function Navbar() {
                       onClick={() => setUserMenuOpen(false)}
                     >
                       {t('nav', 'dashboard')}
+                    </Link>
+                    <Link
+                      to="/account"
+                      className="se-user-dropdown__item"
+                      role="menuitem"
+                      onClick={() => setUserMenuOpen(false)}
+                    >
+                      ⚙️ Account settings
                     </Link>
                     <button
                       className="se-user-dropdown__item danger"

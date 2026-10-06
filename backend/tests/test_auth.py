@@ -167,3 +167,55 @@ class TestForgotPassword:
         res = client.post("/api/auth/forgot-password", json={"email": "noone@nowhere-example.com"})
         assert res.status_code == 200
         assert res.json()["success"] is True
+
+
+class TestAccountSettings:
+    def _auth(self, token):
+        return {"Authorization": f"Bearer {token}"}
+
+    def test_me_requires_login(self, client):
+        assert client.get("/api/auth/me").status_code == 401
+
+    def test_get_and_update_profile(self, client, recipient, recipient_token):
+        got = client.get("/api/auth/me", headers=self._auth(recipient_token)).json()["user"]
+        assert got["email"] == recipient.email
+        res = client.put("/api/auth/me", headers=self._auth(recipient_token),
+                         json={"name": "Renamed Recipient", "phone_number": "077 123 4567", "location": "Galle"})
+        assert res.status_code == 200
+        assert res.json()["user"]["name"] == "Renamed Recipient"
+        assert res.json()["user"]["location"] == "Galle"
+
+    def test_profile_cannot_change_role_or_email(self, client, recipient, recipient_token):
+        res = client.put("/api/auth/me", headers=self._auth(recipient_token),
+                         json={"name": "Still Recipient", "role": "adminofficer", "email": "hijack@example.com"})
+        assert res.status_code == 200
+        assert res.json()["user"]["role"] == "recipient"
+        assert res.json()["user"]["email"] == recipient.email
+
+    def test_bad_phone_is_rejected(self, client, recipient_token):
+        res = client.put("/api/auth/me", headers=self._auth(recipient_token),
+                         json={"name": "Okay Name", "phone_number": "not-a-phone!"})
+        assert res.status_code == 422
+
+    def test_change_password_flow(self, client, db):
+        import uuid
+        from app.models import User
+        from app.utils.security import hash_password
+
+        u = User(name="Pw User", email=f"pytest_pw_{uuid.uuid4().hex[:6]}@example.com",
+                 password=hash_password("oldpass123"), role="recipient", status="active")
+        db.add(u)
+        db.commit()
+        tok = client.post("/api/auth/login", json={"email": u.email, "password": "oldpass123"}).json()["token"]
+        h = self._auth(tok)
+        assert client.post("/api/auth/change-password", headers=h,
+                           json={"current_password": "WRONG", "new_password": "newpass123"}).status_code == 400
+        assert client.post("/api/auth/change-password", headers=h,
+                           json={"current_password": "oldpass123", "new_password": "short"}).status_code == 400
+        assert client.post("/api/auth/change-password", headers=h,
+                           json={"current_password": "oldpass123", "new_password": "oldpass123"}).status_code == 400
+        ok = client.post("/api/auth/change-password", headers=h,
+                         json={"current_password": "oldpass123", "new_password": "newpass123"})
+        assert ok.status_code == 200
+        assert client.post("/api/auth/login", json={"email": u.email, "password": "newpass123"}).status_code == 200
+        assert client.post("/api/auth/login", json={"email": u.email, "password": "oldpass123"}).status_code == 401

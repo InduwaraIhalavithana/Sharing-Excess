@@ -12,6 +12,7 @@ const TITLES: Record<string, string> = {
   '/calendar': 'Calendar',
   '/contact': 'Contact',
   '/feedback': 'Feedback',
+  '/account': 'Account Settings',
   '/donor-dashboard': 'Donor Dashboard',
   '/recipient-dashboard': 'Recipient Dashboard',
   '/admin': 'Admin Panel',
