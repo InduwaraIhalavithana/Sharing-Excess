@@ -85,7 +85,7 @@ class TestStockComesBack:
         assert listing_row(db, item["id"]).status == "sold_out"
         client.put(f"/api/requests/{rid}/respond", headers=d.h, json={"status": "declined", "reason": "Sorry"})
         assert listing_row(db, item["id"]).status == "active"
-        assert any(x["id"] == item["id"] for x in client.get("/api/listings").json()["listings"])
+        assert any(x["id"] == item["id"] for x in client.get("/api/listings?limit=100").json()["listings"])
 
     def test_recipient_cancel_returns_stock_pending_or_accepted(self, client, setup, request_food, db):
         d, item, r1, r2 = setup
