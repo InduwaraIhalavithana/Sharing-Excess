@@ -4,6 +4,7 @@ import { useLanguage } from './i18n/LanguageContext';
 import ImpactSection from './components/ImpactSection';
 import Reveal from './components/Reveal.jsx';
 import HeroArt from './components/HeroArt';
+import { WHO_ITS_FOR } from './data/samplePartners';
 import { useAuth } from './contexts/AuthContext';
 import { usePublicListings, usePublicStats, useFeedbackList } from './hooks/queries';
 import './HomeCustom.css';
@@ -12,11 +13,6 @@ const HOW_STEPS = [
   { num: '01', icon: '📋', titleKey: 'how_step1_title', descKey: 'how_step1_desc' },
   { num: '02', icon: '🔗', titleKey: 'how_step2_title', descKey: 'how_step2_desc' },
   { num: '03', icon: '🚚', titleKey: 'how_step3_title', descKey: 'how_step3_desc' },
-];
-
-const PARTNERS = [
-  'Ceylon Biscuits Limited', 'Dilmah Tea', 'MAS Holdings', 'Brandix', 'Red Bull',
-  'John Keells Holdings', 'Hemas Holdings', 'Hayleys', 'Dialog Axiata', 'Commercial Bank',
 ];
 
 const FAQS = [
@@ -221,11 +217,11 @@ export default function Home() {
 
       {/* ── Partner marquee ───────────────────────────── */}
       <section className="home-partners">
-        <p className="home-partners__label">Trusted by Sri Lanka's leading organisations</p>
+        <p className="home-partners__label">Built for the people who share and receive food</p>
         <div className="home-partners__marquee">
           <div className="home-partners__track">
-            {[...PARTNERS, ...PARTNERS].map((p, i) => (
-              <span key={i} className="home-partners__item">🏢 {p}</span>
+            {[...WHO_ITS_FOR, ...WHO_ITS_FOR].map((p, i) => (
+              <span key={i} className="home-partners__item">{p}</span>
             ))}
           </div>
         </div>
