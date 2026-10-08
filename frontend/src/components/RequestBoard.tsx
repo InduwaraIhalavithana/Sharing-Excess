@@ -4,7 +4,7 @@ import { useLanguage } from '../i18n/LanguageContext';
 import { useRate, useRespondToRequest, useUpdateRequestStatus, type HandoverStatus } from '../hooks/queries';
 import type { FoodRequest } from '../types/api';
 import { CATEGORY_ICON, fmtDateTime, imgSrc, qty } from '../utils/format';
-import { RatingModal, ReasonModal, StatusBadge } from './ui';
+import { Avatar, RatingModal, ReasonModal, StatusBadge } from './ui';
 
 type Notify = (msg: string, type?: 'success' | 'error') => void;
 
@@ -91,12 +91,12 @@ export default function RequestBoard({ requests, notify, emptyText }: {
               <div className="dd-card-top">
                 {r.listing.image
                   ? <img className="dd-card-img" src={imgSrc(r.listing.image)} alt="" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                  : <div className="dd-card-img dd-card-img--emoji">{CATEGORY_ICON.other}</div>}
+                  : <div className="dd-card-img dd-card-img--emoji" data-cat={r.listing.category}>{CATEGORY_ICON[r.listing.category] ?? CATEGORY_ICON.other}</div>}
                 <div className="dd-card-info">
                   <div className="dd-card-title"><Link to={`/listings/${r.listing.id}`}>{r.listing.food_name}</Link></div>
                   <p className="dd-card-meta">
                     📦 <b>{qty(r.quantity_requested)} {r.listing.unit}</b>
-                    {' · '}{isDonor ? '👤' : '🤝'} {who}{r.recipient.kind === 'ngo' && isDonor ? ' (NGO)' : ''}
+                    {' · '}<Avatar size={20} src={isDonor ? r.recipient.photo : r.donor.photo} name={who} /> {who}{r.recipient.kind === 'ngo' && isDonor ? ' (NGO)' : ''}
                   </p>
                   <p className="dd-card-meta">📍 {r.listing.district}{r.listing.area ? ` · ${r.listing.area}` : ''}</p>
                   {r.created_at && <p className="dd-card-meta">🕒 {fmtDateTime(r.created_at)}</p>}

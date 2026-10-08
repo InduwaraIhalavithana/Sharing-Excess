@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect } from 'react';
+import { lazy, Suspense, useEffect, type ReactNode } from 'react';
 import './App.css';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -12,6 +12,7 @@ import { useLiveUpdates } from './hooks/useLiveUpdates';
 import { useScrollReveal } from './hooks/useScrollReveal';
 import './theme-polish.css';
 import './redesign.css';
+import './polish-v2.css';
 
 // Each page is its own chunk, downloaded only when first visited.
 const Home = lazy(() => import('./Home'));
@@ -47,6 +48,14 @@ function MyDashboard({ tab }: { tab?: string }) {
   const { user } = useAuth();
   if (!user) return <Navigate to="/" replace />;
   return <Navigate to={`${dashboardPath(user.role)}${tab && user.role !== 'admin' ? `?tab=${tab}` : ''}`} replace />;
+}
+
+/** A dashboard only for the given roles: signed-out visitors go home, other roles go to their own dashboard. */
+function RoleRoute({ roles, children }: { roles: string[]; children: ReactNode }) {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/" replace />;
+  if (!roles.includes(user.role)) return <Navigate to={dashboardPath(user.role)} replace />;
+  return <>{children}</>;
 }
 
 function AppContent() {
@@ -91,11 +100,11 @@ function AppContent() {
             <Suspense fallback={<PageFallback />}>
               <Routes>
                 <Route path="/" element={<Home />} />
-                <Route path="/donor-dashboard" element={<DonorDashboard />} />
-                <Route path="/recipient-dashboard" element={<RecipientDashboard />} />
+                <Route path="/donor-dashboard" element={<RoleRoute roles={['donor']}><DonorDashboard /></RoleRoute>} />
+                <Route path="/recipient-dashboard" element={<RoleRoute roles={['recipient']}><RecipientDashboard /></RoleRoute>} />
                 <Route path="/about" element={<About />} />
                 <Route path="/ngos" element={<NGOs />} />
-                <Route path="/ngo-dashboard" element={<NgoDashboard />} />
+                <Route path="/ngo-dashboard" element={<RoleRoute roles={['ngo']}><NgoDashboard /></RoleRoute>} />
                 <Route path="/post-food" element={<PostFood />} />
                 <Route path="/food" element={<Browse />} />
                 <Route path="/listings" element={<Navigate to="/food" replace />} />

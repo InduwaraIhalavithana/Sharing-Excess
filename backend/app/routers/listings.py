@@ -61,6 +61,7 @@ def listing_out(item: FoodListing, *, me: Optional[User] = None, near: Optional[
         "id": item.id,
         "donor_id": item.donor_id,
         "donor_name": item.donor.name if item.donor else None,
+        "donor_photo": item.donor.photo if item.donor else None,
         "donor_rating": (ratings or {}).get(item.donor_id),
         "food_name": item.food_name,
         "description": item.description,

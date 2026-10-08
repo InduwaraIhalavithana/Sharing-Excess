@@ -19,7 +19,7 @@ def purge_user(db: Session, user: User) -> None:
 
     Requests other people made on this user's listings go with the listings (a request cannot exist without one).
     """
-    photos: list = [user.org_logo]
+    photos: list = [user.org_logo, user.avatar]
     listings = db.query(FoodListing).filter(FoodListing.donor_id == user.id).all()
     listing_ids = [x.id for x in listings]
     for x in listings:

@@ -14,6 +14,7 @@ const SELECTOR = [
   '.app-content .donate-impact__stat',
   '.app-content .events-hero__stat',
   '.app-content .dd-card',
+  '.app-content .se-listing',
 ].join(',');
 
 /**

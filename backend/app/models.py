@@ -45,6 +45,7 @@ class User(Base):
     org_name          = Column(String(200), nullable=True)
     org_description   = Column(Text, nullable=True)
     org_logo          = Column(String(500), nullable=True)
+    avatar            = Column(String(500), nullable=True)      # profile photo of a donor or recipient (an NGO's is org_logo)
     ngo_status        = Column(String(20), nullable=True)       # pending | approved | rejected (NULL for other roles)
     created_at        = Column(DateTime, server_default=func.now())
     updated_at        = Column(DateTime, onupdate=func.now())
@@ -52,6 +53,11 @@ class User(Base):
     listings = relationship("FoodListing", back_populates="donor", foreign_keys="FoodListing.donor_id")
     requests = relationship("FoodRequest", back_populates="recipient", foreign_keys="FoodRequest.recipient_id")
     feedback = relationship("Feedback", back_populates="recipient")
+
+    @property
+    def photo(self) -> str | None:
+        """The picture shown next to this account: an NGO's logo, otherwise the profile photo."""
+        return (self.org_logo or self.avatar) if self.role == "ngo" else self.avatar
 
 
 class FoodListing(Base):

@@ -1,4 +1,4 @@
-import { Children, cloneElement, isValidElement, useEffect, useId, useState } from 'react';
+import { Children, cloneElement, isValidElement, useEffect, useId, useRef, useState } from 'react';
 import { Link, Navigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -7,7 +7,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useMeta } from '../hooks/queries';
 import { CATEGORY_ICON, dashboardPath } from '../utils/format';
-import { DistrictSelect } from './ui';
+import { Avatar, DistrictSelect } from './ui';
 import { api, ApiError } from '../utils/api';
 import {
   deleteAccountSchema, passwordSchema, profileSchema,
@@ -68,6 +68,23 @@ export default function AccountSettings() {
     },
     onError: (err: Error) => setToast({ msg: err.message, type: 'error' }),
   });
+
+  const fileRef = useRef<HTMLInputElement>(null);
+  const savePhoto = useMutation({
+    mutationFn: (file: File) => {
+      const fd = new FormData();
+      fd.append('photo', file);
+      return api<{ user: User }>('/api/auth/me/photo', { method: 'POST', body: fd });
+    },
+    onSuccess: (res) => { login(res.user); setToast({ msg: t('acct', 'photo_updated') }); },
+    onError: (err: Error) => setToast({ msg: err.message, type: 'error' }),
+  });
+  const removePhoto = useMutation({
+    mutationFn: () => api<{ user: User }>('/api/auth/me/photo', { method: 'DELETE' }),
+    onSuccess: (res) => { login(res.user); setToast({ msg: t('acct', 'photo_removed') }); },
+    onError: (err: Error) => setToast({ msg: err.message, type: 'error' }),
+  });
+  const busyPhoto = savePhoto.isPending || removePhoto.isPending;
 
   const changePassword = useMutation({
     mutationFn: (data: PasswordForm) =>
@@ -140,7 +157,6 @@ export default function AccountSettings() {
 
   if (!user) return <Navigate to="/" replace />;
 
-  const initial = (user.name || user.email).charAt(0).toUpperCase();
   const e1 = profile.formState.errors;
   const e2 = password.formState.errors;
 
@@ -150,11 +166,28 @@ export default function AccountSettings() {
 
       <div className="dd-header">
         <div className="acct-hero">
-          <div className="acct-avatar" aria-hidden="true">{initial}</div>
+          <button type="button" className="acct-photo" onClick={() => fileRef.current?.click()} disabled={busyPhoto}
+            aria-label={t('acct', user.photo ? 'change_photo' : 'add_photo')} title={t('acct', user.photo ? 'change_photo' : 'add_photo')}>
+            <Avatar className="acct-avatar" size={84} src={user.photo} name={user.name || user.email} />
+            <span className="acct-photo__cam" aria-hidden="true">{busyPhoto ? '…' : '📷'}</span>
+          </button>
+          <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden aria-label={t('acct', 'change_photo')}
+            onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) savePhoto.mutate(f); }} />
           <div>
             <h1 className="dd-title">{t('nav', 'account_settings')}</h1>
             <p className="dd-welcome">
               {user.email} · <span className="acct-role">{t('role', user.role)}</span>
+            </p>
+            <p className="acct-photo__actions">
+              <button type="button" className="acct-photo__btn" onClick={() => fileRef.current?.click()} disabled={busyPhoto}>
+                📷 {t('acct', user.photo ? 'change_photo' : 'add_photo')}
+              </button>
+              {user.photo && (
+                <button type="button" className="acct-photo__btn" onClick={() => removePhoto.mutate()} disabled={busyPhoto}>
+                  ✕ {t('acct', 'remove_photo')}
+                </button>
+              )}
+              <small>{t('acct', 'photo_hint')}</small>
             </p>
           </div>
         </div>

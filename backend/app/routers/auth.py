@@ -1,4 +1,4 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Request, UploadFile
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -22,6 +22,7 @@ from app.utils.email import forgot_password_email, send_email, verification_emai
 from app.utils.jwt import create_access_token
 from app.utils.limiter import limiter
 from app.utils.security import hash_password, verify_password
+from app.utils.uploads import delete_upload, save_upload
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -166,7 +167,7 @@ def _me(u: User) -> dict:
             "status": u.status, "notify_districts": list(u.notify_districts or []),
             "notify_food_types": list(u.notify_food_types or []), "notify_email": u.notify_email,
             "org_name": u.org_name, "org_description": u.org_description, "org_logo": u.org_logo,
-            "ngo_status": u.ngo_status}
+            "photo": u.photo, "ngo_status": u.ngo_status}
 
 
 @router.get("/me")
@@ -191,6 +192,37 @@ def update_me(body: ProfileUpdate, db: Session = Depends(get_db), me: User = Dep
     db.commit()
     db.refresh(me)
     return {"success": True, "message": "Profile updated", "user": _me(me)}
+
+
+def _set_photo(me: User, url: str | None) -> str | None:
+    """Store the picture on the right column (an NGO's is its logo) and return the one it replaced."""
+    if me.role == "ngo":
+        old, me.org_logo = me.org_logo, url
+    else:
+        old, me.avatar = me.avatar, url
+    return old
+
+
+@router.post("/me/photo")
+@limiter.limit("20/hour")
+async def upload_my_photo(request: Request, photo: UploadFile = File(...), db: Session = Depends(get_db),
+                          me: User = Depends(get_current_user)):
+    """Set or replace the profile photo. The image is checked, resized and stripped of location data on the way in."""
+    if me.role == "admin":
+        raise HTTPException(403, "The admin account has no profile photo")
+    url = await save_upload(photo, prefix="avatar")
+    old = _set_photo(me, url)
+    db.commit()
+    delete_upload(old)
+    return {"success": True, "message": "Photo updated", "user": _me(me)}
+
+
+@router.delete("/me/photo")
+def remove_my_photo(db: Session = Depends(get_db), me: User = Depends(get_current_user)):
+    old = _set_photo(me, None)
+    db.commit()
+    delete_upload(old)
+    return {"success": True, "message": "Photo removed", "user": _me(me)}
 
 
 @router.post("/change-password")
