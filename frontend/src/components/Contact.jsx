@@ -25,7 +25,7 @@ export default function Contact() {
         {/* Info strips */}
         <div className="contact-info-strip">
           {[
-            { icon: '📧', label: tr('Email'),   value: 'info@sharingexcess.lk', href: 'mailto:info@sharingexcess.lk' },
+            { icon: '📧', label: tr('Email'),   value: 'admin.sharingexcess@gmail.com', href: 'mailto:admin.sharingexcess@gmail.com' },
             { icon: '📍', label: tr('Address'), value: tr('Uva Wellassa University, Badulla, Sri Lanka'), href: null },
             { icon: '🕑', label: tr('Hours'),   value: tr('Mon – Fri, 9am – 5pm'),  href: null },
           ].map(c => (

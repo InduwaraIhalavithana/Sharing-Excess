@@ -19,6 +19,8 @@ export interface User {
   org_name?: string | null;
   org_description?: string | null;
   org_logo?: string | null;
+  /** The picture to show for this account (an NGO's logo, otherwise the profile photo). */
+  photo?: string | null;
   ngo_status?: NgoStatus | null;
   created_at?: string | null;
 }
@@ -40,6 +42,7 @@ export interface Listing {
   id: number;
   donor_id: number;
   donor_name: string | null;
+  donor_photo?: string | null;
   donor_rating: Rating | null;
   food_name: string;
   description: string | null;
@@ -84,6 +87,7 @@ export interface FoodRequest {
     unit: string;
     district: string;
     area: string | null;
+    category: string;
     image: string | null;
     status: ListingStatus;
     expires_at: string;
@@ -98,10 +102,10 @@ export interface FoodRequest {
   collected_at: string | null;
   completed_at: string | null;
   recipient: {
-    id: number; name: string; kind: 'person' | 'ngo'; org_name: string | null; district: string | null;
+    id: number; name: string; kind: 'person' | 'ngo'; org_name: string | null; district: string | null; photo?: string | null;
     phone?: string | null; email?: string | null;
   };
-  donor: { id: number; name: string; phone?: string | null; email?: string | null; address?: string | null };
+  donor: { id: number; name: string; photo?: string | null; phone?: string | null; email?: string | null; address?: string | null };
   i_am: 'donor' | 'recipient' | 'admin';
   can_rate: boolean;
 }
@@ -172,7 +176,7 @@ export interface NgoCard {
 
 export interface RatingSummary {
   success: boolean;
-  user: { id: number; name: string; role: Role };
+  user: { id: number; name: string; role: Role; photo?: string | null };
   average: number | null;
   count: number;
   recent: { score: number; comment: string; from: string; created_at: string | null }[];

@@ -45,7 +45,7 @@ export default function NGOs() {
             {ngos.map((n) => (
               <div key={n.id} className="ngos-card card">
                 <div className="ngos-card__logo-wrap ngos-card__icon">
-                  {n.logo ? <img src={imgSrc(n.logo)} alt="" /> : <span aria-hidden="true">🤝</span>}
+                  {n.logo ? <img className="ngos-card__logo" src={imgSrc(n.logo)} alt="" loading="lazy" /> : <span aria-hidden="true">🤝</span>}
                 </div>
                 <div className="ngos-card__body">
                   <h3 className="ngos-card__name"><Link to={`/profile/${n.id}`}>{n.org_name}</Link></h3>

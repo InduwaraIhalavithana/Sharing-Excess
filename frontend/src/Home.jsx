@@ -9,7 +9,7 @@ import HeroArt from './components/HeroArt';
 import { WHO_ITS_FOR } from './data/audience';
 import { useAuth } from './contexts/AuthContext';
 import { usePublicListings, usePublicStats } from './hooks/queries';
-import { qty, timeLeft } from './utils/format';
+import { CATEGORY_ICON, qty, timeLeft } from './utils/format';
 import './HomeCustom.css';
 
 const HOW_STEPS = [
@@ -157,9 +157,9 @@ export default function Home() {
             <div className="home-live__grid">
               {liveListings.map((l, i) => (
                 <Reveal key={l.id} delay={i * 90}>
-                  <div className="home-live-card">
+                  <div className="home-live-card" data-cat={l.category}>
                     <div className="home-live-card__top">
-                      <span className="home-live-card__emoji">🍲</span>
+                      <span className="home-live-card__emoji">{CATEGORY_ICON[l.category] ?? '🍲'}</span>
                       <span className="home-live-card__badge">{p('available')}</span>
                     </div>
                     <h3 className="home-live-card__name">{l.food_name}</h3>

@@ -19,7 +19,7 @@ const listing: Listing = {
 
 const request = (over: Partial<FoodRequest> = {}): FoodRequest => ({
   id: 1,
-  listing: { id: 7, food_name: 'Fresh bread', unit: 'loaves', district: 'Colombo', area: 'Pettah', image: null, status: 'active', expires_at: '2030-01-01T18:00:00', fulfilment: 'pickup' },
+  listing: { id: 7, food_name: 'Fresh bread', unit: 'loaves', district: 'Colombo', area: 'Pettah', category: 'other', image: null, status: 'active', expires_at: '2030-01-01T18:00:00', fulfilment: 'pickup' },
   quantity_requested: 3, message: null, status: 'pending', decline_reason: null, created_at: '2030-01-01T10:00:00', responded_at: null,
   collected_at: null, completed_at: null,
   recipient: { id: 2, name: 'Nimali', kind: 'person', org_name: null, district: 'Gampaha' },

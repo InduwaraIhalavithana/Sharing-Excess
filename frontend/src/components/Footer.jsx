@@ -52,7 +52,7 @@ export default function Footer() {
               </li>
               <li>
                 <span className="se-footer__contact-icon">✉️</span>
-                <a href="mailto:info@sharingexcess.lk" className="se-footer__link">info@sharingexcess.lk</a>
+                <a href="mailto:admin.sharingexcess@gmail.com" className="se-footer__link">admin.sharingexcess@gmail.com</a>
               </li>
               <li>
                 <span className="se-footer__contact-icon">🕐</span>

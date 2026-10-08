@@ -60,11 +60,13 @@ export default function FeedbackPage() {
         <div className="feedback-layout">
           <div className="feedback-main">
             {!user ? (
-              <div className="feedback-login-prompt">
-                <p>
-                  <button className="auth-link-btn" onClick={() => window.dispatchEvent(new Event('openLogin'))}>{t('nav', 'login')}</button>
-                  {' '}{t('feedback', 'login_to_send')}
-                </p>
+              <div className="feedback-login-prompt feedback-login-prompt--cta">
+                <span className="feedback-login-prompt__icon" aria-hidden="true">💬</span>
+                <p>{t('feedback', 'login_to_send')}</p>
+                <div className="feedback-login-prompt__btns">
+                  <button className="btn btn-primary" onClick={() => window.dispatchEvent(new Event('openLogin'))}>{t('nav', 'login')}</button>
+                  <button className="btn btn-outline" onClick={() => window.dispatchEvent(new Event('openSignup'))}>{t('nav', 'signup')}</button>
+                </div>
               </div>
             ) : user.role === 'admin' ? (
               <div className="feedback-login-prompt"><p>{t('feedback', 'admin_reads')}</p></div>
