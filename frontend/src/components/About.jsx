@@ -81,6 +81,8 @@ export default function About() {
                 <div>
                   <h3>{p('Our Vision')}</h3>
                   <p>{p('Sharing Excess bridges the gap between surplus and scarcity. Our mission is to create a sustainable system where leftover food is redirected to trusted NGOs, minimising waste and maximising impact.')}</p>
+                  <p>{p('Every donor, recipient and NGO we connect brings us closer to a Sri Lanka where good food always finds a table.')}</p>
+                  <p className="about-vision__highlight"><em>{p('One surplus meal, shared with a neighbour in need.')}</em></p>
                 </div>
               </div>
             </div>
@@ -151,7 +153,7 @@ export default function About() {
           <Reveal>
             <div className="about-dev card">
               <div className="about-dev__left">
-                <div className="about-dev__avatar">👨‍💻</div>
+                <div className="about-dev__avatar"><img src="/developer.webp" alt="Induwara Ihalavithana, the developer of Sharing Excess" width="160" height="160" loading="lazy" /></div>
                 <h3 className="about-dev__name">Induwara Ihalavithana</h3>
                 <p className="about-dev__role">{p('Founder · Designer · Developer')}</p>
                 <p className="about-dev__uni">{p('🎓 Uva Wellassa University, Badulla')}</p>
@@ -242,7 +244,7 @@ export default function About() {
           <Reveal>
             <div className="about-contact">
               {[
-                { icon: '📧', label: tr('Email'),   value: 'info@sharingexcess.lk' },
+                { icon: '📧', label: tr('Email'),   value: 'admin.sharingexcess@gmail.com' },
                 { icon: '📍', label: tr('Address'), value: tr('Uva Wellassa University, Badulla, Sri Lanka') },
                 { icon: '🕑', label: tr('Hours'),   value: tr('Mon – Fri, 9am – 5pm') },
               ].map(c => (

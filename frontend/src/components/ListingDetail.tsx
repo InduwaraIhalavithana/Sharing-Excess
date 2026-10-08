@@ -7,7 +7,7 @@ import { CATEGORY_ICON, fmtDateTime, imgSrc, qty } from '../utils/format';
 import { ExpiryChip, ProximityChip, Stock } from './ListingCard';
 import { SkeletonGrid } from './SkeletonCard.jsx';
 import Toast, { type ToastState } from './Toast';
-import { Empty, QtyStepper, ReasonModal, Stars, StatusBadge } from './ui';
+import { Avatar, Empty, QtyStepper, ReasonModal, Stars, StatusBadge } from './ui';
 
 export default function ListingDetail() {
   const { id } = useParams();
@@ -95,7 +95,7 @@ export default function ListingDetail() {
             <li>⏰ {t('food', 'expires')}: <b>{fmtDateTime(l.expires_at)}</b></li>
             {l.prepared_at && <li>🍳 {t('food', 'prepared')}: {fmtDateTime(l.prepared_at)}</li>}
             <li>🚚 {t('food', l.fulfilment === 'both' ? 'delivery_or_pickup' : l.fulfilment)}</li>
-            <li>🤝 <Link to={`/profile/${l.donor_id}`}>{l.donor_name}</Link>{l.donor_rating && <> · <Stars value={l.donor_rating.average} count={l.donor_rating.count} /></>}</li>
+            <li><Avatar size={26} src={l.donor_photo} name={l.donor_name} /> <Link to={`/profile/${l.donor_id}`}>{l.donor_name}</Link>{l.donor_rating && <> · <Stars value={l.donor_rating.average} count={l.donor_rating.count} /></>}</li>
           </ul>
 
           {l.contact ? (

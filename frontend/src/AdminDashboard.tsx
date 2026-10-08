@@ -19,6 +19,8 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend, ArcEle
 // readable on both the light and the dark panel
 ChartJS.defaults.color = '#94a3b8';
 ChartJS.defaults.borderColor = 'rgba(148,163,184,0.2)';
+ChartJS.defaults.font.size = 14;
+ChartJS.defaults.font.family = "'Inter', sans-serif";
 
 type Section = 'overview' | 'ngos' | 'listings' | 'events' | 'reports' | 'users' | 'feedback';
 

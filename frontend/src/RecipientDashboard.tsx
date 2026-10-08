@@ -48,7 +48,7 @@ export default function RecipientDashboard() {
         <Link to="/account#notifications" className="btn btn-primary">🔔 {t('dash', 'alert_prefs')}</Link>
       </div>
 
-      {!user?.district && (
+      {user && !user.district && (
         <div className="se-notice se-notice--warn">⚠️ {t('food', 'set_district')} <Link to="/account">{t('nav', 'account_settings')}</Link></div>
       )}
 

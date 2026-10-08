@@ -48,7 +48,7 @@ def user_ratings(user_id: int, db: Session = Depends(get_db)):
     avg, count = db.query(func.avg(Rating.score), func.count(Rating.id)).filter(Rating.ratee_id == user_id).one()
     rows = (db.query(Rating).filter(Rating.ratee_id == user_id, Rating.comment.isnot(None))
             .order_by(Rating.created_at.desc()).limit(20).all())
-    return {"success": True, "user": {"id": user.id, "name": user.org_name or user.name, "role": user.role},
+    return {"success": True, "user": {"id": user.id, "name": user.org_name or user.name, "role": user.role, "photo": user.photo},
             "average": round(float(avg), 2) if avg is not None else None, "count": count,
             "recent": [{"score": r.score, "comment": r.comment, "from": (r.rater.name or "").split(" ")[0],
                         "created_at": r.created_at.isoformat() if r.created_at else None} for r in rows]}

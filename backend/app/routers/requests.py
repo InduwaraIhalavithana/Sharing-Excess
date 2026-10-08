@@ -47,7 +47,7 @@ def request_out(r: FoodRequest, me: User, rated: Optional[set[int]] = None) -> d
         "id": r.id,
         "listing": {
             "id": listing.id, "food_name": listing.food_name, "unit": listing.unit, "district": listing.district,
-            "area": listing.area, "image": (listing.images or [None])[0], "status": listing.status,
+            "area": listing.area, "category": listing.category, "image": (listing.images or [None])[0], "status": listing.status,
             "expires_at": listing.expires_at.isoformat(), "fulfilment": listing.fulfilment,
         },
         "quantity_requested": float(r.quantity_requested),
@@ -60,8 +60,8 @@ def request_out(r: FoodRequest, me: User, rated: Optional[set[int]] = None) -> d
         "completed_at": r.completed_at.isoformat() if r.completed_at else None,
         "recipient": {"id": r.recipient_id, "name": r.recipient.name,
                       "kind": "ngo" if r.recipient.role == "ngo" else "person",
-                      "org_name": r.recipient.org_name, "district": r.recipient.district},
-        "donor": {"id": listing.donor_id, "name": listing.donor.name},
+                      "org_name": r.recipient.org_name, "district": r.recipient.district, "photo": r.recipient.photo},
+        "donor": {"id": listing.donor_id, "name": listing.donor.name, "photo": listing.donor.photo},
         "i_am": "recipient" if is_recipient else "donor" if is_donor else "admin",
         "can_rate": r.status == "completed" and (is_recipient or is_donor) and r.id not in (rated or set()),
     }
