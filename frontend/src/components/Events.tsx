@@ -7,7 +7,7 @@ import { useEvents, useJoinEvent, useMeta, usePublicStats, useReport, useSubscri
 import type { CommunityEvent } from '../types/api';
 import { EVENT_ICON, fmtDate, fmtTime, imgSrc } from '../utils/format';
 import Toast, { type ToastState } from './Toast';
-import { DistrictSelect, ReasonModal } from './ui';
+import { Avatar, DistrictSelect, ReasonModal } from './ui';
 
 /** Event times are Sri Lanka wall-clock strings with no zone: show them exactly as stored. */
 function when(ev: CommunityEvent) {
@@ -207,7 +207,7 @@ function EventCard({ ev, canJoin, busy, onJoin, onReport }: {
         <li>📅 {date}</li>
         <li>🕐 {time}</li>
         <li>📍 {ev.location}, {ev.district}</li>
-        {ev.organiser && <li>🤝 {ev.organiser.name}</li>}
+        {ev.organiser && <li><Avatar size={24} src={ev.organiser.logo} name={ev.organiser.name} /> {ev.organiser.name}</li>}
       </ul>
       {ev.description && <p className="event-card__desc">{ev.description}</p>}
       {(ev.contact.phone || ev.contact.email) && (

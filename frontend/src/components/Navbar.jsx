@@ -1,3 +1,4 @@
+import { Avatar } from './ui';
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
@@ -230,9 +231,7 @@ export default function Navbar() {
                   aria-expanded={userMenuOpen}
                   aria-haspopup="true"
                 >
-                  <span className="se-user-avatar">
-                    {(user.name || user.email || 'U').charAt(0).toUpperCase()}
-                  </span>
+                  <Avatar className="se-user-avatar" size={32} src={user.photo} name={user.name || user.email} />
                   <span className="se-user-name">{(user.name || user.email || '').split(' ')[0]}</span>
                   <span className="se-user-chevron">{userMenuOpen ? '▲' : '▼'}</span>
                 </button>
@@ -303,6 +302,7 @@ export default function Navbar() {
                 className={`se-mobile-link${isActive(to) ? ' active' : ''}`}
                 onClick={() => setMenuOpen(false)}
               >
+                <span className="se-mobile-link__icon" aria-hidden="true">{NAV_ICONS[to]}</span>
                 {label}
               </Link>
             ))}

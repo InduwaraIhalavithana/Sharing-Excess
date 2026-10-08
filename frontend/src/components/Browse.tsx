@@ -54,7 +54,7 @@ export default function Browse() {
             <button className="btn btn-outline btn-sm" onClick={() => window.dispatchEvent(new Event('openSignup'))}>{t('nav', 'signup')}</button>
           </div>
         )}
-        {user && !user.district && (
+        {user && user.role !== 'admin' && !user.district && (
           <div className="se-notice se-notice--warn">
             ⚠️ {t('food', 'set_district')} <Link to="/account">{t('nav', 'account_settings')}</Link>
           </div>

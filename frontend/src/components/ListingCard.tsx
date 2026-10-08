@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useLanguage } from '../i18n/LanguageContext';
 import type { Listing } from '../types/api';
 import { CATEGORY_ICON, imgSrc, qty, timeLeft } from '../utils/format';
-import { Stars } from './ui';
+import { Avatar, Stars } from './ui';
 
 export function Stock({ l }: { l: Pick<Listing, 'quantity_available' | 'quantity_total' | 'unit'> }) {
   const pct = l.quantity_total > 0 ? Math.max(0, Math.min(100, (l.quantity_available / l.quantity_total) * 100)) : 0;
@@ -34,7 +34,7 @@ export default function ListingCard({ l, footer }: { l: Listing; footer?: React.
   const img = l.images[0];
   return (
     <article className="dashboard-card se-listing" data-testid={`listing-${l.id}`}>
-      <Link to={`/listings/${l.id}`} className="se-listing__media" aria-label={l.food_name}>
+      <Link to={`/listings/${l.id}`} className="se-listing__media" data-cat={l.category} aria-label={l.food_name}>
         {img
           ? <img src={imgSrc(img)} alt={l.food_name} loading="lazy" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
           : null}
@@ -51,7 +51,7 @@ export default function ListingCard({ l, footer }: { l: Listing; footer?: React.
           {l.fulfilment !== 'pickup' && <span className="se-chip se-chip--gray">🚚 {t('food', l.fulfilment === 'both' ? 'delivery_or_pickup' : 'delivery')}</span>}
         </div>
         <p className="se-listing__donor">
-          🤝 {l.donor_name ?? t('food', 'anonymous')}
+          <Avatar size={22} src={l.donor_photo} name={l.donor_name} /> {l.donor_name ?? t('food', 'anonymous')}
           {l.donor_rating && <> · <Stars value={l.donor_rating.average} count={l.donor_rating.count} /></>}
         </p>
         {footer ?? <Link className="btn btn-primary btn-sm btn-block" to={`/listings/${l.id}`}>{t('food', 'view_request')}</Link>}

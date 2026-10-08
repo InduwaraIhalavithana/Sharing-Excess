@@ -94,6 +94,7 @@ const en = {
   recipient: { no_requests: 'You have not requested any food yet. Find something nearby and tap “Request”.' },
   notif: { title: 'Notifications', mark_all: 'Mark all read', empty: 'Nothing yet. We will tell you when food appears near you.' },
   acct: {
+    change_photo: 'Change photo', add_photo: 'Add photo', remove_photo: 'Remove', photo_updated: 'Photo updated.', photo_removed: 'Photo removed.', photo_hint: 'JPG, PNG or WebP, up to 5 MB.',
     profile_updated: 'Profile updated.', password_changed: 'Password changed.', deleted_bye: 'Your account and its data have been deleted. Goodbye - thank you for sharing.',
     full_name: 'Full name', email: 'Email', save_changes: 'Save changes', current_pw: 'Current password', new_pw: 'New password',
     confirm_pw: 'Confirm new password', update_pw: 'Update password', your_pw: 'Your password', delete_perm: 'Permanently delete my account',
@@ -147,7 +148,7 @@ const en = {
   profile: { not_found: 'We could not find that profile.', no_ratings: 'No ratings yet.', what_people_say: 'What people say' },
   feedback: {
     title: 'Tell the admin', subtitle: 'Ideas, problems or thanks about the platform. Only the admin reads this.',
-    login_to_send: 'to send feedback.', admin_reads: 'You read feedback in the admin panel.', form_title: 'Send feedback',
+    login_to_send: 'Sign in to send your feedback to the admin.', admin_reads: 'You read feedback in the admin panel.', form_title: 'Send feedback',
     private_note: 'Private: visible only to the admin.', how_rate: 'How is Sharing Excess working for you?',
     your_message: 'Your message', photo_optional: 'Photo (optional)', send: 'Send feedback', sent: 'Thank you! The admin will read it.',
     e_comment: 'Please write a message.', impact: 'Community impact',
@@ -280,6 +281,7 @@ const si = {
   recipient: { no_requests: 'ඔබ තවම ආහාර ඉල්ලා නැත. ළඟ ඇති දෙයක් සොයා “ඉල්ලන්න” ඔබන්න.' },
   notif: { title: 'දැනුම්දීම්', mark_all: 'සියල්ල කියවූ ලෙස', empty: 'තවම නැත. ඔබ ළඟ ආහාර පෙනෙන විට දන්වන්නෙමු.' },
   acct: {
+    change_photo: 'ඡායාරූපය වෙනස් කරන්න', add_photo: 'ඡායාරූපයක් එක් කරන්න', remove_photo: 'ඉවත් කරන්න', photo_updated: 'ඡායාරූපය යාවත්කාලීන කළා.', photo_removed: 'ඡායාරූපය ඉවත් කළා.', photo_hint: 'JPG, PNG හෝ WebP, 5 MB දක්වා.',
     profile_updated: 'පැතිකඩ යාවත්කාලීන විය.', password_changed: 'මුරපදය වෙනස් විය.', deleted_bye: 'ඔබේ ගිණුම සහ දත්ත මකා ඇත. ස්තූතියි, ආයුබෝවන්.',
     full_name: 'සම්පූර්ණ නම', email: 'විද්‍යුත් තැපෑල', save_changes: 'වෙනස්කම් සුරකින්න', current_pw: 'වත්මන් මුරපදය', new_pw: 'නව මුරපදය',
     confirm_pw: 'නව මුරපදය තහවුරු කරන්න', update_pw: 'මුරපදය යාවත්කාලීන කරන්න', your_pw: 'ඔබේ මුරපදය', delete_perm: 'මගේ ගිණුම ස්ථිරවම මකන්න',
@@ -333,7 +335,7 @@ const si = {
   profile: { not_found: 'එම පැතිකඩ සොයාගත නොහැකි විය.', no_ratings: 'තවම ශ්‍රේණිගත කිරීම් නැත.', what_people_say: 'මිනිසුන් පවසන දේ' },
   feedback: {
     title: 'පරිපාලකට කියන්න', subtitle: 'වේදිකාව ගැන අදහස්, ගැටලු හෝ ස්තූතිය. කියවන්නේ පරිපාලක පමණි.',
-    login_to_send: 'ප්‍රතිපෝෂණ යැවීමට.', admin_reads: 'ඔබ ප්‍රතිපෝෂණ කියවන්නේ පරිපාලක පැනලයෙනි.', form_title: 'ප්‍රතිපෝෂණ යවන්න',
+    login_to_send: 'පරිපාලකට ප්‍රතිපෝෂණ යැවීමට පුරනය වන්න.', admin_reads: 'ඔබ ප්‍රතිපෝෂණ කියවන්නේ පරිපාලක පැනලයෙනි.', form_title: 'ප්‍රතිපෝෂණ යවන්න',
     private_note: 'පෞද්ගලික: පරිපාලකට පමණක් පෙනේ.', how_rate: 'Sharing Excess ඔබට කෙසේ ක්‍රියා කරන්නේද?', your_message: 'ඔබේ පණිවිඩය',
     photo_optional: 'ඡායාරූපය (අත්‍යවශ්‍ය නොවේ)', send: 'ප්‍රතිපෝෂණ යවන්න', sent: 'ස්තූතියි! පරිපාලක එය කියවනු ඇත.',
     e_comment: 'කරුණාකර පණිවිඩයක් ලියන්න.', impact: 'ප්‍රජා බලපෑම',
@@ -464,6 +466,7 @@ const ta = {
   recipient: { no_requests: 'நீங்கள் இன்னும் உணவு கோரவில்லை. அருகில் ஏதாவது கண்டு “கோரு” அழுத்தவும்.' },
   notif: { title: 'அறிவிப்புகள்', mark_all: 'அனைத்தும் படிக்கப்பட்டது', empty: 'இன்னும் இல்லை. உங்கள் அருகில் உணவு வந்ததும் தெரிவிப்போம்.' },
   acct: {
+    change_photo: 'புகைப்படத்தை மாற்று', add_photo: 'புகைப்படம் சேர்', remove_photo: 'நீக்கு', photo_updated: 'புகைப்படம் புதுப்பிக்கப்பட்டது.', photo_removed: 'புகைப்படம் நீக்கப்பட்டது.', photo_hint: 'JPG, PNG அல்லது WebP, 5 MB வரை.',
     profile_updated: 'சுயவிவரம் புதுப்பிக்கப்பட்டது.', password_changed: 'கடவுச்சொல் மாற்றப்பட்டது.', deleted_bye: 'உங்கள் கணக்கும் தரவும் நீக்கப்பட்டன. நன்றி, பிரியாவிடை.',
     full_name: 'முழுப் பெயர்', email: 'மின்னஞ்சல்', save_changes: 'மாற்றங்களைச் சேமி', current_pw: 'தற்போதைய கடவுச்சொல்', new_pw: 'புதிய கடவுச்சொல்',
     confirm_pw: 'புதிய கடவுச்சொல்லை உறுதிசெய்', update_pw: 'கடவுச்சொல்லைப் புதுப்பி', your_pw: 'உங்கள் கடவுச்சொல்', delete_perm: 'எனது கணக்கை நிரந்தரமாக நீக்கு',
@@ -517,7 +520,7 @@ const ta = {
   profile: { not_found: 'அந்தச் சுயவிவரம் கிடைக்கவில்லை.', no_ratings: 'இன்னும் மதிப்பீடுகள் இல்லை.', what_people_say: 'மக்கள் சொல்வது' },
   feedback: {
     title: 'நிர்வாகியிடம் சொல்லுங்கள்', subtitle: 'தளம் பற்றிய யோசனைகள், சிக்கல்கள் அல்லது நன்றி. நிர்வாகி மட்டுமே படிப்பார்.',
-    login_to_send: 'கருத்து அனுப்ப.', admin_reads: 'கருத்துகளை நிர்வாகி பலகத்தில் படிக்கிறீர்கள்.', form_title: 'கருத்தை அனுப்பு',
+    login_to_send: 'நிர்வாகிக்கு கருத்து அனுப்ப உள்நுழையவும்.', admin_reads: 'கருத்துகளை நிர்வாகி பலகத்தில் படிக்கிறீர்கள்.', form_title: 'கருத்தை அனுப்பு',
     private_note: 'தனிப்பட்டது: நிர்வாகிக்கு மட்டுமே தெரியும்.', how_rate: 'Sharing Excess உங்களுக்கு எப்படி வேலை செய்கிறது?', your_message: 'உங்கள் செய்தி',
     photo_optional: 'புகைப்படம் (விருப்பம்)', send: 'கருத்தை அனுப்பு', sent: 'நன்றி! நிர்வாகி படிப்பார்.',
     e_comment: 'ஒரு செய்தியை எழுதுங்கள்.', impact: 'சமூகத் தாக்கம்',

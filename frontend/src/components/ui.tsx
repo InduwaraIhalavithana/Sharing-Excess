@@ -1,6 +1,19 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useMeta } from '../hooks/queries';
+import { imgSrc } from '../utils/format';
+
+/** A round profile picture, or the first letter of the name when there is none (or it fails to load). */
+export function Avatar({ src, name, size = 32, className = '' }: { src?: string | null; name?: string | null; size?: number; className?: string }) {
+  const [broken, setBroken] = useState(false);
+  useEffect(() => setBroken(false), [src]);
+  const letter = (name || '?').trim().charAt(0).toUpperCase();
+  return (
+    <span className={`se-avatar ${className}`} style={{ width: size, height: size, fontSize: size * 0.44 }} aria-hidden="true">
+      {src && !broken ? <img src={imgSrc(src)} alt="" loading="lazy" onError={() => setBroken(true)} /> : letter}
+    </span>
+  );
+}
 
 /** Accessible dialog: Escape and a click on the backdrop close it, focus moves inside while it is open. */
 export function Modal({ title, onClose, children, wide = false }: {

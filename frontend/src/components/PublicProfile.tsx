@@ -2,7 +2,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useEvents, useRatingSummary } from '../hooks/queries';
 import { fmtDate, fmtDateTime } from '../utils/format';
-import { Empty, Stars } from './ui';
+import { Avatar, Empty, Stars } from './ui';
 
 /** What anyone can see about a donor, recipient or NGO: their name, their rating and what people wrote. No contact details. */
 export default function PublicProfile() {
@@ -22,7 +22,7 @@ export default function PublicProfile() {
   return (
     <div className="container ld-page">
       <div className="dashboard-card pp-card">
-        <div className="pp-avatar" aria-hidden="true">{data.user.name.charAt(0).toUpperCase()}</div>
+        <Avatar className="pp-avatar" size={84} src={data.user.photo} name={data.user.name} />
         <div>
           <h1>{data.user.name}</h1>
           <p className="dd-card-meta">{t('role', data.user.role)}</p>
