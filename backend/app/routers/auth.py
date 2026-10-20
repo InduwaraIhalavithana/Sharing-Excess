@@ -60,10 +60,13 @@ def signup(request: Request, body: SignupRequest, db: Session = Depends(get_db))
 
     sent = send_email(body.email, "Email Verification – Sharing Excess",
                       verification_email(body.name, code))
-    if sent:
-        return {"success": True, "message": "Registration successful! Check your email for the verification code.",
-                "user_id": user.id, "email": user.email, "name": user.name, "role": user.role}
-    return {"success": False, "message": "Registration successful but verification email could not be sent. Contact support."}
+    if not sent:
+        # Nobody can verify an account whose code never arrives, and the address would stay taken: undo the signup
+        db.delete(user)
+        db.commit()
+        raise HTTPException(503, "We could not send the verification email just now. Please try again in a few minutes.")
+    return {"success": True, "message": "Registration successful! Check your email for the verification code.",
+            "user_id": user.id, "email": user.email, "name": user.name, "role": user.role}
 
 
 @router.post("/login")

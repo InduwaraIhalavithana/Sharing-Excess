@@ -30,3 +30,10 @@ export function parseApiErrors(data: ApiErrorBody | null | undefined): Record<st
 export function generalError(fieldErrors: Record<string, string>): string {
   return fieldErrors._ || '';
 }
+
+/** After a failed submit, bring the first visible error into view (long forms hide it above or below the button). */
+export function scrollToFirstError(root: ParentNode = document): void {
+  requestAnimationFrame(() => {
+    root.querySelector('.form-error, .pf-safety--error')?.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
+  });
+}

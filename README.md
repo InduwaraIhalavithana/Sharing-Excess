@@ -90,7 +90,7 @@ Visitors without an account can browse listings, events and the NGO directory. T
 | Backend | FastAPI, SQLAlchemy 2, **Pydantic Settings**, **Alembic** migrations, Pillow, slowapi |
 | Database | PostgreSQL |
 | Auth | JWT (HS256) + PBKDF2-SHA256 password hashing |
-| Tests | pytest (184 tests, including migration tests on a scratch database) · Vitest + Testing Library (55 tests, including a check that every UI string exists in all three languages) |
+| Tests | pytest (187 tests, including migration tests on a scratch database) · Vitest + Testing Library (56 tests, including a check that every UI string exists in all three languages) |
 | Delivery | Docker Compose (Postgres + API + nginx), GitHub Actions CI |
 
 ## Quick start (Windows)
@@ -152,6 +152,7 @@ App at http://localhost, API docs at http://localhost:8003/docs (this machine on
 
 1. Put the site behind HTTPS (a Caddy / nginx / cloud load balancer in front of port 80) and set `CORS_ORIGIN=https://your-domain` in `.env` - email links use it too.
 2. Use a long random `POSTGRES_PASSWORD` and `SECRET_KEY`; never reuse the development values.
+   Also set `MAIL_USERNAME` / `MAIL_PASSWORD` (a Gmail app password): verification codes, password resets and the contact form are sent by email, so without it nobody can sign up.
 3. Take a `pg_dump` before every upgrade (migrations run automatically on start-up).
 4. Create the single admin once: sign up, verify the email, then run the `UPDATE users SET role = 'admin' ...` statement above inside the Postgres container.
 5. Keep a single API container (see Known limitations). Check `https://your-domain/api/health` after deploying.

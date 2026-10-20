@@ -3,6 +3,7 @@ import { useModalA11y } from '../hooks/useModalA11y';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { API_BASE } from '../config';
+import { errorMessage } from '../utils/api';
 
 export default function VerificationModal({ email, userId, password, role, onClose, onVerified }) {
   const boxRef = useModalA11y();
@@ -83,7 +84,7 @@ export default function VerificationModal({ email, userId, password, role, onClo
           onVerified(userData);
         }, 1200);
       } else {
-        setError(data.detail || data.message || 'Invalid verification code.');
+        setError(errorMessage(data, 'Invalid verification code.'));
       }
     } catch {
       setError('Network error. Please try again.');
@@ -103,7 +104,7 @@ export default function VerificationModal({ email, userId, password, role, onClo
       });
       const data = await res.json();
       if (res.ok && data.success) setSuccess('A new code has been sent to your inbox.');
-      else setError(data.detail || data.message || 'Could not resend code.');
+      else setError(errorMessage(data, 'Could not resend code.'));
     } catch {
       setError('Network error.');
     }

@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app.constants import EVENT_TYPES
 from app.database import get_db
 from app.dependencies import get_current_user, is_admin, optional_user, require_approved_ngo
-from app.models import CommunityEvent, EventSignup, EventSubscriber, User
+from app.models import CommunityEvent, EventSignup, EventSubscriber, Report, User
 from app.schemas import EventIn, SubscribeRequest
 from app.services.notifications import announce_event
 from app.utils.limiter import limiter
@@ -154,6 +154,7 @@ def delete_event(event_id: int, db: Session = Depends(get_db), me: User = Depend
     if event.owner_id != me.id and not is_admin(me):
         raise HTTPException(403, "You can only delete your own events")
     photos = list(event.images or [])
+    db.query(Report).filter(Report.target_type == "event", Report.target_id == event_id).delete(synchronize_session=False)
     db.delete(event)
     db.commit()
     for url in photos:

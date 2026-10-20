@@ -3,11 +3,22 @@ from __future__ import annotations
 import re
 from datetime import datetime
 from decimal import Decimal
-from typing import Optional
+from typing import Annotated, Optional
 
-from pydantic import BaseModel, EmailStr, field_validator, model_validator
+from pydantic import AfterValidator, BaseModel, EmailStr, field_validator, model_validator
 
 from app.constants import CATEGORIES, DISTRICTS, EVENT_TYPES, FULFILMENT, UNITS
+from app.utils.timeutil import COLOMBO
+
+# Addresses are stored and looked up in lower case, so "Name@Gmail.com" typed on a phone still finds the account.
+Email = Annotated[EmailStr, AfterValidator(str.lower)]
+
+
+def _colombo(v: Optional[datetime]) -> Optional[datetime]:
+    """A time sent with a time zone (e.g. ...Z) becomes naive Sri Lanka local time, like every stored time."""
+    if v is not None and v.tzinfo is not None:
+        return v.astimezone(COLOMBO).replace(tzinfo=None)
+    return v
 
 
 def _district(v: str) -> str:
@@ -45,7 +56,7 @@ def _phone(v: str) -> str:
 
 class SignupRequest(BaseModel):
     name: str
-    email: EmailStr
+    email: Email
     password: str
     role: str = "recipient"            # donor | recipient | ngo
     phone_number: str = ""
@@ -99,7 +110,7 @@ class SignupRequest(BaseModel):
 
 
 class LoginRequest(BaseModel):
-    email: EmailStr
+    email: Email
     password: str
 
 
@@ -109,15 +120,15 @@ class VerifyEmailRequest(BaseModel):
 
 
 class ResendVerificationRequest(BaseModel):
-    email: EmailStr
+    email: Email
 
 
 class ForgotPasswordRequest(BaseModel):
-    email: EmailStr
+    email: Email
 
 
 class ResetPasswordRequest(BaseModel):
-    email: EmailStr
+    email: Email
     code: str
     new_password: str
 
@@ -193,6 +204,11 @@ class ListingUpdate(BaseModel):
     expires_at: Optional[datetime] = None
     prepared_at: Optional[datetime] = None
     fulfilment: Optional[str] = None
+
+    @field_validator("expires_at", "prepared_at")
+    @classmethod
+    def _zone(cls, v):
+        return _colombo(v)
 
     @field_validator("food_name")
     @classmethod
@@ -376,7 +392,7 @@ class FeedbackReply(BaseModel):
 
 class ContactRequest(BaseModel):
     name: str
-    email: EmailStr
+    email: Email
     subject: str = ""
     message: str
 
@@ -413,6 +429,11 @@ class EventIn(BaseModel):
     contact_name: str
     contact_phone: str = ""
     contact_email: str = ""
+
+    @field_validator("starts_at", "ends_at")
+    @classmethod
+    def _zone(cls, v: Optional[datetime]) -> Optional[datetime]:
+        return _colombo(v)
 
     @field_validator("title")
     @classmethod
@@ -485,4 +506,4 @@ class EventIn(BaseModel):
 
 
 class SubscribeRequest(BaseModel):
-    email: EmailStr
+    email: Email
