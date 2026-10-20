@@ -86,7 +86,7 @@ Visitors without an account can browse listings, events and the NGO directory. T
 
 | Layer | Technology |
 |---|---|
-| Frontend | React 19, Vite 8, TypeScript (core) + JavaScript (older pages), React Router 6, **TanStack Query**, **React Hook Form + Zod**, Chart.js, Leaflet |
+| Frontend | React 19, Vite 8, TypeScript (core) + JavaScript (older pages), React Router 7, **TanStack Query**, **React Hook Form + Zod**, Chart.js, Leaflet |
 | Backend | FastAPI, SQLAlchemy 2, **Pydantic Settings**, **Alembic** migrations, Pillow, slowapi |
 | Database | PostgreSQL |
 | Auth | JWT (HS256) + PBKDF2-SHA256 password hashing |
@@ -142,11 +142,19 @@ The admin signs in through the **Admin login** tab. (The admin cannot be created
 ## Run with Docker
 
 ```bash
-copy .env.example .env      # set POSTGRES_PASSWORD and SECRET_KEY
-docker compose up --build
+copy .env.example .env      # set POSTGRES_PASSWORD and SECRET_KEY (and CORS_ORIGIN for a real domain)
+docker compose up --build -d
 ```
 
-App at http://localhost, API docs at http://localhost:8003/docs. Uploaded photos live in a named volume.
+App at http://localhost, API docs at http://localhost:8003/docs (this machine only). Uploaded photos and the database live in named volumes; containers restart automatically.
+
+### Going live checklist
+
+1. Put the site behind HTTPS (a Caddy / nginx / cloud load balancer in front of port 80) and set `CORS_ORIGIN=https://your-domain` in `.env` - email links use it too.
+2. Use a long random `POSTGRES_PASSWORD` and `SECRET_KEY`; never reuse the development values.
+3. Take a `pg_dump` before every upgrade (migrations run automatically on start-up).
+4. Create the single admin once: sign up, verify the email, then run the `UPDATE users SET role = 'admin' ...` statement above inside the Postgres container.
+5. Keep a single API container (see Known limitations). Check `https://your-domain/api/health` after deploying.
 
 ## Tests and checks
 
