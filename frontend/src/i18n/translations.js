@@ -5,12 +5,15 @@ const translations = {
     nav: {
       home: 'Home',
       about: 'About',
-      ngos: 'NGOs',
+      ngos: 'NGOs',
+
       events: 'Events',
       contact: 'Contact',
       feedback: 'Feedback',
       more: 'More',
-      live: 'live',
+      live: 'live',
+
+
       login: 'Login',
       logout: 'Logout',
       signup: 'Sign Up',
@@ -76,7 +79,9 @@ const translations = {
       login_link: 'Sign in',
       signup_btn: 'Create Account',
       verify_title: 'Verify Your Email',
-      verify_subtitle: 'We sent a 6-digit code to',
+      verify_subtitle: 'We sent a 6-digit code to',
+
+
       verify_btn: 'Verify Email',
       resend: 'Resend code',
       resend_msg: "Didn't receive it?",
@@ -89,19 +94,56 @@ const translations = {
     },
     donor: {
       dashboard_title: 'Donor Dashboard',
-      welcome: 'Welcome back,',
-      add_listing: 'Add New Listing',
+      welcome: 'Welcome back,',
+
+      add_listing: 'Add New Listing',
+
       no_listings: 'No listings yet. Create your first food donation listing!',
-      no_requests: 'No pending requests at the moment.',
+      no_requests: 'No pending requests at the moment.',
+
+
+
+
+
+
+
+
+
+
+
+
+
     },
     recipient: {
       dashboard_title: 'Recipient Dashboard',
-      welcome: 'Welcome back,',
-      no_requests: 'No requests yet.',
+      welcome: 'Welcome back,',
+
+
+
+
+      no_requests: 'No requests yet.',
+
+
+
+
+
+
+
+
     },
     feedback: {
       title: 'Share Your Feedback',
-      subtitle: 'Your experience helps us improve',
+      subtitle: 'Your experience helps us improve',
+
+
+
+
+
+
+
+
+
+
     },
     about: {
       title: 'About Sharing Excess',
@@ -120,27 +162,42 @@ const translations = {
     },
     contact: {
       title: 'Get in Touch',
-      subtitle: "Have questions? We'd love to hear from you.",
+      subtitle: "Have questions? We'd love to hear from you.",
+
+
+
+
+
+
+
+
+
+
+
       hours_value: 'Monday – Friday, 9am – 5pm',
     },
     ngos: {
       title: 'Our NGO Partners',
-      subtitle: 'Organizations helping distribute food across Sri Lanka',
+      subtitle: 'Organizations helping distribute food across Sri Lanka',
+
+
+
     },
     events: {
       title: 'Events & Drives',
       subtitle: 'Upcoming food collection drives and community events',
       upcoming: 'Upcoming Events',
       past: 'Past Events',
-      no_events: 'No upcoming events scheduled.',
-    },
-    calendar: {
-      title: 'Event Calendar',
+      no_events: 'No upcoming events scheduled.',
+
+
+
     },
     footer: {
       tagline: 'Fighting food waste, feeding communities across Sri Lanka.',
       contact_title: 'Contact',
-      links_title: 'Quick Links',
+      links_title: 'Quick Links',
+
       copyright: '© 2025 Sharing Excess. All rights reserved.',
       privacy: 'Privacy Policy',
       terms: 'Terms of Use',
@@ -195,12 +252,15 @@ const translations = {
     nav: {
       home: 'නිවස',
       about: 'අපි ගැන',
-      ngos: 'NGO',
+      ngos: 'NGO',
+
       events: 'සිදුවීම්',
       contact: 'අමතන්න',
       feedback: 'ප්‍රතිපෝෂණ',
       more: 'තවත්',
-      live: 'සජීවී',
+      live: 'සජීවී',
+
+
       login: 'ඇතුල් වන්න',
       logout: 'ඉවත් වන්න',
       signup: 'ලියාපදිංචිය',
@@ -266,7 +326,9 @@ const translations = {
       login_link: 'ඇතුළු වන්න',
       signup_btn: 'ගිනුම සාදන්න',
       verify_title: 'ඊමේල් තහවුරු කරන්න',
-      verify_subtitle: '6-ඉලක්කම් කේතය යවා ඇත',
+      verify_subtitle: '6-ඉලක්කම් කේතය යවා ඇත',
+
+
       verify_btn: 'ඊමේල් තහවුරු කරන්න',
       resend: 'කේතය නැවත යවන්න',
       resend_msg: 'ලැබුණේ නැද්ද?',
@@ -279,19 +341,56 @@ const translations = {
     },
     donor: {
       dashboard_title: 'දායක ඩෑෂ්බෝඩ්',
-      welcome: 'ආයුබෝවන්,',
-      add_listing: 'නව ලැයිස්තුවක් එකතු කරන්න',
+      welcome: 'ආයුබෝවන්,',
+
+      add_listing: 'නව ලැයිස්තුවක් එකතු කරන්න',
+
       no_listings: 'ලැයිස්තු නොමැත. පළමු ලැයිස්තුව සාදන්න!',
-      no_requests: 'අපේක්ෂිත ඉල්ලීම් නොමැත.',
+      no_requests: 'අපේක්ෂිත ඉල්ලීම් නොමැත.',
+
+
+
+
+
+
+
+
+
+
+
+
+
     },
     recipient: {
       dashboard_title: 'ලබාගන්නා ඩෑෂ්බෝඩ්',
-      welcome: 'ආයුබෝවන්,',
-      no_requests: 'ඉල්ලීම් නොමැත.',
+      welcome: 'ආයුබෝවන්,',
+
+
+
+
+      no_requests: 'ඉල්ලීම් නොමැත.',
+
+
+
+
+
+
+
+
     },
     feedback: {
       title: 'ඔබේ ප්‍රතිපෝෂණ',
-      subtitle: 'ඔබේ අත්දැකීම් අපව වැඩිදියුණු කිරීමට උපකාරී වේ',
+      subtitle: 'ඔබේ අත්දැකීම් අපව වැඩිදියුණු කිරීමට උපකාරී වේ',
+
+
+
+
+
+
+
+
+
+
     },
     about: {
       title: 'Sharing Excess ගැන',
@@ -310,27 +409,42 @@ const translations = {
     },
     contact: {
       title: 'සම්බන්ධ වන්න',
-      subtitle: 'ප්‍රශ්න ඇතිද? ඔබෙන් ඇසීමට අපි කැමතිය.',
+      subtitle: 'ප්‍රශ්න ඇතිද? ඔබෙන් ඇසීමට අපි කැමතිය.',
+
+
+
+
+
+
+
+
+
+
+
       hours_value: 'සඳුදා – සිකුරාදා, 9am – 5pm',
     },
     ngos: {
       title: 'අපේ NGO හවුල්කරුවන්',
-      subtitle: 'ශ්‍රී ලංකාව පුරා ආහාර බෙදාහැරීමට සහාය වන සංවිධාන',
+      subtitle: 'ශ්‍රී ලංකාව පුරා ආහාර බෙදාහැරීමට සහාය වන සංවිධාන',
+
+
+
     },
     events: {
       title: 'සිදුවීම් සහ ඩ්‍රයිව්',
       subtitle: 'ළඟ ඇති ආහාර එකතු කිරීමේ ඩ්‍රයිව් සහ ප්‍රජා සිදුවීම්',
       upcoming: 'ළඟ ඇති සිදුවීම්',
       past: 'පෙර සිදුවීම්',
-      no_events: 'ළඟ ඇති සිදුවීම් නොමැත.',
-    },
-    calendar: {
-      title: 'සිදුවීම් දින දර්ශනය',
+      no_events: 'ළඟ ඇති සිදුවීම් නොමැත.',
+
+
+
     },
     footer: {
       tagline: 'ශ්‍රී ලංකාව පුරා ආහාර නාස්තිය සටන් කිරීම.',
       contact_title: 'සම්බන්ධ',
-      links_title: 'ශීඝ්‍ර සබැඳි',
+      links_title: 'ශීඝ්‍ර සබැඳි',
+
       copyright: '© 2025 Sharing Excess. සියලු හිමිකම් ඇවිරිණ.',
       privacy: 'රහස්‍යතා ප්‍රතිපත්තිය',
       terms: 'භාවිත කොන්දේසි',
@@ -385,12 +499,15 @@ const translations = {
     nav: {
       home: 'முகப்பு',
       about: 'எங்களைப் பற்றி',
-      ngos: 'NGO',
+      ngos: 'NGO',
+
       events: 'நிகழ்வுகள்',
       contact: 'தொடர்பு',
       feedback: 'கருத்து',
       more: 'மேலும்',
-      live: 'நேரலை',
+      live: 'நேரலை',
+
+
       login: 'உள்நுழைவு',
       logout: 'வெளியேறு',
       signup: 'பதிவு செய்',
@@ -456,7 +573,9 @@ const translations = {
       login_link: 'உள்நுழைவு',
       signup_btn: 'கணக்கு உருவாக்கவும்',
       verify_title: 'மின்னஞ்சலை சரிபார்க்கவும்',
-      verify_subtitle: '6-இலக்க குறியீடு அனுப்பப்பட்டது',
+      verify_subtitle: '6-இலக்க குறியீடு அனுப்பப்பட்டது',
+
+
       verify_btn: 'மின்னஞ்சலை சரிபார்க்கவும்',
       resend: 'குறியீட்டை மீண்டும் அனுப்பு',
       resend_msg: 'கிடைக்கவில்லையா?',
@@ -469,19 +588,56 @@ const translations = {
     },
     donor: {
       dashboard_title: 'தானியாளர் டாஷ்போர்டு',
-      welcome: 'வருக,',
-      add_listing: 'புதிய பட்டியல் சேர்க்கவும்',
+      welcome: 'வருக,',
+
+      add_listing: 'புதிய பட்டியல் சேர்க்கவும்',
+
       no_listings: 'பட்டியல் இல்லை. முதல் பட்டியலை உருவாக்கவும்!',
-      no_requests: 'நிலுவைக் கோரிக்கைகள் இல்லை.',
+      no_requests: 'நிலுவைக் கோரிக்கைகள் இல்லை.',
+
+
+
+
+
+
+
+
+
+
+
+
+
     },
     recipient: {
       dashboard_title: 'பெறுபவர் டாஷ்போர்டு',
-      welcome: 'வருக,',
-      no_requests: 'கோரிக்கைகள் இல்லை.',
+      welcome: 'வருக,',
+
+
+
+
+      no_requests: 'கோரிக்கைகள் இல்லை.',
+
+
+
+
+
+
+
+
     },
     feedback: {
       title: 'உங்கள் கருத்தை பகிருங்கள்',
-      subtitle: 'உங்கள் அனுபவம் எங்களை மேம்படுத்த உதவுகிறது',
+      subtitle: 'உங்கள் அனுபவம் எங்களை மேம்படுத்த உதவுகிறது',
+
+
+
+
+
+
+
+
+
+
     },
     about: {
       title: 'Sharing Excess பற்றி',
@@ -500,27 +656,42 @@ const translations = {
     },
     contact: {
       title: 'தொடர்பு கொள்ளுங்கள்',
-      subtitle: 'கேள்விகள் உள்ளதா? நாங்கள் கேட்கத் தயாராக இருக்கிறோம்.',
+      subtitle: 'கேள்விகள் உள்ளதா? நாங்கள் கேட்கத் தயாராக இருக்கிறோம்.',
+
+
+
+
+
+
+
+
+
+
+
       hours_value: 'திங்கள் – வெள்ளி, காலை 9 – மாலை 5',
     },
     ngos: {
       title: 'எங்கள் NGO கூட்டாளிகள்',
-      subtitle: 'இலங்கை முழுவதும் உணவு விநியோகிக்க உதவும் அமைப்புகள்',
+      subtitle: 'இலங்கை முழுவதும் உணவு விநியோகிக்க உதவும் அமைப்புகள்',
+
+
+
     },
     events: {
       title: 'நிகழ்வுகள் & டிரைவ்கள்',
       subtitle: 'வரவிருக்கும் உணவு சேகரிப்பு டிரைவ்கள் மற்றும் சமூக நிகழ்வுகள்',
       upcoming: 'வரவிருக்கும் நிகழ்வுகள்',
       past: 'கடந்த நிகழ்வுகள்',
-      no_events: 'திட்டமிட்ட நிகழ்வுகள் இல்லை.',
-    },
-    calendar: {
-      title: 'நிகழ்வு நாட்காட்டி',
+      no_events: 'திட்டமிட்ட நிகழ்வுகள் இல்லை.',
+
+
+
     },
     footer: {
       tagline: 'இலங்கை முழுவதும் உணவு வீண்விரயத்தை எதிர்த்துப் போராடுகிறோம்.',
       contact_title: 'தொடர்பு',
-      links_title: 'விரைவு இணைப்புகள்',
+      links_title: 'விரைவு இணைப்புகள்',
+
       copyright: '© 2025 Sharing Excess. அனைத்து உரிமைகளும் பாதுகாக்கப்பட்டவை.',
       privacy: 'தனியுரிமை கொள்கை',
       terms: 'பயன்பாட்டு விதிமுறைகள்',

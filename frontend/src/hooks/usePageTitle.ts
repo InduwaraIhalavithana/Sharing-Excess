@@ -9,7 +9,6 @@ const TITLES: Record<string, string> = {
   '/post-food': 'Share Food',
   '/events': 'Events',
   '/food': 'Find Food',
-  '/calendar': 'Calendar',
   '/contact': 'Contact',
   '/feedback': 'Feedback',
   '/account': 'Account Settings',
