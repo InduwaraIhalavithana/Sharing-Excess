@@ -8,6 +8,8 @@ from app.config import settings
 
 logger = logging.getLogger(__name__)
 
+SMTP_TIMEOUT_SECONDS = 15   # a mail server that stops answering must not hold a request or worker thread forever
+
 
 def send_email(to: str, subject: str, html_body: str) -> bool:
     """Send an HTML email via Gmail SMTP (SSL port 465). Returns True on success."""
@@ -26,7 +28,7 @@ def send_email(to: str, subject: str, html_body: str) -> bool:
     msg.attach(MIMEText(html_body, "html"))
 
     try:
-        with smtplib.SMTP_SSL(host, port) as server:
+        with smtplib.SMTP_SSL(host, port, timeout=SMTP_TIMEOUT_SECONDS) as server:
             server.login(username, password)
             server.sendmail(username, to, msg.as_string())
         return True

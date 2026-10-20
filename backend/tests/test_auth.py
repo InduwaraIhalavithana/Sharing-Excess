@@ -321,3 +321,31 @@ class TestContactForm:
         with patch("app.routers.contact.send_email", return_value=False):
             res = client.post("/api/contact", json=self.body)
         assert res.status_code == 503 and "couldn't deliver" in res.json()["detail"]
+
+
+class TestEmailCase:
+    """Phones capitalise the first letter: "Name@Gmail.com" and "name@gmail.com" are the same person."""
+
+    def test_signup_login_and_duplicates_ignore_case(self, client):
+        stem = f"pytest_case_{uuid.uuid4().hex[:6]}"
+        body = {"name": "Case Test", "email": f"{stem.title()}@Example.com", "password": "password123",
+                "role": "recipient", "district": "Colombo"}
+        res = client.post("/api/auth/signup", json=body)
+        assert res.status_code == 200
+        assert res.json()["email"] == f"{stem}@example.com"            # stored in lower case
+        again = client.post("/api/auth/signup", json={**body, "email": f"{stem}@example.com"})
+        assert again.status_code == 400                                 # same person, not a second account
+        login = client.post("/api/auth/login", json={"email": f"{stem.upper()}@EXAMPLE.COM", "password": "password123"})
+        assert login.status_code == 403                                 # found (still unverified), not "invalid password"
+
+
+class TestSignupWhenMailIsDown:
+    def test_failed_verification_email_leaves_no_stuck_account(self, client, db):
+        from unittest.mock import patch
+        email = f"pytest_nomail_{uuid.uuid4().hex[:6]}@example.com"
+        body = {"name": "No Mail", "email": email, "password": "password123", "role": "recipient", "district": "Colombo"}
+        with patch("app.routers.auth.send_email", lambda *a, **k: False):
+            res = client.post("/api/auth/signup", json=body)
+        assert res.status_code == 503
+        # the address is free again, so the person can simply try again once mail works
+        assert client.post("/api/auth/signup", json=body).status_code == 200

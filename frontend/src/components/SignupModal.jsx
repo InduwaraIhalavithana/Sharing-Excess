@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useModalA11y } from '../hooks/useModalA11y';
 import { useLanguage } from '../i18n/LanguageContext';
 import { API_BASE } from '../config';
+import { errorMessage } from '../utils/api';
 import { DistrictSelect } from './ui';
 
 export default function SignupModal({ onClose, onSignupSuccess, onSwitchToLogin }) {
@@ -36,6 +37,7 @@ export default function SignupModal({ onClose, onSignupSuccess, onSwitchToLogin 
     if (form.password !== form.confirmPassword) e.confirmPassword = 'Passwords do not match';
     if (!form.role) e.role = 'Please select a role';
     if (!form.phone_number.trim()) e.phone_number = 'Phone is required';
+    else if (!/^[0-9+\-() ]{7,20}$/.test(form.phone_number.trim())) e.phone_number = 'Enter a valid phone number';
     if (!form.district) e.district = t('post', 'e_district');
     if (form.role === 'ngo' && form.org_name.trim().length < 2) e.org_name = t('auth', 'org_name_required');
     return e;
@@ -66,7 +68,7 @@ export default function SignupModal({ onClose, onSignupSuccess, onSwitchToLogin 
           role: form.role
         });
       } else {
-        setErrors({ submit: data.detail || data.message || 'Signup failed. Please try again.' });
+        setErrors({ submit: errorMessage(data, 'Signup failed. Please try again.') });
       }
     } catch {
       setErrors({ submit: 'Could not connect to server.' });

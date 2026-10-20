@@ -3,6 +3,7 @@ import { useModalA11y } from './hooks/useModalA11y';
 import { useLanguage } from './i18n/LanguageContext';
 import { useAuth } from './contexts/AuthContext';
 import { API_BASE } from './config';
+import { errorMessage } from './utils/api';
 
 export default function LoginModal({ onClose, onLoginSuccess, onSwitchToSignup, onForgotPassword }) {
   const boxRef = useModalA11y();
@@ -45,7 +46,7 @@ export default function LoginModal({ onClose, onLoginSuccess, onSwitchToSignup, 
         login(user, data.token);
         onLoginSuccess(user);
       } else {
-        setError(data.detail || data.message || 'Invalid email or password.');
+        setError(errorMessage(data, 'Invalid email or password.'));
       }
     } catch {
       setError('Could not connect to server.');

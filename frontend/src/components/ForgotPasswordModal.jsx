@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useModalA11y } from '../hooks/useModalA11y';
 import { useLanguage } from '../i18n/LanguageContext';
 import { API_BASE } from '../config';
+import { errorMessage } from '../utils/api';
 
 export default function ForgotPasswordModal({ onClose, onBackToLogin }) {
   const boxRef = useModalA11y();
@@ -36,7 +37,7 @@ export default function ForgotPasswordModal({ onClose, onBackToLogin }) {
         setMessage('A reset code has been sent to your email.');
         setStep(2);
       } else {
-        setError(data.detail || data.message || 'Failed to send reset code.');
+        setError(errorMessage(data, 'Failed to send reset code.'));
       }
     } catch {
       setError('Network error. Please try again.');
@@ -62,7 +63,7 @@ export default function ForgotPasswordModal({ onClose, onBackToLogin }) {
       if (res.ok && data.success) {
         setStep(3);
       } else {
-        setError(data.detail || data.message || 'Password reset failed.');
+        setError(errorMessage(data, 'Password reset failed.'));
       }
     } catch {
       setError('Network error. Please try again.');
