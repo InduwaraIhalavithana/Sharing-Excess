@@ -90,7 +90,7 @@ Visitors without an account can browse listings, events and the NGO directory. T
 | Backend | FastAPI, SQLAlchemy 2, **Pydantic Settings**, **Alembic** migrations, Pillow, slowapi |
 | Database | PostgreSQL |
 | Auth | JWT (HS256) + PBKDF2-SHA256 password hashing |
-| Tests | pytest (177 tests, including migration tests on a scratch database) · Vitest + Testing Library (45 tests, including a check that every UI string exists in all three languages) |
+| Tests | pytest (184 tests, including migration tests on a scratch database) · Vitest + Testing Library (55 tests, including a check that every UI string exists in all three languages) |
 | Delivery | Docker Compose (Postgres + API + nginx), GitHub Actions CI |
 
 ## Quick start (Windows)
@@ -113,7 +113,7 @@ npm install
 copy .env.example .env
 ```
 
-Then start everything with **`start-services.bat`** (stop with `stop-services.bat`):
+Then start everything with **`start-services.bat`** (stop with `stop-services.bat`). The launcher checks that packages are installed and PostgreSQL is up, waits until both servers really answer, and tells you which one failed if not:
 
 | | URL |
 |---|---|
