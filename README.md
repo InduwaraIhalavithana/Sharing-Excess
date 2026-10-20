@@ -1,20 +1,54 @@
-# 🍃 Sharing Excess
+# Sharing Excess — Food Redistribution Platform for Sri Lanka
 
-**A food-redistribution platform for Sri Lanka.** Donors post surplus food, people nearby see it first, request all or part of it, and the donor accepts or declines (with a reason). On acceptance the two share contact details and arrange pickup or delivery. NGOs post events. One admin account handles approvals and moderation: it does not check food quality or supervise handovers. Built as a final-year project at Uva Wellassa University.
+**Donors · Recipients · NGOs · Admin** | Nearest-first matching | Stock-tracked requests | Events | Live notifications | Trilingual
 
-![Home page](docs/screenshots/01-home.jpg)
+Full-stack web application for sharing surplus food in Sri Lanka. Donors post food and people nearby see it first; recipients request all or part of it and the donor accepts or declines (with a reason). On acceptance the two share contact details and arrange pickup or delivery. NGOs post events, and one admin account handles NGO approvals and moderation. It does not check food quality or supervise handovers. Built as a final-year project at Uva Wellassa University.
 
-| Food near you (nearest district first) | Map view |
+---
+
+## Screenshots
+
+**Home**
+
+![Sharing Excess home page](docs/screenshots/01-home.jpg)
+
+**Food near you** - a recipient in Ratnapura sees their own district first, then neighbouring districts, with the time left on each listing
+
+![Find food page, nearest district first](docs/screenshots/02-available-food.jpg)
+
+**Map view** - listings grouped by district, with a count on each pin
+
+![Map of available food](docs/screenshots/03-map.jpg)
+
+**Listing detail** - how much is left, when it expires, and a request form that holds the amount you ask for
+
+![Listing detail with request form](docs/screenshots/09-listing-detail.jpg)
+
+**Donor dashboard** - incoming requests with accept / decline, live stock, ratings
+
+![Donor dashboard](docs/screenshots/04-donor-dashboard.jpg)
+
+**Recipient dashboard** - each request on a Pending, Accepted, Collected, Completed timeline; the donor's contact appears only after they accept
+
+![Recipient dashboard, my requests](docs/screenshots/05-recipient-dashboard.jpg)
+
+**NGO dashboard** - an approved organisation publishes events and can also request food
+
+![NGO dashboard](docs/screenshots/10-ngo-dashboard.jpg)
+
+**Events** - food drives and volunteer sessions, filterable by type and district
+
+![Events page](docs/screenshots/11-events.jpg)
+
+**Admin panel** - NGO approvals, listings, events, reports, users and feedback in one place
+
+![Admin overview](docs/screenshots/06-admin-overview.jpg)
+
+**Guided tour** (shown in dark mode) and the **phone layout**
+
+| Guided tour | Phone |
 |---|---|
-| ![Available food](docs/screenshots/02-available-food.jpg) | ![Map](docs/screenshots/03-map.jpg) |
-
-| Donor dashboard | Recipient dashboard |
-|---|---|
-| ![Donor](docs/screenshots/04-donor-dashboard.jpg) | ![Recipient](docs/screenshots/05-recipient-dashboard.jpg) |
-
-| Admin panel | Guided tour (dark mode) | Phone |
-|---|---|---|
-| ![Admin](docs/screenshots/06-admin-overview.jpg) | ![Tour](docs/screenshots/07-guided-tour-dark.jpg) | ![Mobile](docs/screenshots/08-mobile.jpg) |
+| ![Guided tour in dark mode](docs/screenshots/07-guided-tour-dark.jpg) | ![Phone layout](docs/screenshots/08-mobile.jpg) |
 
 > The screenshots show clearly-labelled **demo data**, not real donors or recipients.
 
