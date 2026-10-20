@@ -212,7 +212,6 @@ Written down so a reviewer doesn't have to hunt for it:
 - **The expiry sweeper** runs in-process every 5 minutes (and on every browse or request), so it also assumes a single API worker.
 - The NGO directory shows no email or phone; people reach an NGO through the contact details on its events.
 - Some older pages (Home, About, Contact, legal text) still contain English-only paragraphs.
-- Contact details on the About / Contact pages (phone, email, social links) are placeholders.
 
 ## Team
 
