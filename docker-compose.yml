@@ -2,6 +2,7 @@ services:
 
   postgres:
     image: postgres:16-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_DB:       sharing_excess
       POSTGRES_USER:     postgres
@@ -17,13 +18,14 @@ services:
       - se_net
 
   backend:
+    restart: unless-stopped
     build:
       context: ./backend
       dockerfile: Dockerfile
     environment:
       DATABASE_URL:             postgresql://postgres:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/sharing_excess
       SECRET_KEY:               ${SECRET_KEY:?set SECRET_KEY in .env (32+ random chars)}
-      CORS_ORIGIN:              http://localhost
+      CORS_ORIGIN:              ${CORS_ORIGIN:-http://localhost}   # the public address of the site, e.g. https://food.example.lk
       CLOUDINARY_CLOUD_NAME:    ${CLOUDINARY_CLOUD_NAME:-}
       CLOUDINARY_API_KEY:       ${CLOUDINARY_API_KEY:-}
       CLOUDINARY_API_SECRET:    ${CLOUDINARY_API_SECRET:-}
@@ -34,6 +36,12 @@ services:
       MAIL_FROM_NAME:           Sharing Excess
     volumes:
       - uploads_data:/app/uploads
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8003/health', timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     depends_on:
       postgres:
         condition: service_healthy
@@ -43,6 +51,7 @@ services:
       - se_net
 
   frontend:
+    restart: unless-stopped
     build:
       context: ./frontend
       dockerfile: Dockerfile
@@ -52,7 +61,8 @@ services:
     ports:
       - "80:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     networks:
       - se_net
 
