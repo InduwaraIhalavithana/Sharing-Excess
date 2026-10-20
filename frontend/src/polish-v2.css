@@ -165,7 +165,7 @@ textarea.form-control { min-height: 110px; }
 @keyframes v2-gradient { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
 .dd-tab { font-size: 1rem; }
 .dd-card-meta, .req-message { font-size: .95rem; }
-.cards-grid { grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 24px; }
+.cards-grid { grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr)); gap: 24px; }
 .req-card { display: flex; flex-direction: column; transition: transform .28s cubic-bezier(.2,.8,.2,1), box-shadow .28s ease; }
 .req-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-lg); }
 .req-card .dd-card-actions { margin-top: auto; padding-top: 12px; }
@@ -190,8 +190,8 @@ textarea.form-control { min-height: 110px; }
 .feedback-login-prompt__btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 
 /* ── Footer balance ─────────────────────────────────────── */
-.se-footer__grid { grid-template-columns: 1.4fr 1fr 1.3fr; }
-.se-footer a, .se-footer p, .se-footer li { font-size: 1rem; }
+@media (min-width: 769px) { .se-footer__grid { grid-template-columns: 1.4fr 1fr 1.3fr; } }   /* narrower screens keep the 2- and 1-column layouts from Footer.css */
+.se-footer a, .se-footer p, .se-footer li { font-size: 1rem; overflow-wrap: anywhere; }
 
 /* ── Admin panel ────────────────────────────────────────── */
 .adm-content .stats-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
@@ -277,6 +277,9 @@ textarea.form-control { min-height: 110px; }
 @media (max-width: 640px) {
   .dd-tab { min-width: 0; white-space: normal; padding: 10px 8px; line-height: 1.25; font-size: .92rem; }
   .dd-tabs { flex-wrap: nowrap; }
+  /* four tabs (NGO dashboard) do not fit in one row on a phone: two rows of two */
+  .dd-tabs:has(> .dd-tab:nth-of-type(4)) { flex-wrap: wrap; }
+  .dd-tabs:has(> .dd-tab:nth-of-type(4)) .dd-tab { flex: 1 1 calc(50% - 4px); }
 }
 
 /* About: Mission and Vision are twin cards, same layout and padding, content centred in the shared height */
@@ -351,3 +354,13 @@ textarea.form-control { min-height: 110px; }
 @keyframes v2-spin { to { transform: rotate(360deg); } }
 @keyframes v2-spin-rev { to { transform: rotate(-360deg); } }
 @media (prefers-reduced-motion: reduce) { .about-dev__avatar, .about-dev__avatar img { animation: none !important; } }
+
+
+/* ── Admin panel on a phone: the top bar wraps instead of pushing its buttons off-screen ───────────── */
+@media (max-width: 640px) {
+  .adm-main { min-width: 0; }
+  .adm-topbar { height: auto; min-height: 60px; padding: 8px 12px; flex-wrap: wrap; gap: 8px; }
+  .adm-topbar__title { font-size: 1.1rem; }
+  .adm-topbar__right { gap: 6px; flex-wrap: wrap; }
+  .adm-refresh-btn, .adm-logout-btn { padding: 6px 10px; font-size: .85rem; }
+}
