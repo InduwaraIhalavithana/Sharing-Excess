@@ -10,7 +10,6 @@ export default defineConfig({
         // Heavy libraries get their own cached chunks, loaded only by pages that use them.
         manualChunks(id) {
           if (id.includes('chart.js') || id.includes('react-chartjs-2')) return 'charts'
-          if (id.includes('react-calendar')) return 'calendar'
         },
       },
     },

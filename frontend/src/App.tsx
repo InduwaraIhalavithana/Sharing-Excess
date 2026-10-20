@@ -26,7 +26,6 @@ const PostFood = lazy(() => import('./components/PostFood'));
 const Browse = lazy(() => import('./components/Browse'));
 const ListingDetail = lazy(() => import('./components/ListingDetail'));
 const PublicProfile = lazy(() => import('./components/PublicProfile'));
-const CalendarPage = lazy(() => import('./components/CalendarPage'));
 const Contact = lazy(() => import('./components/Contact'));
 const Events = lazy(() => import('./components/Events'));
 const FeedbackPage = lazy(() => import('./FeedbackPage'));
@@ -90,11 +89,10 @@ function AppContent() {
     );
   }
 
-  const isCalendarPage = location.pathname.startsWith('/calendar');
   return (
     <div className="app-root">
       <Navbar />
-      <div className={`main-background${isCalendarPage ? ' no-bg' : ''}`} data-page={page}>
+      <div className="main-background" data-page={page}>
         <div className="app-content">
           <ErrorBoundary key={location.pathname}>
             <Suspense fallback={<PageFallback />}>
@@ -116,7 +114,6 @@ function AppContent() {
                 <Route path="/donate" element={<Navigate to="/post-food" replace />} />
                 <Route path="/food-donations" element={<Navigate to="/food" replace />} />
                 <Route path="/events" element={<Events />} />
-                <Route path="/calendar" element={<CalendarPage />} />
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/feedback" element={<FeedbackPage />} />
                 <Route path="/account" element={<AccountSettings />} />

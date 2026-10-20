@@ -25,7 +25,6 @@ function usedKeys(): [string, string][] {
     prox: ['same_district', 'neighbouring', 'other'],
     role: ['donor', 'recipient', 'ngo', 'admin'],
     food: ['pickup', 'delivery', 'delivery_or_pickup'],
-    calendar: ['expires', 'best_before'],
     admin: ['overview', 'ngos', 'listings', 'events', 'reports', 'users', 'feedback'].map((k) => `nav_${k}`),
   };
   for (const [section, keys] of Object.entries(dynamic)) keys.forEach((k) => found.add(`${section}.${k}`));
