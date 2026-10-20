@@ -1,8 +1,11 @@
 @echo off
+setlocal
 title Sharing Excess Launcher
 cls
 
 set "ROOT=%~dp0"
+set "QUIET=0"
+if /i "%~1"=="/q" set "QUIET=1"
 
 echo.
 echo  ============================================================
@@ -10,37 +13,78 @@ echo    Sharing Excess ^| Starting All Services
 echo  ============================================================
 echo.
 
-REM -- Check if ports are already occupied
+REM -- 1. Is everything installed?
+if not exist "%ROOT%frontend\node_modules" (
+    echo  [!] Frontend packages are not installed.
+    echo      Run:  cd frontend ^&^& npm install
+    echo.
+    if "%QUIET%"=="0" pause
+    exit /b 1
+)
+if not exist "%ROOT%backend\.venv\Scripts\uvicorn.exe" (
+    echo  [!] backend\.venv was not found - falling back to a global uvicorn.
+    echo      Recommended setup is in README.md ^(Quick start^).
+    echo.
+)
+
+REM -- 2. Is PostgreSQL up? (only a warning: the database in backend\.env may live on another machine)
+netstat -ano 2>nul | findstr /L ":5432 " | findstr /L "LISTENING" >nul
+if errorlevel 1 (
+    echo  [!] Nothing is listening on PostgreSQL port 5432 - the backend will not start without its database.
+    echo      Start PostgreSQL first ^(ignore this if backend\.env points to a remote database^).
+    echo.
+)
+
+REM -- 3. Are the ports free?
 for %%P in (8003 5175) do (
     netstat -ano 2>nul | findstr /L ":%%P " | findstr /L "LISTENING" >nul
     if not errorlevel 1 (
         echo  [!] Port %%P is already in use.
         echo      Run stop-services.bat first, then try again.
         echo.
-        if /i not "%~1"=="/q" pause
+        if "%QUIET%"=="0" pause
         exit /b 1
     )
 )
 
+REM -- 4. Backend, then wait until it really answers
 echo  [1/2] Starting Backend API   ^| port 8003
 start "Sharing Excess - Backend :8003" "%ROOT%_run_backend.bat"
+call :wait_for "http://127.0.0.1:8003/api/health" 40 BACKEND_UP
 
-echo.
-echo  Waiting 5 seconds for backend to initialise...
-timeout /t 5 /nobreak >nul
-
+REM -- 5. Frontend, then wait until it really answers
 echo  [2/2] Starting Frontend      ^| port 5175
 start "Sharing Excess - Frontend :5175" "%ROOT%_run_frontend.bat"
+call :wait_for "http://localhost:5175/" 40 FRONTEND_UP
 
 echo.
 echo  ============================================================
-echo    All services launched in separate windows.
-echo.
-echo    Backend API  :  http://localhost:8003
-echo    Frontend     :  http://localhost:5175
+if "%BACKEND_UP%"=="1" (echo    Backend API  :  http://localhost:8003   [running]) else (echo    Backend API  :  NOT ANSWERING - read the Backend window for the error)
+if "%FRONTEND_UP%"=="1" (echo    Frontend     :  http://localhost:5175   [running]) else (echo    Frontend     :  NOT ANSWERING - read the Frontend window for the error)
 echo    API Docs     :  http://localhost:8003/docs
 echo.
-echo    Run stop-services.bat to shut everything down.
+echo    Services run in their own windows. Run stop-services.bat to shut them down.
 echo  ============================================================
 echo.
-if /i not "%~1"=="/q" pause
+if "%QUIET%"=="0" pause
+if "%BACKEND_UP%"=="1" if "%FRONTEND_UP%"=="1" exit /b 0
+exit /b 1
+
+
+REM ---------------------------------------------------------------------------
+REM  :wait_for <url> <max seconds> <result variable>
+REM  Sets the variable to 1 as soon as the URL answers, or 0 after the time is up.
+REM  (ping is used as the sleep because "timeout" refuses to run without a keyboard)
+REM ---------------------------------------------------------------------------
+:wait_for
+set "%~3=0"
+for /l %%S in (1,1,%~2) do (
+    curl.exe -s -f -o nul --max-time 2 "%~1" >nul 2>&1
+    if not errorlevel 1 (
+        set "%~3=1"
+        goto :wait_for_done
+    )
+    ping -n 2 127.0.0.1 >nul
+)
+:wait_for_done
+exit /b 0

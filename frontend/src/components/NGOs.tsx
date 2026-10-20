@@ -5,7 +5,6 @@ import { useLanguage } from '../i18n/LanguageContext';
 import { useDebounced } from '../hooks/useDebounced';
 import { useNgoDirectory } from '../hooks/queries';
 import { imgSrc } from '../utils/format';
-import './NGOs.css';
 import { DistrictSelect, Empty } from './ui';
 
 /** The real directory: every NGO the admin has approved, with how many events it has coming up. */

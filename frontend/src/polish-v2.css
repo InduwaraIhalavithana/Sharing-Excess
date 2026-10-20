@@ -210,7 +210,7 @@ textarea.form-control { min-height: 110px; }
 
 /* ── Toolbars on small screens: selects fill the row ─────── */
 @media (max-width: 640px) {
-  .fd-toolbar select.se-filter, .fd-toolbar .se-filter select, .events-filters select, .events-toolbar select { width: 100%; flex: 1 1 100%; }
+  .fd-toolbar select.se-filter, .fd-toolbar .se-filter select, .events-filters select { width: 100%; flex: 1 1 100%; }
   .cards-grid { grid-template-columns: 1fr; }
 }
 
