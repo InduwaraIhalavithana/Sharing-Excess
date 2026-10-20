@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { api, ApiError, apiFetch } from './api';
+import { api, ApiError, apiFetch, errorMessage } from './api';
 import { generalError, parseApiErrors } from './formErrors';
 
 function mockFetch(status: number, body: unknown) {
@@ -73,5 +73,16 @@ describe('formErrors', () => {
 
   it('returns an empty map for nothing', () => {
     expect(parseApiErrors(null)).toEqual({});
+  });
+});
+
+describe('errorMessage', () => {
+  it('is always a plain string, so it is safe to render', () => {
+    expect(errorMessage({ detail: 'Email already registered' }, 'x')).toBe('Email already registered');
+    expect(errorMessage({ detail: [{ loc: ['body', 'phone_number'], msg: 'Value error, Enter a valid phone number' }] }, 'x'))
+      .toBe('Enter a valid phone number');
+    expect(errorMessage({ message: 'Try later' }, 'x')).toBe('Try later');
+    expect(errorMessage(null, 'fallback')).toBe('fallback');
+    expect(typeof errorMessage({ detail: [{}] }, 'fallback')).toBe('string');
   });
 });
