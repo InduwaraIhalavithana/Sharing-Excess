@@ -20,7 +20,7 @@ export interface LiveEnv {
   locks?: LockManager;
 }
 
-export function browserEnv(): LiveEnv {
+function browserEnv(): LiveEnv {
   return {
     EventSource: typeof EventSource === 'undefined' ? undefined : EventSource,
     BroadcastChannel: typeof BroadcastChannel === 'undefined' ? undefined : BroadcastChannel,
