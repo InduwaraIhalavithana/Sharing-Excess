@@ -141,10 +141,6 @@ const en = {
     joined: 'joined', spots_left: 'spots left', full: 'Full', took_part: 'took part', joined_leave: 'Joined - leave',
     event_full: 'Event full', join: 'Join event',
   },
-  calendar: {
-    title: 'My food calendar', sign_in: 'Sign in to see your food on the calendar.', none: 'Nothing on this date.',
-    events_for: 'Food on', expires: 'Expires', best_before: 'Best before',
-  },
   profile: { not_found: 'We could not find that profile.', no_ratings: 'No ratings yet.', what_people_say: 'What people say' },
   feedback: {
     title: 'Tell the admin', subtitle: 'Ideas, problems or thanks about the platform. Only the admin reads this.',
@@ -328,10 +324,6 @@ const si = {
     manage: 'ඔබේ සිදුවීම් කළමනාකරණය', next: 'ඊළඟ සිදුවීම', joined: 'එක් වූහ', spots_left: 'ඉතිරි ස්ථාන', full: 'පිරී ඇත',
     took_part: 'සහභාගී වූහ', joined_leave: 'එක් වී ඇත - ඉවත් වන්න', event_full: 'සිදුවීම පිරී ඇත', join: 'සිදුවීමට එක් වන්න',
   },
-  calendar: {
-    title: 'මගේ ආහාර දින දර්ශනය', sign_in: 'දින දර්ශනයේ ඔබේ ආහාර බැලීමට පිවිසෙන්න.', none: 'මෙම දිනයේ කිසිවක් නැත.',
-    events_for: 'ආහාර', expires: 'කල් ඉකුත්වේ', best_before: 'පරිභෝජනයට පෙර',
-  },
   profile: { not_found: 'එම පැතිකඩ සොයාගත නොහැකි විය.', no_ratings: 'තවම ශ්‍රේණිගත කිරීම් නැත.', what_people_say: 'මිනිසුන් පවසන දේ' },
   feedback: {
     title: 'පරිපාලකට කියන්න', subtitle: 'වේදිකාව ගැන අදහස්, ගැටලු හෝ ස්තූතිය. කියවන්නේ පරිපාලක පමණි.',
@@ -512,10 +504,6 @@ const ta = {
     howto2: 'மிகை உணவைக் கொண்டு வாருங்கள் அல்லது உங்கள் நேரத்தைத் தாருங்கள்.', howto3: 'நிகழ்வில் உள்ள விவரங்களால் அமைப்பாளரைத் தொடர்பு கொள்ளுங்கள்.',
     manage: 'உங்கள் நிகழ்வுகளை நிர்வகி', next: 'அடுத்த நிகழ்வு', joined: 'இணைந்தனர்', spots_left: 'இடங்கள் மீதம்', full: 'நிரம்பியது',
     took_part: 'பங்கேற்றனர்', joined_leave: 'இணைந்துள்ளீர்கள் - விலகு', event_full: 'நிகழ்வு நிரம்பியது', join: 'நிகழ்வில் சேர்',
-  },
-  calendar: {
-    title: 'எனது உணவு நாட்காட்டி', sign_in: 'நாட்காட்டியில் உங்கள் உணவைக் காண உள்நுழையுங்கள்.', none: 'இந்தத் தேதியில் எதுவும் இல்லை.',
-    events_for: 'உணவு', expires: 'காலாவதி', best_before: 'இதற்கு முன் உண்ணவும்',
   },
   profile: { not_found: 'அந்தச் சுயவிவரம் கிடைக்கவில்லை.', no_ratings: 'இன்னும் மதிப்பீடுகள் இல்லை.', what_people_say: 'மக்கள் சொல்வது' },
   feedback: {

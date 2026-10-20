@@ -15,7 +15,6 @@ from app.database import engine
 from app.routers import (
     admin,
     auth,
-    calendar,
     community_events,
     contact,
     feedback,
@@ -136,7 +135,6 @@ app.include_router(auth.router)
 app.include_router(listings.router)
 app.include_router(requests.router)
 app.include_router(admin.router)
-app.include_router(calendar.router)
 app.include_router(feedback.router)
 app.include_router(contact.router)
 app.include_router(notifications.router)
