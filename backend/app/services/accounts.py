@@ -24,8 +24,10 @@ def purge_user(db: Session, user: User) -> None:
     listing_ids = [x.id for x in listings]
     for x in listings:
         photos += list(x.images or [])
+    event_ids = []
     for e in db.query(CommunityEvent).filter(CommunityEvent.owner_id == user.id).all():
         photos += list(e.images or [])
+        event_ids.append(e.id)
         db.delete(e)  # sign-ups cascade
 
     # whoever was still waiting on this donor's food is told, not silently dropped
@@ -48,6 +50,11 @@ def purge_user(db: Session, user: User) -> None:
         db.query(FoodRequest).filter(FoodRequest.id.in_(request_ids)).delete(synchronize_session=False)
     db.query(Report).filter(Report.target_type == "listing", Report.target_id.in_(listing_ids or [0])) \
         .delete(synchronize_session=False)
+    # reports about things that no longer exist would only confuse the admin
+    gone = [("user", [user.id]), ("event", event_ids), ("request", request_ids)]
+    for target_type, ids in gone:
+        if ids:
+            db.query(Report).filter(Report.target_type == target_type, Report.target_id.in_(ids)).delete(synchronize_session=False)
     db.query(FoodListing).filter(FoodListing.donor_id == user.id).delete(synchronize_session=False)
     db.query(EventSubscriber).filter(EventSubscriber.email == user.email.lower()).delete(synchronize_session=False)
     db.delete(user)  # ratings, notifications and event sign-ups go with it (ON DELETE CASCADE)

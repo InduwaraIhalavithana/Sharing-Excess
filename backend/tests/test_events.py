@@ -32,6 +32,15 @@ def create(client, ngo, **over):
     return res.json()["event"]
 
 
+class TestTimeZones:
+    def test_event_times_with_a_zone_are_converted_to_sri_lanka_time(self, client, ngo):
+        start = (now_colombo() + timedelta(days=4)).replace(hour=10, minute=0, second=0, microsecond=0)
+        utc = (start - timedelta(hours=5, minutes=30)).strftime("%Y-%m-%dT%H:%M:00Z")   # the same moment, in UTC
+        end = (start + timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M:00")                 # a local time, no zone
+        event = create(client, ngo, starts_at=utc, ends_at=end)
+        assert event["starts_at"] == start.strftime("%Y-%m-%dT%H:%M:00")
+
+
 class TestWhoCanPost:
     def test_only_approved_ngos_post_events(self, client, make_user):
         for who in (make_user("donor"), make_user("recipient"), make_user("admin"),

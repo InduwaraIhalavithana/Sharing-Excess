@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useCreateListing, useMeta, usePublicStats } from '../hooks/queries';
-import { parseApiErrors } from '../utils/formErrors';
+import { parseApiErrors, scrollToFirstError } from '../utils/formErrors';
 import { CATEGORY_ICON, inHours } from '../utils/format';
 import Toast, { type ToastState } from './Toast';
 import { DistrictSelect } from './ui';
@@ -81,7 +81,7 @@ export default function PostFood() {
     ev.preventDefault();
     const e = validate();
     setErrors(e);
-    if (Object.keys(e).length) return;
+    if (Object.keys(e).length) { scrollToFirstError(); return; }
     const fd = new FormData();
     (Object.keys(f) as (keyof FormState)[]).forEach((k) => { if (k !== 'safety_confirmed') fd.append(k, String(f[k])); });
     fd.append('safety_confirmed', 'true');
@@ -93,7 +93,7 @@ export default function PostFood() {
       setF(blank());
     } catch (err) {
       const fields = parseApiErrors((err as { body?: never }).body);
-      if (Object.keys(fields).length && !fields._) setErrors(fields);
+      if (Object.keys(fields).length && !fields._) { setErrors(fields); scrollToFirstError(); }
       setToast({ msg: (err as Error).message, type: 'error' });
     }
   };

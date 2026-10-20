@@ -33,10 +33,12 @@ export class ApiError extends Error {
   }
 }
 
-function errorMessage(body: ApiErrorBody | null, fallback: string): string {
+/** Readable text from any error body. FastAPI sends `detail` as a string, or as a list of objects for validation errors
+    (never put `detail` straight into JSX: an object there crashes the page). */
+export function errorMessage(body: ApiErrorBody | null, fallback: string): string {
   if (!body) return fallback;
   if (typeof body.detail === 'string') return body.detail;
-  if (Array.isArray(body.detail) && body.detail[0]?.msg) return body.detail[0].msg;
+  if (Array.isArray(body.detail) && body.detail[0]?.msg) return body.detail[0].msg.replace(/^Value error, /, '');
   return body.message || fallback;
 }
 
