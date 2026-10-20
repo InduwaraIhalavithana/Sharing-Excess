@@ -12,10 +12,11 @@ echo    Sharing Excess ^| Stopping All Services
 echo  ============================================================
 echo.
 
-REM -- Step 1: close the two service windows by title (also ends their child processes)
+REM -- Step 1: close the two service windows, found by the script they run (not by title: in Windows
+REM -- Terminal the window titles are not visible to taskkill, so every stop left both windows open).
+REM -- /T also ends the server inside each window. Only this folder's windows match.
 echo  Closing service windows...
-taskkill /F /T /FI "WINDOWTITLE eq Sharing Excess - Backend :8003"  >nul 2>&1
-taskkill /F /T /FI "WINDOWTITLE eq Sharing Excess - Frontend :5175" >nul 2>&1
+powershell -NoProfile -Command "Get-CimInstance Win32_Process -Filter \"Name='cmd.exe'\" | Where-Object { $_.CommandLine -and ($_.CommandLine.Contains('%~dp0_run_backend.bat') -or $_.CommandLine.Contains('%~dp0_run_frontend.bat')) } | ForEach-Object { taskkill /F /T /PID $_.ProcessId | Out-Null }"
 
 ping -n 2 127.0.0.1 >nul
 

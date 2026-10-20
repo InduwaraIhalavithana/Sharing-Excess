@@ -1797,44 +1797,6 @@ h1, h2, h3, h4, h5, h6 {
 .ngos-card__desc { font-size: 0.875rem; color: var(--text-secondary); line-height: 1.55; flex: 1; margin: 0; }
 
 /* ============================================================
-   CALENDAR PAGE
-   ============================================================ */
-.calendar-page { background: var(--bg-base); min-height: 100vh; padding: 40px var(--page-x) 80px; }
-.calendar-page__title { font-size: 1.75rem; font-weight: 800; color: var(--text-primary); margin-bottom: 28px; text-align: center; }
-.calendar-layout {
-  max-width: var(--max-width);
-  margin: 0 auto;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-xl);
-  padding: 32px;
-  display: grid;
-  grid-template-columns: 1fr 1.5fr;
-  gap: 32px;
-}
-.calendar-events-title { font-size: 1.125rem; font-weight: 700; color: var(--text-primary); padding-bottom: 12px; border-bottom: 2px solid var(--border-color); margin-bottom: 20px; }
-.calendar-event-card {
-  background: var(--bg-elevated);
-  border-radius: var(--radius-md);
-  padding: 16px;
-  margin-bottom: 14px;
-  border-left: 4px solid var(--clr-primary);
-}
-.calendar-event-card--listing { border-left-color: var(--clr-info); }
-.calendar-event-card__title { font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
-.calendar-event-card__meta { font-size: 0.875rem; color: var(--text-secondary); display: flex; flex-direction: column; gap: 3px; }
-
-.react-calendar { width: 100% !important; border: 1px solid var(--border-color) !important; border-radius: var(--radius-lg) !important; background: var(--bg-surface) !important; color: var(--text-primary) !important; font-family: var(--font-body) !important; }
-.react-calendar__tile--now { background: var(--clr-primary-muted) !important; }
-.react-calendar__tile--active { background: var(--clr-primary) !important; color: #fff !important; }
-.react-calendar__navigation button { color: var(--text-primary) !important; }
-.event-dot { width: 6px; height: 6px; background: var(--clr-primary); border-radius: 50%; margin: 2px auto 0; }
-
-@media (max-width: 768px) {
-  .calendar-layout { grid-template-columns: 1fr; }
-}
-
-/* ============================================================
    HERO WAVE DIVIDERS (shared across pages)
    ============================================================ */
 .contact-hero,
