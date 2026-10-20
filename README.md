@@ -175,9 +175,9 @@ backend/
     config.py            ALL settings (validated once, at start-up)
     models.py schemas.py dependencies.py   data model, API shapes, auth/role checks
     constants.py         districts + borders, food categories, units, event types
-    routers/             auth, listings, requests, ratings, reports, notifications, ngos, community_events, admin, feedback, meta, public, live
-    services/            stock (held / returned quantities, expiry sweeper), notifications (bell + email), accounts (account purge)
-    utils/               jwt, uploads (image processing), email, rate limiter, live-update broadcaster
+    routers/             auth, listings, requests, ratings, reports, notifications, ngos, community_events, admin, feedback, contact, meta, public, live
+    services/            stock (held / returned quantities, expiry sweeper), notifications (bell + email), otp (e-mail codes), accounts (account purge)
+    utils/               jwt, security (password hashing), uploads (image processing), email, rate limiter, live-update broadcaster, time zone and query-parameter helpers
   alembic/               database migrations (0006 is the 2026-10 redesign; 0007 dropped the old-schema safety copies)
   scripts/seed_demo.py   demo data
   tests/                 pytest suite
