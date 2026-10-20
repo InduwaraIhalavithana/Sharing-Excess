@@ -49,12 +49,13 @@ for %%P in (8003 5175) do (
 
 REM -- 4. Backend, then wait until it really answers
 echo  [1/2] Starting Backend API   ^| port 8003
-start "Sharing Excess - Backend :8003" "%ROOT%_run_backend.bat"
+REM cmd /c (not start's default /K): the window closes when the service ends instead of lingering at a prompt
+start "Sharing Excess - Backend :8003" cmd /c ""%ROOT%_run_backend.bat""
 call :wait_for "http://127.0.0.1:8003/api/health" 40 BACKEND_UP
 
 REM -- 5. Frontend, then wait until it really answers
 echo  [2/2] Starting Frontend      ^| port 5175
-start "Sharing Excess - Frontend :5175" "%ROOT%_run_frontend.bat"
+start "Sharing Excess - Frontend :5175" cmd /c ""%ROOT%_run_frontend.bat""
 call :wait_for "http://localhost:5175/" 40 FRONTEND_UP
 
 echo.
