@@ -1,6 +1,10 @@
 @echo off
+setlocal
 title Sharing Excess ^| Stop Services
 cls
+
+set "QUIET=0"
+if /i "%~1"=="/q" set "QUIET=1"
 
 echo.
 echo  ============================================================
@@ -13,7 +17,7 @@ echo  Closing service windows...
 taskkill /F /T /FI "WINDOWTITLE eq Sharing Excess - Backend :8003"  >nul 2>&1
 taskkill /F /T /FI "WINDOWTITLE eq Sharing Excess - Frontend :5175" >nul 2>&1
 
-timeout /t 1 /nobreak >nul
+ping -n 2 127.0.0.1 >nul
 
 REM -- Step 2: whatever still listens on the two ports. uvicorn --reload leaves a worker process behind that keeps the
 REM -- port open after its parent dies, so also stop every python/node process that was started from this folder.
@@ -25,7 +29,7 @@ for %%P in (8003 5175) do (
 )
 powershell -NoProfile -ExecutionPolicy Bypass -Command "$root = (Resolve-Path '%~dp0').Path.TrimEnd('\'); Get-CimInstance Win32_Process | Where-Object { ($_.Name -match '^(python|pythonw|node|uvicorn)(\.exe)?$') -and $_.CommandLine -and $_.CommandLine.Contains($root) } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }" >nul 2>&1
 
-timeout /t 2 /nobreak >nul
+ping -n 3 127.0.0.1 >nul
 
 REM -- Step 3: verify
 echo.
@@ -46,4 +50,5 @@ if "%REMAINING%"=="0" (
 )
 
 echo.
-if /i not "%~1"=="/q" pause
+if "%QUIET%"=="0" pause
+if "%REMAINING%"=="0" (exit /b 0) else (exit /b 1)

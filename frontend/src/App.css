@@ -316,15 +316,6 @@ h1, h2, h3, h4, h5, h6 {
   border-color: var(--border-strong);
 }
 
-.card-accent::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, var(--clr-primary), var(--clr-primary-light));
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-}
-
 /* ============================================================
    FORM SYSTEM
    ============================================================ */
@@ -860,53 +851,6 @@ h1, h2, h3, h4, h5, h6 {
 /* Legacy status classes */
 
 /* ============================================================
-   FOOD LISTING CARD DETAILS
-   ============================================================ */
-
-.listing-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 14px;
-}
-
-.request-btn {
-  background: var(--clr-primary);
-  color: #fff;
-  border: none;
-  padding: 9px 16px;
-  border-radius: var(--radius-md);
-  font-weight: 600;
-  cursor: pointer;
-  font-size: 0.875rem;
-  flex: 1;
-  transition: all var(--t-base);
-}
-.request-btn:hover {
-  background: var(--clr-primary-dark);
-  transform: translateY(-1px);
-}
-
-/* ============================================================
-   FEEDBACK / GENERAL ACTION BUTTONS
-   ============================================================ */
-
-.refresh-btn {
-  background: var(--clr-primary);
-  color: #fff;
-  border: none;
-  padding: 9px 18px;
-  border-radius: var(--radius-md);
-  font-weight: 600;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: all var(--t-base);
-}
-.refresh-btn:hover {
-  background: var(--clr-primary-dark);
-  transform: translateY(-1px);
-}
-
-/* ============================================================
    LEGACY: role options (signup)
    ============================================================ */
 
@@ -936,7 +880,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .about-hero { background: var(--bg-elevated); border-radius: var(--radius-xl); padding: 60px 40px; margin-bottom: 48px; }
-.about-card p, .contact-item p { color: var(--text-secondary) !important; }
+.about-card p { color: var(--text-secondary) !important; }
 
 /* ============================================================
    ANIMATIONS
@@ -971,7 +915,6 @@ h1, h2, h3, h4, h5, h6 {
    ============================================================ */
 @media (max-width: 768px) {
   :root { --page-x: 16px; }
-  .listing-actions { flex-direction: column; }
   .cards-grid { grid-template-columns: 1fr; }
   .stats-grid { grid-template-columns: repeat(2, 1fr); }
 }
@@ -2644,8 +2587,6 @@ h1, h2, h3, h4, h5, h6 {
 @media (max-width: 1280px) { .adm-main .stats-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); } }
 
 /* ── NGO page (sample partners) ───────────────────────────────────────────── */
-.ngos-sample-banner { background: #fef9c3; color: #713f12; border: 1px solid #fde68a; border-radius: var(--radius-md); padding: 12px 16px; margin: 0 0 24px; font-size: .9rem; }
-[data-theme="dark"] .ngos-sample-banner { background: #422006; color: #fde68a; border-color: #713f12; }
 .ngos-card__icon { font-size: 3rem; display: grid; place-items: center; min-height: 96px; }
 .ngos-join { margin-top: 36px; padding: 28px; text-align: center; border-top: 4px solid var(--clr-primary); }
 .ngos-join h2 { margin-bottom: 8px; }
