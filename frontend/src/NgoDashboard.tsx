@@ -42,7 +42,7 @@ function Organisation({ user, notify }: { user: User; notify: (m: string, t?: 's
   };
 
   return (
-    <form className="dashboard-card pf-form" onSubmit={save}>
+    <form className="dashboard-card pf-form org-form" onSubmit={save}>
       <div className="form-group">
         <label className="form-label" htmlFor="org-name">{t('ngo', 'org_name')}</label>
         <input id="org-name" className="form-control" value={name} onChange={(e) => setName(e.target.value)} maxLength={200} required />

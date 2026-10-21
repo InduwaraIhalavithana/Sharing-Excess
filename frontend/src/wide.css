@@ -21,9 +21,14 @@
 .app-root .main-background { position: relative; }
 .app-root .main-background > .app-content { position: relative; z-index: 1; }
 
-/* NGO directory: a short last row is centred instead of leaving a hole on the right */
-.ngos-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; }
-.ngos-grid > * { flex: 0 1 clamp(260px, calc((100% - 80px) / 5), 360px); }
+/* Card grids (listings, requests, events, NGOs): full rows share the width; a short last row is centred and its cards
+   grow to a sensible size, so the page never has a hole on one side */
+.cards-grid, .events-grid, .ngos-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 24px; }
+.cards-grid > *, .events-grid > * { flex: 1 1 340px; max-width: 520px; min-width: 0; }
+.ngos-grid > * { flex: 1 1 260px; max-width: 340px; min-width: 0; }
+.cards-grid > .dd-empty, .events-grid > .events-empty { flex: 1 1 100%; max-width: none; }
+.cards-grid > :only-child, .events-grid > :only-child { max-width: 520px; }
+@media (max-width: 768px) { .cards-grid > *, .events-grid > *, .ngos-grid > * { flex-basis: 100%; max-width: none; } }
 
 /* About: the steps and the journey use the width instead of a narrow centred column */
 @media (min-width: 1000px) {
@@ -129,4 +134,24 @@
 @media (min-width: 1100px) {
   .home-faq .home-faq__inner { max-width: 1180px; }
   .home-faq .home-faq__list { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 22px; align-items: start; }
+}
+
+/* NGO organisation form: name and description beside the logo instead of one very wide column of fields */
+@media (min-width: 1000px) {
+  .org-form { display: grid; grid-template-columns: minmax(0, 1fr) 340px; column-gap: 40px; align-items: start; padding: 28px 32px; }
+  .org-form > .form-group:nth-child(1), .org-form > .form-group:nth-child(2) { grid-column: 1; }
+  .org-form > .form-group:nth-child(3) {
+    grid-column: 2; grid-row: 1 / span 2; align-self: stretch; text-align: center;
+    border: 1px dashed var(--border-strong, var(--border-color)); border-radius: var(--radius-xl); padding: 20px;
+    background: color-mix(in srgb, var(--clr-primary) 5%, var(--bg-surface));
+  }
+  .org-form > .form-group:nth-child(3) .pf-photos { justify-content: center; }
+  .org-form > .btn { grid-column: 1 / -1; justify-self: start; min-width: 180px; }
+}
+
+/* Large desktop screens (1700px and up): the page container grows so the sides are not left blank */
+@media (min-width: 1700px) {
+  :root { --max-width: 1800px; --page-x: 48px; }
+  .pf-page { max-width: 1440px; }
+  .home-faq .home-faq__inner { max-width: 1400px; }
 }
