@@ -78,8 +78,9 @@ select:focus { outline: none; border-color: var(--clr-primary); box-shadow: 0 0 
 textarea.form-control { min-height: 110px; }
 
 /* ── Page transitions ────────────────────────────────────── */
-.app-content.page-enter { animation: v2-enter .6s cubic-bezier(.16,.84,.3,1) backwards; }
-@keyframes v2-enter { from { opacity: 0; transform: translateY(22px) scale(.992); filter: blur(5px); } }
+/* a gentle slide, never a blank page: the new page starts mostly visible instead of fading up from nothing */
+.app-content.page-enter { animation: v2-enter .4s cubic-bezier(.16,.84,.3,1) backwards; }
+@keyframes v2-enter { from { opacity: .6; transform: translateY(10px); } }
 .app-root .se-footer { animation: none; }
 /* hero art + floating badges drift gently */
 .home-hero__float--1 { animation: v2-bob 5.5s ease-in-out infinite; }
@@ -374,3 +375,21 @@ textarea.form-control { min-height: 110px; }
   .dashboard-page, .fd-body, .about-body, .contact-body, .events-body, .feedback-body, .ngos-body,
   .ld-page, .pf-page, .legal-body { padding-bottom: 28px; }
 }
+
+
+/* ── Scroll-reveal that never leaves a grid looking empty: cards start faint (not invisible), settle quickly ── */
+[data-rv] {
+  transition: opacity .4s ease, transform .4s cubic-bezier(.2,.8,.2,1), box-shadow .28s ease, border-color .28s ease;
+  transition-delay: calc(var(--rv-d, 0ms) * .4);
+}
+[data-rv="1"] { opacity: .3; transform: translateY(12px); }
+
+
+/* Cards and stat tiles arrive together and already visible: a short rise from 35% opacity, one tiny stagger (was 0 -> 100% with up to 0.4s of delay) */
+@keyframes dd-fade-up {
+  from { opacity: .35; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.stats-grid > *, .cards-grid > * { animation-duration: .35s; }
+.stats-grid > :nth-child(n), .cards-grid > :nth-child(n) { animation-delay: .02s; }
+.stats-grid > :nth-child(2n), .cards-grid > :nth-child(2n) { animation-delay: .06s; }

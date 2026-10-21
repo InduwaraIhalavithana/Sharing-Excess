@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, type ComponentType, type ReactNode } from 'react';
 import './App.css';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -8,31 +8,85 @@ import { BrowserRouter as Router, Navigate, Routes, Route, useLocation } from 'r
 import { useAuth } from './contexts/AuthContext';
 import { dashboardPath } from './utils/format';
 import { usePageTitle } from './hooks/usePageTitle';
+import { warmPublicData, warmRoleData } from './lib/warmup';
 import { useLiveUpdates } from './hooks/useLiveUpdates';
 import { useScrollReveal } from './hooks/useScrollReveal';
 import './theme-polish.css';
 import './redesign.css';
 import './polish-v2.css';
+import './wide.css';
 
 // Each page is its own chunk, downloaded only when first visited.
-const Home = lazy(() => import('./Home'));
-const About = lazy(() => import('./components/About'));
-const DonorDashboard = lazy(() => import('./DonorDashboard'));
-const RecipientDashboard = lazy(() => import('./RecipientDashboard'));
-const NgoDashboard = lazy(() => import('./NgoDashboard'));
-const AdminDashboard = lazy(() => import('./AdminDashboard'));
-const NGOs = lazy(() => import('./components/NGOs'));
-const PostFood = lazy(() => import('./components/PostFood'));
-const Browse = lazy(() => import('./components/Browse'));
-const ListingDetail = lazy(() => import('./components/ListingDetail'));
-const PublicProfile = lazy(() => import('./components/PublicProfile'));
-const Contact = lazy(() => import('./components/Contact'));
-const Events = lazy(() => import('./components/Events'));
-const FeedbackPage = lazy(() => import('./FeedbackPage'));
-const AccountSettings = lazy(() => import('./components/AccountSettings'));
-const Privacy = lazy(() => import('./components/LegalPages').then((m) => ({ default: m.Privacy })));
-const Terms = lazy(() => import('./components/LegalPages').then((m) => ({ default: m.Terms })));
-const NotFound = lazy(() => import('./components/NotFound'));
+// One loader per page, shared by lazy() and preloadPages(), so a page opened later is already in memory.
+const loaders = {
+  Home: () => import('./Home'),
+  About: () => import('./components/About'),
+  DonorDashboard: () => import('./DonorDashboard'),
+  RecipientDashboard: () => import('./RecipientDashboard'),
+  NgoDashboard: () => import('./NgoDashboard'),
+  AdminDashboard: () => import('./AdminDashboard'),
+  NGOs: () => import('./components/NGOs'),
+  PostFood: () => import('./components/PostFood'),
+  Browse: () => import('./components/Browse'),
+  FoodMap: () => import('./components/FoodMap'),
+  ListingDetail: () => import('./components/ListingDetail'),
+  PublicProfile: () => import('./components/PublicProfile'),
+  Contact: () => import('./components/Contact'),
+  Events: () => import('./components/Events'),
+  FeedbackPage: () => import('./FeedbackPage'),
+  AccountSettings: () => import('./components/AccountSettings'),
+  Legal: () => import('./components/LegalPages'),
+  NotFound: () => import('./components/NotFound'),
+};
+/**
+ * A page that is downloaded on first visit (lazy) but, once preloadPages() has fetched it, is rendered directly.
+ * React always shows the loading fallback for ~250 ms the first time a lazy() component renders, even when its code
+ * is already in memory - which looked like an empty page flashing between every two pages.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function page<P extends object>(load: () => Promise<{ default: ComponentType<any> }>) {
+  const Lazy = lazy(load) as ComponentType<P>;
+  let Loaded: ComponentType<P> | undefined;
+  const preload = () => load().then((m) => { Loaded = m.default as ComponentType<P>; });
+  const Page = (props: P) => {
+    const C = Loaded ?? Lazy;
+    return <C {...props} />;
+  };
+  return { Page, preload };
+}
+
+const pages = {
+  Home: page(loaders.Home),
+  About: page(loaders.About),
+  DonorDashboard: page(loaders.DonorDashboard),
+  RecipientDashboard: page(loaders.RecipientDashboard),
+  NgoDashboard: page(loaders.NgoDashboard),
+  AdminDashboard: page(loaders.AdminDashboard),
+  NGOs: page(loaders.NGOs),
+  PostFood: page(loaders.PostFood),
+  Browse: page(loaders.Browse),
+  ListingDetail: page(loaders.ListingDetail),
+  PublicProfile: page(loaders.PublicProfile),
+  Contact: page(loaders.Contact),
+  Events: page(loaders.Events),
+  FeedbackPage: page(loaders.FeedbackPage),
+  AccountSettings: page(loaders.AccountSettings),
+  Privacy: page(() => loaders.Legal().then((m) => ({ default: m.Privacy }))),
+  Terms: page(() => loaders.Legal().then((m) => ({ default: m.Terms }))),
+  NotFound: page(loaders.NotFound),
+};
+const { Home, About, DonorDashboard, RecipientDashboard, NgoDashboard, AdminDashboard, NGOs, PostFood, Browse, ListingDetail,
+  PublicProfile, Contact, Events, FeedbackPage, AccountSettings, Privacy, Terms, NotFound } =
+  Object.fromEntries(Object.entries(pages).map(([k, v]) => [k, v.Page])) as { [K in keyof typeof pages]: () => ReactNode };
+
+/** Download the rest of the app quietly once the first page is up, so moving around never waits on a chunk. */
+function preloadPages(role?: string) {
+  for (const [name, p] of Object.entries(pages)) {
+    if (name === 'AdminDashboard' && role !== 'admin') continue; // the admin panel (and its charts) only for the admin
+    void p.preload().catch(() => undefined);
+  }
+  void loaders.FoodMap().catch(() => undefined); // the map view on Find Food
+}
 
 function PageFallback() {
   return (
@@ -61,6 +115,14 @@ function AppContent() {
   const location = useLocation();
   usePageTitle(location.pathname);
   useLiveUpdates();
+  const { user } = useAuth();
+
+  // After the first paint: fetch the other pages' code and the data they open with.
+  useEffect(() => {
+    const id = window.setTimeout(() => { preloadPages(user?.role); warmPublicData(); }, 400);
+    return () => window.clearTimeout(id);
+  }, [user?.role]);
+  useEffect(() => { if (user) warmRoleData(user); }, [user?.id, user?.role]); // eslint-disable-line react-hooks/exhaustive-deps
   const isAdminPage = location.pathname.startsWith('/admin');
   const page = location.pathname.split('/')[1] || 'home';
 

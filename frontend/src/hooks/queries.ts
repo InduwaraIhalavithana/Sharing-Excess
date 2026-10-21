@@ -1,4 +1,4 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../utils/api';
 import type {
   AppNotification, Attendee, CommunityEvent, FoodRequest, Listing, ListingsPage, Meta, NgoCard,
@@ -42,12 +42,13 @@ const qs = (params: Record<string, string | number | boolean | null | undefined>
 // ── Public data ──────────────────────────────────────────────────────────────
 
 /** The fixed lists (districts, categories, units ...) the forms and filters are built from. */
+export const metaOptions = () => queryOptions({
+  queryKey: keys.meta,
+  queryFn: () => api<{ success: boolean } & Meta>('/api/meta'),
+  staleTime: Infinity,
+});
 export function useMeta() {
-  return useQuery({
-    queryKey: keys.meta,
-    queryFn: () => api<{ success: boolean } & Meta>('/api/meta'),
-    staleTime: Infinity,
-  });
+  return useQuery(metaOptions());
 }
 
 export interface BrowseFilters {
@@ -60,13 +61,16 @@ export interface BrowseFilters {
 }
 
 /** Active listings, same district first, then neighbours, then the rest. */
-export function usePublicListings(opts: BrowseFilters = {}) {
+export const publicListingsOptions = (opts: BrowseFilters = {}) => {
   const { limit = 20, ...rest } = opts;
-  return useQuery({
+  return queryOptions({
     queryKey: [...keys.listings, 'public', rest, limit],
     queryFn: () => api<ListingsPage>(`/api/listings${qs({ ...rest, q: rest.q?.trim(), limit })}`),
     placeholderData: keepPreviousData, // keep old cards on screen while a new search loads
   });
+};
+export function usePublicListings(opts: BrowseFilters = {}) {
+  return useQuery(publicListingsOptions(opts));
 }
 
 export function useListing(id: number | undefined) {
@@ -77,8 +81,13 @@ export function useListing(id: number | undefined) {
   });
 }
 
+export const publicStatsOptions = () => queryOptions({
+  queryKey: keys.stats,
+  queryFn: () => api<PublicStats>('/api/public/stats'),
+  staleTime: 60_000,
+});
 export function usePublicStats() {
-  return useQuery({ queryKey: keys.stats, queryFn: () => api<PublicStats>('/api/public/stats'), staleTime: 60_000 });
+  return useQuery(publicStatsOptions());
 }
 
 export function useRatingSummary(userId: number | undefined) {
@@ -92,32 +101,35 @@ export function useRatingSummary(userId: number | undefined) {
 // ── Signed-in data ───────────────────────────────────────────────────────────
 
 /** The donor's own listings with every status (active, sold out, expired, closed). */
+export const myListingsOptions = (donorId: number | undefined) => queryOptions({
+  queryKey: [...keys.listings, 'mine', donorId],
+  queryFn: () => api<ListingsPage>(`/api/listings?donor_id=${donorId}&limit=100`),
+  enabled: donorId != null,
+  refetchInterval: 30_000,
+});
 export function useMyListings(donorId: number | undefined) {
-  return useQuery({
-    queryKey: [...keys.listings, 'mine', donorId],
-    queryFn: () => api<ListingsPage>(`/api/listings?donor_id=${donorId}&limit=100`),
-    enabled: donorId != null,
-    refetchInterval: 30_000,
-  });
+  return useQuery(myListingsOptions(donorId));
 }
 
 /** Requests as the signed-in user sees them: recipients/NGOs their own, donors those on their listings. */
+export const myRequestsOptions = (enabled = true) => queryOptions({
+  queryKey: [...keys.requests, 'mine'],
+  queryFn: () => api<RequestsResponse>('/api/requests'),
+  enabled,
+  refetchInterval: 30_000,
+});
 export function useMyRequests(enabled = true) {
-  return useQuery({
-    queryKey: [...keys.requests, 'mine'],
-    queryFn: () => api<RequestsResponse>('/api/requests'),
-    enabled,
-    refetchInterval: 30_000,
-  });
+  return useQuery(myRequestsOptions(enabled));
 }
 
+export const notificationsOptions = (enabled = true) => queryOptions({
+  queryKey: keys.notifications,
+  queryFn: () => api<{ success: boolean; unread: number; notifications: AppNotification[] }>('/api/notifications?limit=20'),
+  enabled,
+  refetchInterval: 60_000,
+});
 export function useNotifications(enabled: boolean) {
-  return useQuery({
-    queryKey: keys.notifications,
-    queryFn: () => api<{ success: boolean; unread: number; notifications: AppNotification[] }>('/api/notifications?limit=20'),
-    enabled,
-    refetchInterval: 60_000,
-  });
+  return useQuery(notificationsOptions(enabled));
 }
 
 // ── Mutations ────────────────────────────────────────────────────────────────
@@ -256,13 +268,14 @@ export interface EventFilters {
 }
 
 /** Everyone sees events; when signed in, each one also says whether *you* joined. */
+export const eventsOptions = (filters: EventFilters = {}) => queryOptions({
+  queryKey: [...keys.events, filters],
+  queryFn: () => api<{ success: boolean; events: CommunityEvent[] }>(`/api/community-events${qs({ ...filters })}`),
+  staleTime: 15_000,
+  placeholderData: keepPreviousData,
+});
 export function useEvents(filters: EventFilters = {}) {
-  return useQuery({
-    queryKey: [...keys.events, filters],
-    queryFn: () => api<{ success: boolean; events: CommunityEvent[] }>(`/api/community-events${qs({ ...filters })}`),
-    staleTime: 15_000,
-    placeholderData: keepPreviousData,
-  });
+  return useQuery(eventsOptions(filters));
 }
 
 export function useJoinEvent() {
@@ -335,12 +348,13 @@ export function useAttendees(eventId: number | null) {
 
 // ── NGOs ─────────────────────────────────────────────────────────────────────
 
+export const ngoDirectoryOptions = (filters: { q?: string; district?: string } = {}) => queryOptions({
+  queryKey: [...keys.ngos, filters],
+  queryFn: () => api<{ success: boolean; ngos: NgoCard[] }>(`/api/ngos${qs({ ...filters, q: filters.q?.trim() })}`),
+  placeholderData: keepPreviousData,
+});
 export function useNgoDirectory(filters: { q?: string; district?: string } = {}) {
-  return useQuery({
-    queryKey: [...keys.ngos, filters],
-    queryFn: () => api<{ success: boolean; ngos: NgoCard[] }>(`/api/ngos${qs({ ...filters, q: filters.q?.trim() })}`),
-    placeholderData: keepPreviousData,
-  });
+  return useQuery(ngoDirectoryOptions(filters));
 }
 
 // ── Admin ────────────────────────────────────────────────────────────────────

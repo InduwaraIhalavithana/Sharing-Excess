@@ -140,6 +140,7 @@ export default function PostFood() {
         </div>
       )}
 
+      <div className="pf-layout">
       <form className="pf-form dashboard-card" onSubmit={submit} noValidate>
         <fieldset>
           <legend>1 · {t('post', 'what')}</legend>
@@ -260,6 +261,30 @@ export default function PostFood() {
           {create.isPending ? t('post', 'posting') : `🚀 ${t('post', 'submit')}`}
         </button>
       </form>
+
+      <aside className="pf-aside" aria-label={t('post', 'next_title')}>
+        <section className="pf-aside__card pf-aside__card--steps">
+          <h2>{t('post', 'next_title')}</h2>
+          <ol className="pf-steps">
+            {(['next_1', 'next_2', 'next_3'] as const).map((k, i) => (
+              <li key={k}><span className="pf-steps__n">{i + 1}</span><span>{t('post', k)}</span></li>
+            ))}
+          </ol>
+        </section>
+        <section className="pf-aside__card pf-aside__card--tips">
+          <h2>💡 {t('post', 'tips_title')}</h2>
+          <ul className="pf-tips">
+            {(['tip_1', 'tip_2', 'tip_3'] as const).map((k) => <li key={k}>{t('post', k)}</li>)}
+          </ul>
+        </section>
+        {stats && (
+          <section className="pf-aside__stats">
+            <div><b>{Number(stats.donors).toLocaleString()}</b><span>{t('post', 'donors_sharing')}</span></div>
+            <div><b>{Number(stats.handovers_completed).toLocaleString()}</b><span>{t('post', 'handovers')}</span></div>
+          </section>
+        )}
+      </aside>
+      </div>
     </div>
   );
 }
