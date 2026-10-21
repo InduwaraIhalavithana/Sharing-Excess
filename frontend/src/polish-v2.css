@@ -364,3 +364,13 @@ textarea.form-control { min-height: 110px; }
   .adm-topbar__right { gap: 6px; flex-wrap: wrap; }
   .adm-refresh-btn, .adm-logout-btn { padding: 6px 10px; font-size: .85rem; }
 }
+
+
+/* ── Space above the footer: one consistent, modest gap on every page (was 48-80px of empty space) ── */
+.dashboard-page, .fd-body, .about-body, .contact-body, .events-body, .feedback-body, .ngos-body,
+.ld-page, .pf-page { padding-bottom: 36px; }
+.legal-body { padding-bottom: 36px; }
+@media (max-width: 640px) {
+  .dashboard-page, .fd-body, .about-body, .contact-body, .events-body, .feedback-body, .ngos-body,
+  .ld-page, .pf-page, .legal-body { padding-bottom: 28px; }
+}
