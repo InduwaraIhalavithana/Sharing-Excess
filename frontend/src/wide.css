@@ -124,3 +124,9 @@
   .req-timeline { flex-wrap: wrap; row-gap: 4px; }
   .req-timeline__label { font-size: .68rem; }
 }
+
+/* Home FAQ: two columns on a wide screen (each question opens within its own column) */
+@media (min-width: 1100px) {
+  .home-faq .home-faq__inner { max-width: 1180px; }
+  .home-faq .home-faq__list { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 22px; align-items: start; }
+}
