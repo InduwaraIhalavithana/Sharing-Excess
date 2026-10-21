@@ -299,14 +299,14 @@ export default function AdminDashboard() {
             <>
               <div className="dd-search-row">
                 <input className="form-control" style={{ maxWidth: 280 }} type="search" placeholder={t('admin', 'search_users')} value={userQ} onChange={(e) => setUserQ(e.target.value)} aria-label={t('admin', 'search_users')} />
-                <select className="form-control" style={{ maxWidth: 180 }} value={userRole} onChange={(e) => setUserRole(e.target.value)} aria-label={t('auth', 'role')}>
+                <select className="form-control" style={{ maxWidth: 180 }} value={userRole} onChange={(e) => setUserRole(e.target.value)} aria-label={t('admin', 'col_role')}>
                   <option value="">{t('admin', 'all_roles')}</option>
                   {['donor', 'recipient', 'ngo'].map((r) => <option key={r} value={r}>{t('role', r)}</option>)}
                 </select>
               </div>
               <div className="od-table-wrap">
                 <table className="od-table">
-                  <thead><tr><th>{t('auth', 'name')}</th><th>{t('auth', 'role')}</th><th>{t('post', 'district')}</th><th>{t('ui', 'status')}</th><th>{t('admin', 'joined')}</th><th /></tr></thead>
+                  <thead><tr><th>{t('auth', 'name')}</th><th>{t('admin', 'col_role')}</th><th>{t('post', 'district')}</th><th>{t('ui', 'status')}</th><th>{t('admin', 'joined')}</th><th /></tr></thead>
                   <tbody>
                     {shownUsers.map((u) => (
                       <tr key={u.id}>
