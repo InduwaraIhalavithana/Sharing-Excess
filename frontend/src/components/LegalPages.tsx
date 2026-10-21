@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../i18n/LanguageContext';
 
@@ -6,6 +6,13 @@ const UPDATED = '6 October 2026';
 
 function Page({ title, intro, children, other }: { title: string; intro: string; children: ReactNode; other: { to: string; label: string } }) {
   const { lang, p } = useLanguage();
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const [toc, setToc] = useState<{ id: string; text: string }[]>([]);
+  // A side index built from the page's own headings, so a wide screen is not a narrow column with white on both sides.
+  useEffect(() => {
+    const heads = Array.from(bodyRef.current?.querySelectorAll('h2') ?? []);
+    setToc(heads.map((h, i) => { h.id = h.id || `sec-${i + 1}`; return { id: h.id, text: h.textContent ?? '' }; }));
+  }, [title]);
   return (
     <div className="legal-page">
       <div className="legal-hero">
@@ -15,7 +22,13 @@ function Page({ title, intro, children, other }: { title: string; intro: string;
           <span className="legal-hero__date">Last updated {UPDATED}</span>
         </div>
       </div>
-      <div className="container legal-body">
+      <div className="container legal-wrap">
+        {toc.length > 1 && (
+          <nav className="legal-toc" aria-label="Page sections">
+            {toc.map((x, i) => <a key={x.id} href={`#${x.id}`}><span>{i + 1}</span>{x.text}</a>)}
+          </nav>
+        )}
+        <div className="legal-body" ref={bodyRef}>
         {lang !== 'en' && (
           <p className="legal-note" role="note">{p('This page is shown in English only. If anything is unclear, please contact us and we will explain it.')}</p>
         )}
@@ -27,6 +40,7 @@ function Page({ title, intro, children, other }: { title: string; intro: string;
         <p className="legal-foot">
           Questions? Use the <Link to="/contact">Contact page</Link>. See also: <Link to={other.to}>{other.label}</Link>.
         </p>
+        </div>
       </div>
     </div>
   );
