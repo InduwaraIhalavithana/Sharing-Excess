@@ -14,6 +14,7 @@ import { useScrollReveal } from './hooks/useScrollReveal';
 import './theme-polish.css';
 import './redesign.css';
 import './polish-v2.css';
+import './wide.css';
 
 // Each page is its own chunk, downloaded only when first visited.
 // One loader per page, shared by lazy() and preloadPages(), so a page opened later is already in memory.
