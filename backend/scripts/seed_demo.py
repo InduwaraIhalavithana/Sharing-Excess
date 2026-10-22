@@ -1,7 +1,7 @@
 """Fill the database with clearly-labelled demo data so every page has something to show.
 
     python -m scripts.seed_demo --yes                       # (re)create the demo data
-    python -m scripts.seed_demo --yes --password "Demo#2026"  # same, and demo accounts can sign in with that password
+    python -m scripts.seed_demo --yes --password "<choose one>"  # same, and demo accounts can sign in with that password
     python -m scripts.seed_demo --remove                   # delete only the demo data
 
 Safe by design:
