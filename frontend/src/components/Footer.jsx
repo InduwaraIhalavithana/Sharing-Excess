@@ -51,6 +51,10 @@ export default function Footer() {
                 <span>Uva Wellassa University, Badulla, Sri Lanka</span>
               </li>
               <li>
+                <span className="se-footer__contact-icon">✉️</span>
+                <a href="mailto:admin.sharingexcess@gmail.com" className="se-footer__link">admin.sharingexcess@gmail.com</a>
+              </li>
+              <li>
                 <span className="se-footer__contact-icon">🕐</span>
                 <span>{t('contact', 'hours_value')}</span>
               </li>
