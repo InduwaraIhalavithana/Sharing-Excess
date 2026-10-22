@@ -244,7 +244,6 @@ export default function About() {
           <Reveal>
             <div className="about-contact">
               {[
-                { icon: '📧', label: tr('Email'),   value: 'admin.sharingexcess@gmail.com' },
                 { icon: '📍', label: tr('Address'), value: tr('Uva Wellassa University, Badulla, Sri Lanka') },
                 { icon: '🕑', label: tr('Hours'),   value: tr('Mon – Fri, 9am – 5pm') },
               ].map(c => (
