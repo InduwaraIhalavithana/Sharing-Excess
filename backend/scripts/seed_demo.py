@@ -39,7 +39,7 @@ from app.utils.timeutil import now_colombo
 from app.utils.uploads import UPLOAD_DIR, delete_upload
 
 DOMAIN = "@demo.sharingexcess.lk"
-CONTACT = f"contact{DOMAIN}"
+CONTACT = "admin.sharingexcess@gmail.com"
 rnd = random.Random(2026)  # fixed seed: the same data every run
 
 
