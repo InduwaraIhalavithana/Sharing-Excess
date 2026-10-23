@@ -1,3 +1,4 @@
+import { districtLabel } from '../i18n/districts';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -16,7 +17,7 @@ function when(ev: CommunityEvent) {
 }
 
 export default function Events() {
-  const { t } = useLanguage();
+  const { t, p } = useLanguage();
   const { user } = useAuth();
   const { data: meta } = useMeta();
   const [type, setType] = useState('');
@@ -50,7 +51,7 @@ export default function Events() {
   const onSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
     const parsed = emailSchema.safeParse(notifyEmail);
-    if (!parsed.success) { setNotifyError(parsed.error.issues[0].message); return; }
+    if (!parsed.success) { setNotifyError(p(parsed.error.issues[0].message)); return; }
     setNotifyError('');
     subscribe.mutate(parsed.data, { onSuccess: () => setNotified(true), onError: (err) => setNotifyError(err.message) });
   };
@@ -168,7 +169,7 @@ export default function Events() {
                 <div className="events-next__label">{t('events', 'next')}</div>
                 <h4 className="events-next__title">{next.title}</h4>
                 <p className="events-next__date">📅 {when(next).date}</p>
-                <p className="events-next__loc">📍 {next.location}, {next.district}</p>
+                <p className="events-next__loc">📍 {next.location}, {districtLabel(next.district)}</p>
               </div>
             )}
           </aside>
@@ -206,7 +207,7 @@ function EventCard({ ev, canJoin, busy, onJoin, onReport }: {
       <ul className="event-card__meta">
         <li>📅 {date}</li>
         <li>🕐 {time}</li>
-        <li>📍 {ev.location}, {ev.district}</li>
+        <li>📍 {ev.location}, {districtLabel(ev.district)}</li>
         {ev.organiser && <li><Avatar size={24} src={ev.organiser.logo} name={ev.organiser.name} /> {ev.organiser.name}</li>}
       </ul>
       {ev.description && <p className="event-card__desc">{ev.description}</p>}

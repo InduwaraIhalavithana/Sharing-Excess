@@ -1,3 +1,4 @@
+import { districtLabel } from './i18n/districts';
 import { useCallback, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useLanguage } from './i18n/LanguageContext';
@@ -122,7 +123,7 @@ export default function DonorDashboard() {
       <div className="dd-header">
         <div>
           <h1 className="dd-title">{t('donor', 'dashboard_title')}</h1>
-          <p className="dd-welcome">{t('donor', 'welcome')} <strong>{user?.name}</strong>{user?.district && <> · 📍 {user.district}</>}</p>
+          <p className="dd-welcome">{t('donor', 'welcome')} <strong>{user?.name}</strong>{user?.district && <> · 📍 {districtLabel(user.district)}</>}</p>
           <div className="dd-header__chips">
             <span className="dd-impact-chip">📦 {count('completed')} {t('dash', 'handed_over')}</span>
             {rating.data && rating.data.count > 0 && rating.data.average !== null && (

@@ -1,3 +1,4 @@
+import { districtLabel } from '../i18n/districts';
 import { Fragment, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -60,7 +61,7 @@ function Photos({ ev, notify }: { ev: CommunityEvent; notify: Notify }) {
 
 /** An NGO's own events: create, edit, add photos, see who joined, cancel or delete. */
 export default function NgoEvents({ ownerId, notify }: { ownerId: number; notify: Notify }) {
-  const { t } = useLanguage();
+  const { t, p } = useLanguage();
   const { user } = useAuth();
   const { data: meta } = useMeta();
   const { data, isPending } = useEvents({ owner_id: ownerId });
@@ -104,7 +105,7 @@ export default function NgoEvents({ ownerId, notify }: { ownerId: number; notify
     });
   };
 
-  const err = (k: keyof EventFormValues) => errors[k] && <p className="form-error" role="alert">{errors[k]?.message}</p>;
+  const err = (k: keyof EventFormValues) => errors[k] && <p className="form-error" role="alert">{p(errors[k]?.message ?? '')}</p>;
   const current = editing && editing !== 'new' ? (data?.events.find((e) => e.id === editing.id) ?? editing) : null;
 
   return (
@@ -202,7 +203,7 @@ export default function NgoEvents({ ownerId, notify }: { ownerId: number; notify
                 <tr>
                   <td><strong>{EVENT_ICON[ev.event_type]} {ev.title}</strong></td>
                   <td>{fmtDateTime(ev.starts_at)}</td>
-                  <td>{ev.district}</td>
+                  <td>{districtLabel(ev.district)}</td>
                   <td>{ev.going}{ev.capacity !== null ? ` / ${ev.capacity}` : ''}</td>
                   <td>{ev.status === 'cancelled' ? <span className="badge badge-red">{t('ngo', 'cancelled')}</span> : ev.is_past ? <span className="badge badge-gray">{t('ngo', 'past')}</span> : <StatusBadge status="published" />}</td>
                   <td>

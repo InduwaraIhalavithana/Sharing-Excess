@@ -1,3 +1,4 @@
+import { districtLabel } from '../i18n/districts';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -48,7 +49,7 @@ export default function NGOs() {
                 </div>
                 <div className="ngos-card__body">
                   <h3 className="ngos-card__name"><Link to={`/profile/${n.id}`}>{n.org_name}</Link></h3>
-                  <span className="ngos-card__impact badge badge-green">📍 {n.district ?? '—'}</span>
+                  <span className="ngos-card__impact badge badge-green">📍 {n.district ? districtLabel(n.district) : '—'}</span>
                   {n.upcoming_events > 0 && (
                     <Link to="/events" className="badge badge-blue" style={{ marginLeft: 6 }}>📅 {n.upcoming_events} {t('ngos', 'upcoming')}</Link>
                   )}

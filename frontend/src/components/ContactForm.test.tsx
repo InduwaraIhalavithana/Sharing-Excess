@@ -3,12 +3,13 @@ import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import ContactForm from './ContactForm';
+import { LanguageProvider } from '../i18n/LanguageContext';
 
 function renderForm() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
   return render(
     <QueryClientProvider client={qc}>
-      <ContactForm />
+      <LanguageProvider><ContactForm /></LanguageProvider>
     </QueryClientProvider>,
   );
 }
