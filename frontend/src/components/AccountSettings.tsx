@@ -20,6 +20,7 @@ import Toast, { type ToastState } from './Toast';
 /** A label tied to the first control inside it, so screen readers announce it and a click on the label focuses it. */
 function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
   const id = useId();
+  const { p } = useLanguage();
   let tied = false;
   const kids = Children.map(children, (child) => {
     if (!tied && isValidElement<{ id?: string }>(child) && child.type !== 'p') {
@@ -32,14 +33,14 @@ function Field({ label, error, children }: { label: string; error?: string; chil
     <div className="form-group">
       <label className="form-label" htmlFor={id}>{label}</label>
       {kids}
-      {error && <p className="acct-error" role="alert">{error}</p>}
+      {error && <p className="acct-error" role="alert">{p(error)}</p>}
     </div>
   );
 }
 
 export default function AccountSettings() {
   const { user, login, logout } = useAuth();
-  const { t } = useLanguage();
+  const { t, p } = useLanguage();
   const { data: meta } = useMeta();
   const { hash } = useLocation();
   const [toast, setToast] = useState<ToastState | null>(null);
@@ -289,7 +290,7 @@ export default function AccountSettings() {
               <label className="acct-danger__check">
                 <input type="checkbox" {...deleteForm.register('understood')} /> {t('acct', 'understand')}
               </label>
-              {deleteForm.formState.errors.understood && <p className="acct-error" role="alert">{deleteForm.formState.errors.understood.message}</p>}
+              {deleteForm.formState.errors.understood && <p className="acct-error" role="alert">{p(deleteForm.formState.errors.understood.message ?? '')}</p>}
               <div className="acct-danger__actions">
                 <button className="btn adm-btn-danger" type="submit" disabled={deleteAccount.isPending}>
                   {deleteAccount.isPending ? '…' : t('acct', 'delete_perm')}

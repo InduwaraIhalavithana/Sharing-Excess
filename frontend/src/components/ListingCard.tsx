@@ -1,3 +1,4 @@
+import { districtLabel } from '../i18n/districts';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../i18n/LanguageContext';
 import type { Listing } from '../types/api';
@@ -43,7 +44,7 @@ export default function ListingCard({ l, footer }: { l: Listing; footer?: React.
       </Link>
       <div className="se-listing__body">
         <h3 className="se-listing__title"><Link to={`/listings/${l.id}`}>{l.food_name}</Link></h3>
-        <p className="se-listing__where">📍 {l.district}{l.area ? ` · ${l.area}` : ''}</p>
+        <p className="se-listing__where">📍 {districtLabel(l.district)}{l.area ? ` · ${l.area}` : ''}</p>
         <Stock l={l} />
         <div className="se-listing__chips">
           <ExpiryChip expiresAt={l.expires_at} />

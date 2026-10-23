@@ -1,4 +1,15 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { phrases, tr } from '../i18n/phrases';
+
+/** The boundary sits outside the language provider, so it reads the saved language directly. */
+function say(text: string): string {
+  try {
+    const lang = localStorage.getItem('se-lang');
+    return (lang === 'si' || lang === 'ta' ? (phrases as Record<string, Record<string, string>>)[lang]?.[text] : undefined) ?? text;
+  } catch {
+    return text;
+  }
+}
 
 interface Props {
   children: ReactNode;
@@ -25,14 +36,14 @@ export default class ErrorBoundary extends Component<Props, State> {
     return (
       <div className="se-error-boundary" role="alert">
         <div className="se-error-boundary__icon">🍃</div>
-        <h1>Something went wrong</h1>
-        <p>The page hit an unexpected problem. Your data is safe - try reloading.</p>
+        <h1>{say(tr('Something went wrong'))}</h1>
+        <p>{say(tr('The page hit an unexpected problem. Your data is safe - try reloading.'))}</p>
         <div className="se-error-boundary__actions">
           <button className="btn btn-primary" onClick={() => window.location.reload()}>
-            Reload page
+            {say(tr("Reload page"))}
           </button>
           <a className="btn btn-outline" href="/">
-            Go to Home
+            {say(tr("Go to Home"))}
           </a>
         </div>
       </div>

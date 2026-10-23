@@ -1,3 +1,4 @@
+import { districtLabel } from '../i18n/districts';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -98,7 +99,7 @@ export default function RequestBoard({ requests, notify, emptyText }: {
                     📦 <b>{qty(r.quantity_requested)} {r.listing.unit}</b>
                     {' · '}<Avatar size={20} src={isDonor ? r.recipient.photo : r.donor.photo} name={who} /> {who}{r.recipient.kind === 'ngo' && isDonor ? ' (NGO)' : ''}
                   </p>
-                  <p className="dd-card-meta">📍 {r.listing.district}{r.listing.area ? ` · ${r.listing.area}` : ''}</p>
+                  <p className="dd-card-meta">📍 {districtLabel(r.listing.district)}{r.listing.area ? ` · ${r.listing.area}` : ''}</p>
                   {r.created_at && <p className="dd-card-meta">🕒 {fmtDateTime(r.created_at)}</p>}
                 </div>
                 <StatusBadge status={r.status} />

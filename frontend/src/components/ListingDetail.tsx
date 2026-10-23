@@ -1,3 +1,4 @@
+import { districtLabel } from '../i18n/districts';
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -91,7 +92,7 @@ export default function ListingDetail() {
           <Stock l={l} />
           {l.description && <p className="ld-desc">{l.description}</p>}
           <ul className="ld-facts">
-            <li>📍 <b>{l.district}</b>{l.area ? ` · ${l.area}` : ''}</li>
+            <li>📍 <b>{districtLabel(l.district)}</b>{l.area ? ` · ${l.area}` : ''}</li>
             <li>⏰ {t('food', 'expires')}: <b>{fmtDateTime(l.expires_at)}</b></li>
             {l.prepared_at && <li>🍳 {t('food', 'prepared')}: {fmtDateTime(l.prepared_at)}</li>}
             <li>🚚 {t('food', l.fulfilment === 'both' ? 'delivery_or_pickup' : l.fulfilment)}</li>

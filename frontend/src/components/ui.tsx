@@ -1,3 +1,4 @@
+import { districtLabel } from '../i18n/districts';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useMeta } from '../hooks/queries';
@@ -176,7 +177,7 @@ export function DistrictSelect({ value, onChange, allLabel, id, required, invali
     <select id={id} aria-label={label ?? t('post', 'district')} className={`form-control${invalid ? ' error' : ''}`} value={value}
       required={required} onChange={(e) => onChange(e.target.value)}>
       <option value="">{allLabel ?? t('ui', 'choose_district')}</option>
-      {(data?.districts ?? []).map((d) => <option key={d} value={d}>{d}</option>)}
+      {(data?.districts ?? []).map((d) => <option key={d} value={d}>{districtLabel(d)}</option>)}
     </select>
   );
 }

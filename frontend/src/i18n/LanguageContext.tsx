@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
 import translations from './translations';
 import { phrases } from './phrases';
+import { setDistrictLang } from './districts';
 
 export type Lang = 'en' | 'si' | 'ta';
 
@@ -27,6 +28,8 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     setLang(newLang);
     localStorage.setItem('se-lang', newLang);
   }, []);
+
+  setDistrictLang(lang);
 
   const t = useCallback(
     (section: string, key: string) =>
