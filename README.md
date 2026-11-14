@@ -217,3 +217,7 @@ Written down so a reviewer doesn't have to hunt for it:
 ## Team
 
 Developed by **Induwara Ihalavithana**, Uva Wellassa University.
+
+## Licence
+
+Released under the [MIT Licence](LICENSE).
