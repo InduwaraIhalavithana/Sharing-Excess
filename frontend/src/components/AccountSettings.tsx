@@ -167,29 +167,40 @@ export default function AccountSettings() {
 
       <div className="dd-header">
         <div className="acct-hero">
-          <button type="button" className="acct-photo" onClick={() => fileRef.current?.click()} disabled={busyPhoto}
-            aria-label={t('acct', user.photo ? 'change_photo' : 'add_photo')} title={t('acct', user.photo ? 'change_photo' : 'add_photo')}>
-            <Avatar className="acct-avatar" size={84} src={user.photo} name={user.name || user.email} />
-            <span className="acct-photo__cam" aria-hidden="true">{busyPhoto ? '…' : '📷'}</span>
-          </button>
-          <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden aria-label={t('acct', 'change_photo')}
-            onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) savePhoto.mutate(f); }} />
+          {user.role === 'admin' ? (
+            /* The admin account has no profile photo (the API refuses one) */
+            <div className="acct-photo acct-photo--plain">
+              <Avatar className="acct-avatar" size={84} src={null} name={user.name || user.email} />
+            </div>
+          ) : (
+            <>
+            <button type="button" className="acct-photo" onClick={() => fileRef.current?.click()} disabled={busyPhoto}
+              aria-label={t('acct', user.photo ? 'change_photo' : 'add_photo')} title={t('acct', user.photo ? 'change_photo' : 'add_photo')}>
+              <Avatar className="acct-avatar" size={84} src={user.photo} name={user.name || user.email} />
+              <span className="acct-photo__cam" aria-hidden="true">{busyPhoto ? '…' : '📷'}</span>
+            </button>
+            <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden aria-label={t('acct', 'change_photo')}
+              onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) savePhoto.mutate(f); }} />
+            </>
+          )}
           <div>
             <h1 className="dd-title">{t('nav', 'account_settings')}</h1>
             <p className="dd-welcome">
               {user.email} · <span className="acct-role">{t('role', user.role)}</span>
             </p>
-            <p className="acct-photo__actions">
-              <button type="button" className="acct-photo__btn" onClick={() => fileRef.current?.click()} disabled={busyPhoto}>
-                📷 {t('acct', user.photo ? 'change_photo' : 'add_photo')}
-              </button>
-              {user.photo && (
-                <button type="button" className="acct-photo__btn" onClick={() => removePhoto.mutate()} disabled={busyPhoto}>
-                  ✕ {t('acct', 'remove_photo')}
+            {user.role !== 'admin' && (
+              <p className="acct-photo__actions">
+                <button type="button" className="acct-photo__btn" onClick={() => fileRef.current?.click()} disabled={busyPhoto}>
+                  📷 {t('acct', user.photo ? 'change_photo' : 'add_photo')}
                 </button>
-              )}
-              <small>{t('acct', 'photo_hint')}</small>
-            </p>
+                {user.photo && (
+                  <button type="button" className="acct-photo__btn" onClick={() => removePhoto.mutate()} disabled={busyPhoto}>
+                    ✕ {t('acct', 'remove_photo')}
+                  </button>
+                )}
+                <small>{t('acct', 'photo_hint')}</small>
+              </p>
+            )}
           </div>
         </div>
         <Link to={dashboardPath(user.role)} className="btn btn-primary">← {t('acct', 'back')}</Link>

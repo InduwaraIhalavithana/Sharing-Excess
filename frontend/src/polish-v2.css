@@ -329,6 +329,8 @@ textarea.form-control { min-height: 110px; }
   border-radius: 50%; background: #fff; font-size: .95rem; box-shadow: 0 4px 10px rgba(0, 0, 0, .25);
 }
 .acct-photo:disabled { opacity: .7; cursor: progress; }
+.acct-photo--plain { cursor: default; }
+.acct-photo--plain:hover .se-avatar { transform: none; }
 .acct-photo__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 10px 0 0; }
 .acct-photo__actions small { color: rgba(255, 255, 255, .8); }
 .acct-photo__btn {
