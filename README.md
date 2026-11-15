@@ -4,6 +4,8 @@
 
 Full-stack web application for sharing surplus food in Sri Lanka. Donors post food and people nearby see it first; recipients request all or part of it and the donor accepts or declines (with a reason). On acceptance the two share contact details and arrange pickup or delivery. NGOs post events, and one admin account handles NGO approvals and moderation. It does not check food quality or supervise handovers. Built as a final-year project at Uva Wellassa University.
 
+**Demo video:** [watch the walkthrough on LinkedIn](https://lnkd.in/p/g4cekeV8) · **More projects:** [induwara-ihalavithana.vercel.app](https://induwara-ihalavithana.vercel.app)
+
 ---
 
 ## Screenshots
